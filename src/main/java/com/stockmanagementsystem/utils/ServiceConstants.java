@@ -273,11 +273,15 @@ public class ServiceConstants {
     public static final String SUPPLIER_ID = "Supplier ID";
     public static final String USR = "USR";
     public static final String USR_FILE = "usershift.xlsx";
+    public static final String USR_LIST_FILE = "userlist.xlsx";
+
     public static final String PREFIX_ACCEPTED_REJECTED = "AR";
     public static final String DELIMITER_ACCEPTED_REJECTED_STAGING_AREA = "S";
     public static final int MAX_ACCEPTED_REJECTED__PER_AR = 9;
     public static final AtomicInteger accepteRejectedCounter = new AtomicInteger(1);
     public static final String ZONEC = "ZONEC";
+    public static final String USRLST = "USRLST";
+    public static final String USERLIST = "userList";
 
     protected static final String ERP_SUPPLIER_ID = "ERP Supplier Code";
     public static final String SUPPLIER_NAME = "Supplier Name";
@@ -1044,4 +1048,5 @@ public class ServiceConstants {
     protected static final String DIRECT_INDIRECT_INVALID = "Please enter a value between Direct or Indirect";
     protected static final String SERIAL_BATCH_INVALID = "Please enter a value between Serial, Batch or None";
     protected static final String QC_REQUIRE_MANDATORY = "Qc Required is Mandatory ";
+    protected static final String USER_LIST_DATA_UPLOAD_FAILED = "Failed to upload user list data";
 }

@@ -92,6 +92,9 @@ public class FileController {
                 case ServiceConstants.USR:
                     filePath = baseFilePath + ServiceConstants.USR_FILE;
                     break;
+                case ServiceConstants.USRLST:
+                    filePath = baseFilePath + ServiceConstants.USR_LIST_FILE;
+                    break;
             }
 
             log.info("FileController----downloadExcelFile Method----filePath :" + filePath);
@@ -182,6 +185,9 @@ public class FileController {
                 break;
             case ServiceConstants.DEVICEMASTER:
                 stringResponseEntity =this.uploadExcelService.uploadDeviceMasterDetails(file,type);
+                break;
+            case ServiceConstants.USERLIST:
+                stringResponseEntity =this.uploadExcelService.uploadUserListDetails(file,type);
                 break;
         }
 

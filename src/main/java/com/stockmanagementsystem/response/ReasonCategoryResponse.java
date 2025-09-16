@@ -12,4 +12,6 @@ public class ReasonCategoryResponse {
     private Integer id;
     private String reasonId;
     private String ReasonCategory;
+    private String rejectedReason;
+
 }
