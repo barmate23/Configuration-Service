@@ -950,8 +950,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     // Create a new Supplier object and set its properties
                     Supplier supplier = new Supplier();
-
-
                         supplier.setSupplierId(supplierService.generateSupplierId(supplierNo));
                         supplierNo++;
                     if (supplierName == null || supplierName.isEmpty()) {
@@ -1032,9 +1030,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     supplier.setAddress2(address2);
 
                     if (locality != null && !locality.isEmpty()) {
-                        if (!validateRegex(locality, ServiceConstants.ADDRESS_REGEX)) {
+//                        if (!validateRegex(locality, ServiceConstants.ADDRESS_REGEX)) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LOCALITY, ServiceConstants.INVALID_LOCALITY_FORMAT));
-                        }
+//                        }
                     }
                     supplier.setLocality(locality);
 
@@ -1187,7 +1185,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (erpSupplierId == null || erpSupplierId.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.ERP_ID_MANDATORY_ERROR_MESSAGE));
-                    } else if (!validateRegex(erpSupplierId, ServiceConstants.ID_REGEX)) {
+                    } else  {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.INVALID_ERP_SUPPLIER_ID_FORMAT));
                     }
                     if (erpSupplierIdSet.contains(erpSupplierId)) {
@@ -1202,8 +1200,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
 
                     }
-
-
                     if (supplierTanNumber == null || supplierTanNumber.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.TAN_MANDATORY_ERROR_MESSAGE));
                     } else if (!validateRegex(supplierTanNumber, ServiceConstants.SUPPLIER_TAN_REGEX)) {
@@ -1237,7 +1233,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (fullBranchAddress == null || fullBranchAddress.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.FULL_BRANCH_ADDRESS_MANDATORY));
-                    } else if (!validateRegex(supplierPrimaryBanker, ServiceConstants.ADDRESS_REGEX)) {
+                    } else  {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.INVALID_FULL_BRANCH_ADDRESS_FORMAT));
                     }
                     supplier.setFullBranchAddress(fullBranchAddress);
@@ -1267,22 +1263,22 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     }
                     supplier.setVillage(village);
                     if (building != null && !building.isEmpty()) {
-                        if (!validateRegex(building, ServiceConstants.ADDRESS_REGEX)) {
+//                        if (!validateRegex(building, ServiceConstants.ADDRESS_REGEX)) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BUILDING, ServiceConstants.INVALID_BUILDING_FORMAT));
-                        }
+//                        }
                     }
                     supplier.setBuilding(building);
                     if (street != null && !street.isEmpty()) {
-                        if (!validateRegex(street, ServiceConstants.ADDRESS_REGEX)) {
+//                        if (!validateRegex(street, ServiceConstants.ADDRESS_REGEX)) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.STREET, ServiceConstants.INVALID_STREET_FORMAT));
-                        }
+//                        }
                     }
                     supplier.setStreet(street);
 
                     if (subLocality != null && !subLocality.isEmpty()) {
-                        if (!validateRegex(subLocality, ServiceConstants.ADDRESS_REGEX)) {
+//                        if (!validateRegex(subLocality, ServiceConstants.ADDRESS_REGEX)) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_LOCALITY, ServiceConstants.INVALID_SUB_LOCALITY_FORMAT));
-                        }
+//                        }
                     }
                     supplier.setSubLocality(subLocality);
 

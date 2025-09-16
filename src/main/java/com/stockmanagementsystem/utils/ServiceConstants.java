@@ -790,7 +790,7 @@ public class ServiceConstants {
     public static final String INTEGER_REGEX =  "^[0-9]+(\\.[0-9]+)?$"; //allows only integers (digits) OR allow floats
     public static final String NAME_REGEX = "^[A-Za-z.\\s]{1,50}$";// Example: Alphabets and spaces with fullstops up to 50 characters
     public static final String NAME_FIRST_LETTER_CAPITAL_REGEX = "^(?:[A-Z][a-z]*\\s?)*$";// Example: Alphabets and spaces and first char of each String must capital
-   // public static final String STRING_REGEX = "^[a-zA-Z\\s.]*$";//strings that consist only of letters (both uppercase and lowercase) and whitespace and fullstops characters.
+   // public static final String STRING_REGEX = "^[a -zA-Z\\s.]*$";//strings that consist only of letters (both uppercase and lowercase) and whitespace and fullstops characters.
     public static final String NOT_ALLOW_SPECIAL_CHAR_REGEX = "^[a-zA-Z\\d ]+$";// not allow special characters
     public static final String POST_CODE_REGEX = "^\\d{6}$";
 
