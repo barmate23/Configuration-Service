@@ -1093,9 +1093,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     supplier.setSupplierPANNumber(supplierPanCardNumber);
                     if (contactPersonName != null && !contactPersonName.isEmpty()) {
                         // Add any specific validation for contactPersonName if needed
-                        if (!validateRegex(contactPersonName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) { // Assuming you have a regex for names
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CONTACT_PERSON_NAME, ServiceConstants.INVALID_NAME_FORMAT_ERROR_MESSAGE));
-                        }
+//                        if (!validateRegex(contactPersonName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) { // Assuming you have a regex for names
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CONTACT_PERSON_NAME, ServiceConstants.INVALID_NAME_FORMAT_ERROR_MESSAGE));
+//                        }
                     }
                     supplier.setContactPersonName(contactPersonName);
                     if (designation != null && !designation.isEmpty()) {
@@ -1116,9 +1116,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (primaryPhone == null || primaryPhone.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.PRIMARY_PHONE_MANDATORY));
-                    } else if (!validateRegex(primaryPhone, ServiceConstants.PHONE_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.INVALID__PHONE_FORMAT_ERROR_MESSAGE));
                     }
+//                    else if (!validateRegex(primaryPhone, ServiceConstants.PHONE_REGEX)) {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.INVALID__PHONE_FORMAT_ERROR_MESSAGE));
+//                    }
                     if (phoneSet.contains(primaryPhone)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.DUPLICATE_PHONE_ERROR_MESSAGE));
                     } else {
@@ -1212,6 +1213,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (tanSet.contains(supplierTanNumber)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.DUPLICATE_TAN_ERROR_MESSAGE));
                     } else {
+                        if(supplierTanNumber!=null)
                         tanSet.add(supplierTanNumber);
                     }
                     supplier.setSupplierTANNumber(supplierTanNumber);
