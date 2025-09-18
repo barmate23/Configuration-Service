@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  uploadingservice:
+    image: configuration:latest
+    pull_policy: never
+    container_name: configurationservice
+    ports:
+      - "8084:8084"
+    networks:
+      - rmscadminnetwork
+    depends_on:
+      adminserviceregistry:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://adminserviceregistry:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    restart: on-failure
+
+networks:
+  rmscadminnetwork:
+    external: true
