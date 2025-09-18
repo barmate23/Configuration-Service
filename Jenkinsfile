@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        COMPOSE_FILE = "docker-compose.yml"
+        COMPOSE_FILE = "docker-compose.uploading.yml"
         REGISTRY_CONTAINER_NAME = "adminserviceregistry"
         TARGET_SERVICE = "uploadingservice"
     }
