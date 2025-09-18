@@ -793,8 +793,8 @@ public class ServiceConstants {
 //    public static final String ID_REGEX = "^[a-zA-Z0-9]+$"; //allows only characters (letters) and integers (digits) but disallows any special characters
     public static final String INTEGER_REGEX =  "^[0-9]+(\\.[0-9]+)?$"; //allows only integers (digits) OR allow floats
     public static final String NAME_REGEX = "^[A-Za-z.\\s]{1,50}$";// Example: Alphabets and spaces with fullstops up to 50 characters
-    public static final String NAME_FIRST_LETTER_CAPITAL_REGEX = "^(?:[A-Z][a-z]*\\s?)*$";// Example: Alphabets and spaces and first char of each String must capital
-   // public static final String STRING_REGEX = "^[a-zA-Z\\s.]*$";//strings that consist only of letters (both uppercase and lowercase) and whitespace and fullstops characters.
+    public static final String NAME_FIRST_LETTER_CAPITAL_REGEX = "^(?! )[A-Za-z]+(?:[ .'-][A-Za-z]+)*(?<! )$";// Example: Alphabets and spaces and first char of each String must capital
+   // public static final String STRING_REGEX = "^[a -zA-Z\\s.]*$";//strings that consist only of letters (both uppercase and lowercase) and whitespace and fullstops characters.
     public static final String NOT_ALLOW_SPECIAL_CHAR_REGEX = "^[a-zA-Z\\d ]+$";// not allow special characters
     public static final String POST_CODE_REGEX = "^\\d{6}$";
 
@@ -809,7 +809,7 @@ public class ServiceConstants {
     public static final String PHONE_REGEX = "^\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$";// Example: phone no number format
 
     public static final String SUPPLIER_TAN_REGEX = "^[A-Z]{4}[0-9]{5}[A-Z]{1}$"; // Example: TAN number format
-    public static final String IFSC_CODE_REGEX = "^[A-Z]{4}0[0-9]{6}$"; // Example: IFSC code format
+    public static final String IFSC_CODE_REGEX = "^[A-Za-z]{4}0[A-Za-z0-9]{6}$"; // Example: IFSC code format
     public static final String MICR_CODE_REGEX = "^\\d{9}$"; // ALLOW EXACT 9 DIGITS
     public static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
