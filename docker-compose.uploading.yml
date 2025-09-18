@@ -1,12 +1,14 @@
 services:
   uploadingservice:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: configuration:latest
-    pull_policy: never
     container_name: configurationservice
     ports:
       - "8084:8084"
     networks:
-      - updated_orgadmin_rmscadminnetwork
+      - rmscadminnetwork
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://adminserviceregistry:8761/eureka
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
@@ -16,5 +18,5 @@ services:
     restart: on-failure
 
 networks:
-  updated_orgadmin_rmscadminnetwork:
+  rmscadminnetwork:
     external: true
