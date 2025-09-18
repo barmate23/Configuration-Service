@@ -47,5 +47,7 @@ public interface UploadExcelService {
 
     ResponseEntity<BaseResponse> uploadDeviceMasterDetails(MultipartFile file, String type) throws IOException;
 
+    ResponseEntity<BaseResponse> uploadUserListDetails(MultipartFile file, String type);
+
 //    ResponseEntity<BaseResponse> uploadPurchaseOrders(MultipartFile file, String type) throw,s IOException;
 }

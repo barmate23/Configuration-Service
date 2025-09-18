@@ -385,7 +385,7 @@ public class ReasonServiceImpl implements ReasonService {
         try {
 
             List<ReasonCategoryResponse> responseList = reasonRepository.findBySubOrganizationIdAndIsDeleted( loginUser.getSubOrgId(),false).stream()
-                    .map(reason -> new ReasonCategoryResponse(reason.getId(),reason.getReasonId(), reason.getReasonCategoryMaster().getReasonCategoryName()))
+                    .map(reason -> new ReasonCategoryResponse(reason.getId(),reason.getReasonId(), reason.getReasonCategoryMaster().getReasonCategoryName(), reason.getRejectedReason()))
                     .collect(Collectors.toList());
 
             ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10071S);
