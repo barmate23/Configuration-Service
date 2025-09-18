@@ -17,6 +17,7 @@ pipeline {
         stage('Docker Version') {
             steps {
                 sh 'docker --version'
+                sh 'docker compose version'
             }
         }
 
@@ -32,7 +33,7 @@ pipeline {
                         echo "${REGISTRY_CONTAINER_NAME} is already running. Skipping start."
                     } else {
                         echo "${REGISTRY_CONTAINER_NAME} not running. Starting container..."
-                        sh "docker-compose -f ${COMPOSE_FILE} up -d ${REGISTRY_CONTAINER_NAME}"
+                        sh "docker compose -f ${COMPOSE_FILE} up -d ${REGISTRY_CONTAINER_NAME}"
                     }
                 }
             }
@@ -40,8 +41,8 @@ pipeline {
 
         stage('Build and Run Target Service') {
             steps {
-                sh "docker-compose -f ${COMPOSE_FILE} build ${TARGET_SERVICE}"
-                sh "docker-compose -f ${COMPOSE_FILE} up -d ${TARGET_SERVICE}"
+                sh "docker compose -f ${COMPOSE_FILE} build ${TARGET_SERVICE}"
+                sh "docker compose -f ${COMPOSE_FILE} up -d ${TARGET_SERVICE}"
             }
         }
     }
