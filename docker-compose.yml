@@ -1,22 +1,100 @@
-version: '3.8'
-
 services:
-  jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins
-    restart: unless-stopped
+  adminserviceregistry:
+    image: registry:latest
+    pull_policy: never
+    container_name: adminserviceregistry
     ports:
-      - "8080:8080"
-      - "50000:50000"
-    user: root  # Required to install packages inside the container
-    volumes:
-      - /home/ubuntu/jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
+      - "8761:8761"
+    networks:
+      - rmscadminnetwork
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: on-failure
+
+  gateway:
+    image: gateway:latest
+    pull_policy: never
+    container_name: admingateway
+    ports:
+      - "8083:8083"
+    networks:
+      - rmscadminnetwork
+    depends_on:
+      adminserviceregistry:
+        condition: service_healthy
     environment:
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    entrypoint: >
-      bash -c "
-        apt-get update &&
-        apt-get install -y docker.io &&
-        exec /sbin/tini -- /usr/local/bin/jenkins.sh
-      "
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://adminserviceregistry:8761/eureka
+      SPRING_APPLICATION_NAME: SMSGateway
+    restart: on-failure
+
+  loginservice:
+    image: login:latest
+    pull_policy: never
+    container_name: adminloginservice
+    ports:
+      - "8082:8082"
+    networks:
+      - rmscadminnetwork
+    depends_on:
+      adminserviceregistry:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://adminserviceregistry:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    restart: on-failure
+
+  uploadingservice:
+    image: configuration:latest
+    pull_policy: never
+    container_name: configurationservice
+    ports:
+      - "8084:8084"
+    networks:
+      - rmscadminnetwork
+    depends_on:
+      adminserviceregistry:
+        condition: service_healthy
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://adminserviceregistry:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    restart: on-failure
+
+  db:
+    image: postgres:16.3
+    pull_policy: never
+    container_name: adminpostgres
+    ports:
+      - "5432:5432"
+    networks:
+      - rmscadminnetwork
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+networks:
+  rmscadminnetwork:
+    driver: bridge
+
+volumes:
+  postgres-data:
+
+
