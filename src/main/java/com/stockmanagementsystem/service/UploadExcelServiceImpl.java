@@ -431,9 +431,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         item.setCreatedOn(new Date());
                         if (dockName == null || dockName.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.DOCK_NAME_MANDATORY));
-                        } else if (!validateRegex(dockName, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.INVALID_DOCK_NAME_FORMAT));
                         }
+//                        else if (!validateRegex(dockName, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.INVALID_DOCK_NAME_FORMAT));
+//                        }
                         if (dockId == null || dockId.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_ID, ServiceConstants.DOCK_ID_MANDATORY));
                         }
