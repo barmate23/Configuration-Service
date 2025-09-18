@@ -2,11 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "configuration"
-        CONTAINER_NAME = "configurationservice"
-        DOCKER_NETWORK = "updated_orgadmin_rmscadminnetwork"
-        HOST_PORT = "8084"
-        CONTAINER_PORT = "8084"
+        COMPOSE_FILE = "docker-compose.yml"
+        REGISTRY_CONTAINER_NAME = "adminserviceregistry"
+        TARGET_SERVICE = "uploadingservice"
     }
 
     stages {
@@ -22,37 +20,28 @@ pipeline {
             }
         }
 
-        stage('Clean Old Docker Image') {
+        stage('Ensure Registry is Running') {
             steps {
-                echo "Removing old Docker image if it exists..."
-                sh "docker rmi -f ${IMAGE_NAME}:latest || true"
+                script {
+                    def isRunning = sh(
+                        script: "docker ps -q -f name=${REGISTRY_CONTAINER_NAME}",
+                        returnStdout: true
+                    ).trim()
+
+                    if (isRunning) {
+                        echo "${REGISTRY_CONTAINER_NAME} is already running. Skipping start."
+                    } else {
+                        echo "${REGISTRY_CONTAINER_NAME} not running. Starting container..."
+                        sh "docker-compose -f ${COMPOSE_FILE} up -d ${REGISTRY_CONTAINER_NAME}"
+                    }
+                }
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build and Run Target Service') {
             steps {
-                echo "Building Docker image..."
-                sh "docker build -t ${IMAGE_NAME}:latest ."
-            }
-        }
-
-        stage('Stop & Remove Old Container') {
-            steps {
-                sh """
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm ${CONTAINER_NAME} || true
-                """
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                sh """
-                    docker run -d --name ${CONTAINER_NAME} \\
-                        -p ${HOST_PORT}:${CONTAINER_PORT} \\
-                        --network ${DOCKER_NETWORK} \\
-                        ${IMAGE_NAME}:latest
-                """
+                sh "docker-compose -f ${COMPOSE_FILE} build ${TARGET_SERVICE}"
+                sh "docker-compose -f ${COMPOSE_FILE} up -d ${TARGET_SERVICE}"
             }
         }
     }
