@@ -21,28 +21,22 @@ pipeline {
             }
         }
 
-        stage('Ensure Registry is Running') {
+        stage('Check Registry and Run Service') {
             steps {
                 script {
-                    def isRunning = sh(
+                    def isRegistryRunning = sh(
                         script: "docker ps -q -f name=${REGISTRY_CONTAINER_NAME}",
                         returnStdout: true
                     ).trim()
 
-                    if (isRunning) {
-                        echo "${REGISTRY_CONTAINER_NAME} is already running. Skipping start."
+                    if (isRegistryRunning) {
+                        echo "${REGISTRY_CONTAINER_NAME} is running. Proceeding to build and start ${TARGET_SERVICE}..."
+                        sh "docker compose -f ${COMPOSE_FILE} build ${TARGET_SERVICE}"
+                        sh "docker compose -f ${COMPOSE_FILE} up -d ${TARGET_SERVICE}"
                     } else {
-                        echo "${REGISTRY_CONTAINER_NAME} not running. Starting container..."
-                        sh "docker compose -f ${COMPOSE_FILE} up -d ${REGISTRY_CONTAINER_NAME}"
+                        error "${REGISTRY_CONTAINER_NAME} is not running. Aborting deployment of ${TARGET_SERVICE}."
                     }
                 }
-            }
-        }
-
-        stage('Build and Run Target Service') {
-            steps {
-                sh "docker compose -f ${COMPOSE_FILE} build ${TARGET_SERVICE}"
-                sh "docker compose -f ${COMPOSE_FILE} up -d ${TARGET_SERVICE}"
             }
         }
     }
