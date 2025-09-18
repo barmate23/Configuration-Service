@@ -6,6 +6,7 @@ pipeline {
         REGISTRY_CONTAINER_NAME = "adminserviceregistry"
         TARGET_SERVICE = "uploadingservice"
         TARGET_CONTAINER_NAME = "configurationservice" // container_name from your compose file
+        TARGET_IMAGE_NAME = "configuration:latest" // image name from your compose file
     }
 
     stages {
@@ -33,9 +34,13 @@ pipeline {
                     if (isRegistryRunning) {
                         echo "${REGISTRY_CONTAINER_NAME} is running. Proceeding to build and start ${TARGET_SERVICE}..."
 
-                        // Remove existing container if it exists to avoid conflict
+                        // Remove existing container
                         sh "docker rm -f ${TARGET_CONTAINER_NAME} || true"
 
+                        // Remove existing image
+                        sh "docker rmi -f ${TARGET_IMAGE_NAME} || true"
+
+                        // Build and run the service
                         sh "docker compose -f ${COMPOSE_FILE} build ${TARGET_SERVICE}"
                         sh "docker compose -f ${COMPOSE_FILE} up -d ${TARGET_SERVICE}"
                     } else {
