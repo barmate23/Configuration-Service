@@ -39,6 +39,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     private AssemblyLineRepository assemblyLineRepository;
 
     @Autowired
+    private StageRepository stageRepository;
+
+    @Autowired
     private ItemRepository itemRepository;
 
     @Autowired
@@ -2316,7 +2319,13 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String bomNotes = getCellStringValue(data, ServiceConstants.CELL_INDEX_10, resultResponses, type, headerNames);
                         // Create a new Store object and set its properties
                         BOMLine bomLine = new BOMLine();
-                        bomLine.setStage(stage);
+
+                        Optional<Stage> stageOptional = stageRepository.findByStageCodeAndAssemblyLineId(stage, assemblyLine1.getId());
+                        if(stageOptional.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), headerNames.get(ServiceConstants.CELL_INDEX_6), "The Stage does not exist or is not linked to the given Assembly Line."));
+                        } else {
+                            bomLine.setStage(stageOptional.get().getStageCode());
+                        }
                         bomLine.setLevel(level);
                         Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemCode);
                         if (itemOption.isPresent()) {
