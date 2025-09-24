@@ -39,6 +39,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     private AssemblyLineRepository assemblyLineRepository;
 
     @Autowired
+    private StageRepository stageRepository;
+
+    @Autowired
     private ItemRepository itemRepository;
 
     @Autowired
@@ -432,9 +435,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         item.setCreatedOn(new Date());
                         if (dockName == null || dockName.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.DOCK_NAME_MANDATORY));
-                        } else if (!validateRegex(dockName, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.INVALID_DOCK_NAME_FORMAT));
                         }
+//                        else if (!validateRegex(dockName, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.INVALID_DOCK_NAME_FORMAT));
+//                        }
                         if (dockId == null || dockId.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_ID, ServiceConstants.DOCK_ID_MANDATORY));
                         }
@@ -1024,19 +1028,19 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 //                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ADDRESS_1, ServiceConstants.INVALID_ADDRESS_1_FORMAT));
 //                    }
                     supplier.setAddress1(address1);
-                    if (address2 != null && !address2.isEmpty()) {
-//                        if (!validateRegex(address2, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ADDRESS_2, ServiceConstants.INVALID_ADDRESS_2_FORMAT));
-//                        }
-
-                    }
+//                    if (address2 != null && !address2.isEmpty()) {
+////                        if (!validateRegex(address2, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ADDRESS_2, ServiceConstants.INVALID_ADDRESS_2_FORMAT));
+////                        }
+//
+//                    }
                     supplier.setAddress2(address2);
-
-                    if (locality != null && !locality.isEmpty()) {
-                        if (!validateRegex(locality, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LOCALITY, ServiceConstants.INVALID_LOCALITY_FORMAT));
-                        }
-                    }
+//
+//                    if (locality != null && !locality.isEmpty()) {
+//                        if (!validateRegex(locality, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LOCALITY, ServiceConstants.INVALID_LOCALITY_FORMAT));
+//                        }
+//                    }
                     supplier.setLocality(locality);
 
                     if (district == null || district.isEmpty()) {
@@ -1094,9 +1098,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     supplier.setSupplierPANNumber(supplierPanCardNumber);
                     if (contactPersonName != null && !contactPersonName.isEmpty()) {
                         // Add any specific validation for contactPersonName if needed
-                        if (!validateRegex(contactPersonName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) { // Assuming you have a regex for names
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CONTACT_PERSON_NAME, ServiceConstants.INVALID_NAME_FORMAT_ERROR_MESSAGE));
-                        }
+//                        if (!validateRegex(contactPersonName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) { // Assuming you have a regex for names
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CONTACT_PERSON_NAME, ServiceConstants.INVALID_NAME_FORMAT_ERROR_MESSAGE));
+//                        }
                     }
                     supplier.setContactPersonName(contactPersonName);
                     if (designation != null && !designation.isEmpty()) {
@@ -1117,9 +1121,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (primaryPhone == null || primaryPhone.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.PRIMARY_PHONE_MANDATORY));
-                    } else if (!validateRegex(primaryPhone, ServiceConstants.PHONE_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.INVALID__PHONE_FORMAT_ERROR_MESSAGE));
                     }
+//                    else if (!validateRegex(primaryPhone, ServiceConstants.PHONE_REGEX)) {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.INVALID__PHONE_FORMAT_ERROR_MESSAGE));
+//                    }
                     if (phoneSet.contains(primaryPhone)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.DUPLICATE_PHONE_ERROR_MESSAGE));
                     } else {
@@ -1188,9 +1193,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (erpSupplierId == null || erpSupplierId.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.ERP_ID_MANDATORY_ERROR_MESSAGE));
-                    } else if (!validateRegex(erpSupplierId, ServiceConstants.ID_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.INVALID_ERP_SUPPLIER_ID_FORMAT));
                     }
+//                    else if (!validateRegex(erpSupplierId, ServiceConstants.ID_REGEX)) {
+////                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.INVALID_ERP_SUPPLIER_ID_FORMAT));
+////                    }
                     if (erpSupplierIdSet.contains(erpSupplierId)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.DUPLICATE_ERP_ID_ERROR_MESSAGE));
                     } else {
@@ -1203,16 +1209,16 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
 
                     }
-
-
                     if (supplierTanNumber == null || supplierTanNumber.isEmpty()) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.TAN_MANDATORY_ERROR_MESSAGE));
-                    } else if (!validateRegex(supplierTanNumber, ServiceConstants.SUPPLIER_TAN_REGEX)) {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.TAN_MANDATORY_ERROR_MESSAGE));
+                    }
+                    else if (!validateRegex(supplierTanNumber, ServiceConstants.SUPPLIER_TAN_REGEX)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.INVALID_SUPPLIER_TAN_FORMAT));
                     }
                     if (tanSet.contains(supplierTanNumber)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.DUPLICATE_TAN_ERROR_MESSAGE));
                     } else {
+                        if(supplierTanNumber!=null)
                         tanSet.add(supplierTanNumber);
                     }
                     supplier.setSupplierTANNumber(supplierTanNumber);
@@ -1238,9 +1244,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (fullBranchAddress == null || fullBranchAddress.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.FULL_BRANCH_ADDRESS_MANDATORY));
-                    } else if (!validateRegex(supplierPrimaryBanker, ServiceConstants.ADDRESS_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.INVALID_FULL_BRANCH_ADDRESS_FORMAT));
                     }
+//                    else  {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.INVALID_FULL_BRANCH_ADDRESS_FORMAT));
+//                    }
                     supplier.setFullBranchAddress(fullBranchAddress);
 
                     if (country == null || country.isEmpty()) {
@@ -1267,24 +1274,24 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.VILLAGE, ServiceConstants.INVALID_VILLAGE_NAME_FORMAT));
                     }
                     supplier.setVillage(village);
-                    if (building != null && !building.isEmpty()) {
-                        if (!validateRegex(building, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BUILDING, ServiceConstants.INVALID_BUILDING_FORMAT));
-                        }
-                    }
+//                    if (building != null && !building.isEmpty()) {
+////                        if (!validateRegex(building, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BUILDING, ServiceConstants.INVALID_BUILDING_FORMAT));
+////                        }
+//                    }
                     supplier.setBuilding(building);
-                    if (street != null && !street.isEmpty()) {
-                        if (!validateRegex(street, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.STREET, ServiceConstants.INVALID_STREET_FORMAT));
-                        }
-                    }
+//                    if (street != null && !street.isEmpty()) {
+////                        if (!validateRegex(street, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.STREET, ServiceConstants.INVALID_STREET_FORMAT));
+////                        }
+//                    }
                     supplier.setStreet(street);
 
-                    if (subLocality != null && !subLocality.isEmpty()) {
-                        if (!validateRegex(subLocality, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_LOCALITY, ServiceConstants.INVALID_SUB_LOCALITY_FORMAT));
-                        }
-                    }
+//                    if (subLocality != null && !subLocality.isEmpty()) {
+////                        if (!validateRegex(subLocality, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_LOCALITY, ServiceConstants.INVALID_SUB_LOCALITY_FORMAT));
+////                        }
+//                    }
                     supplier.setSubLocality(subLocality);
 
                     if (alternatePhone != null && !alternatePhone.isEmpty()) {
@@ -2313,7 +2320,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         // Create a new Store object and set its properties
                         BOMLine bomLine = new BOMLine();
 
-                        bomLine.setStage(stage);
+
+                        Optional<Stage> stageOptional = stageRepository.findByStageCodeAndAssemblyLineId(stage, assemblyLine1.getId());
+                        if(stageOptional.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), headerNames.get(ServiceConstants.CELL_INDEX_6), "The Stage does not exist or is not linked to the given Assembly Line."));
+                        } else {
+                            bomLine.setStage(stageOptional.get().getStageCode());
+                        }
+
                         bomLine.setLevel(level);
                         Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemCode);
                         if (itemOption.isPresent()) {
