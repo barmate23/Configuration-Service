@@ -588,6 +588,10 @@ public class LocationServiceImpl extends Validations implements LocationService{
 
                 CellStyle leftAlignStyle = workbook.createCellStyle();
                 leftAlignStyle.setFont(calibriFont);
+                leftAlignStyle.setBorderTop(BorderStyle.THIN);
+                leftAlignStyle.setBorderBottom(BorderStyle.THIN);
+                leftAlignStyle.setBorderLeft(BorderStyle.THIN);
+                leftAlignStyle.setBorderRight(BorderStyle.THIN);
                 leftAlignStyle.setAlignment(HorizontalAlignment.LEFT);
                 leftAlignStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
