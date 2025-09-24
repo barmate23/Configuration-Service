@@ -318,7 +318,7 @@ public class Validations extends ServiceConstants {
 
     }
     public String locationIdGeneration(Integer zoneId){
-        List<Location>locations=locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneId(false,loginUser.getSubOrgId(),zoneId);
+        List<Location>locations=locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(false,loginUser.getSubOrgId(),zoneId);
        if(locations!=null && locations.size()!=0){
            return locations.get(locations.size()-1).getZone().getZoneId()+"LOC0"+locations.get(locations.size()-1).getId();
        }else {

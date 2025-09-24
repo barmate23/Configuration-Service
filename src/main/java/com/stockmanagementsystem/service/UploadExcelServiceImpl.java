@@ -2320,12 +2320,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         // Create a new Store object and set its properties
                         BOMLine bomLine = new BOMLine();
 
+
                         Optional<Stage> stageOptional = stageRepository.findByStageCodeAndAssemblyLineId(stage, assemblyLine1.getId());
                         if(stageOptional.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), headerNames.get(ServiceConstants.CELL_INDEX_6), "The Stage does not exist or is not linked to the given Assembly Line."));
                         } else {
                             bomLine.setStage(stageOptional.get().getStageCode());
                         }
+
                         bomLine.setLevel(level);
                         Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemCode);
                         if (itemOption.isPresent()) {
