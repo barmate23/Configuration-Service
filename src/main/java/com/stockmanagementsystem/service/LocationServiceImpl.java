@@ -641,7 +641,7 @@ public class LocationServiceImpl extends Validations implements LocationService{
                     setCellValueAndStyle(erpLocationId, locations.get(i).getErpLocationId(), leftAlignStyle);
 
                     if (locations.get(i).getItem() != null) {
-                        setCellValueAndStyle(itemId, locations.get(i).getItem().getItemId(), leftAlignStyle);
+                        setCellValueAndStyle(itemId, locations.get(i).getItem().getItemCode(), leftAlignStyle);
                         setCellValueAndStyle(itemName, locations.get(i).getItem().getName(), leftAlignStyle);
                     }
 
