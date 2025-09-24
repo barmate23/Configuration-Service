@@ -2312,6 +2312,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String bomNotes = getCellStringValue(data, ServiceConstants.CELL_INDEX_10, resultResponses, type, headerNames);
                         // Create a new Store object and set its properties
                         BOMLine bomLine = new BOMLine();
+
                         bomLine.setStage(stage);
                         bomLine.setLevel(level);
                         Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemCode);

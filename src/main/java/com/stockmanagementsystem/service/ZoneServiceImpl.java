@@ -240,7 +240,7 @@ public class ZoneServiceImpl implements ZoneService{
             zone.get().setIsDeleted(true);
             List<Zone> zoneList=new ArrayList<>();
             zoneList.add(zone.get());
-            List<Location>locations=locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneId(false,loginUser.getSubOrgId(),zoneId);
+            List<Location>locations=locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(false,loginUser.getSubOrgId(),zoneId);
             if(locations!=null && !locations.isEmpty()){
                 ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10021E);
                 baseResponse.setCode(responseMessage.getCode());
