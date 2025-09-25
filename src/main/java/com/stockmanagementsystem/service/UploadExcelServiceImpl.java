@@ -1841,9 +1841,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         cal.set(year + 1, Calendar.MARCH, 31);  // Set to 31st March of the next year
                         Date expectedDeliverByDate = cal.getTime();
 
-                        if (!deliverByDate.equals(expectedDeliverByDate)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DELIVER_BY_DATE, "DELIVER BY DATE MUST BE 31-MAR-" + (year + 1)));
-                        }
+//                        if (!deliverByDate.equals(expectedDeliverByDate)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DELIVER_BY_DATE, "DELIVER BY DATE MUST BE 31-MAR-" + (year + 1)));
+//                        }
                     }
 
                     purchaseOrderHead.setDeliverByDate(deliverByDate);
