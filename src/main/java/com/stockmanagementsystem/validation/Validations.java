@@ -155,12 +155,29 @@ public class Validations extends ServiceConstants {
 
                 if (evaluatedValue != null && evaluatedValue.getCellType() == CellType.NUMERIC) {
                     return (float) evaluatedValue.getNumberValue();
-                } else {
+                } else if (evaluatedValue != null && evaluatedValue.getCellType() == CellType.STRING) {
+                    try {
+                        return Float.parseFloat(evaluatedValue.getStringValue().trim());
+                    } catch (NumberFormatException e) {
+                        resultResponses.add(new ValidationResultResponse(
+                                type,
+                                (row.getRowNum() + 1),
+                                headerNames.get(cellIndex),
+                                "Formula does not evaluate to a numeric value"
+                        ));
+                    }
+                }
+                return null;
+
+            } else if (cellType == CellType.STRING) {
+                try {
+                    return Float.parseFloat(cell.getStringCellValue().trim());
+                } catch (NumberFormatException e) {
                     resultResponses.add(new ValidationResultResponse(
                             type,
                             (row.getRowNum() + 1),
                             headerNames.get(cellIndex),
-                            "Formula does not evaluate to a numeric value"
+                            "Data must be numeric value"
                     ));
                     return null;
                 }
