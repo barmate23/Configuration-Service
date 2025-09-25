@@ -139,15 +139,39 @@ public class Validations extends ServiceConstants {
     public Float getCellFloatValue(Row row, int cellIndex, List<ValidationResultResponse> resultResponses, String type, List<String> headerNames) {
         Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
         if (cell == null) {
-//            resultResponses.add(new ValidationResultResponse(type, (row.getRowNum() + 1), headerNames.get(cellIndex), "Data value found null"));
             return null;
-        }else {
-            if (cell.getCellType() == CellType.NUMERIC) {
-                // Return numeric value as float
-                double numericValue = cell.getNumericCellValue();
-                return (float) numericValue;
+        } else {
+            CellType cellType = cell.getCellType();
+
+            if (cellType == CellType.NUMERIC) {
+                return (float) cell.getNumericCellValue();
+
+            } else if (cellType == CellType.FORMULA) {
+                // Create evaluator directly from the workbook
+                FormulaEvaluator evaluator = row.getSheet().getWorkbook()
+                        .getCreationHelper()
+                        .createFormulaEvaluator();
+                CellValue evaluatedValue = evaluator.evaluate(cell);
+
+                if (evaluatedValue != null && evaluatedValue.getCellType() == CellType.NUMERIC) {
+                    return (float) evaluatedValue.getNumberValue();
+                } else {
+                    resultResponses.add(new ValidationResultResponse(
+                            type,
+                            (row.getRowNum() + 1),
+                            headerNames.get(cellIndex),
+                            "Formula does not evaluate to a numeric value"
+                    ));
+                    return null;
+                }
+
             } else {
-                resultResponses.add(new ValidationResultResponse(type, (row.getRowNum() + 1), headerNames.get(cellIndex), "Data must be numeric value"));
+                resultResponses.add(new ValidationResultResponse(
+                        type,
+                        (row.getRowNum() + 1),
+                        headerNames.get(cellIndex),
+                        "Data must be numeric value"
+                ));
                 return null;
             }
         }
