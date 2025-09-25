@@ -1,9 +1,11 @@
+version: '3.8'
+
 services:
-  uploadingservice:
+  configurationservice:  # ✅ Service name fixed
     build:
       context: .
       dockerfile: Dockerfile
-    image: configuration:latest
+    image: configurationservice:latest  # ✅ Image name aligned
     container_name: configurationservice
     ports:
       - "8084:8084"
