@@ -582,12 +582,12 @@ public class LocationServiceImpl extends Validations implements LocationService{
                 Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
 
                 // ✅ Create font (Calibri) and style (Left aligned)
-                Font calibriFont = workbook.createFont();
-                calibriFont.setFontName("Calibri");
-                calibriFont.setFontHeightInPoints((short) 11);
+                Font arialFont = workbook.createFont();
+                arialFont.setFontName("Arial");
+                arialFont.setFontHeightInPoints((short) 11);
 
                 CellStyle leftAlignStyle = workbook.createCellStyle();
-                leftAlignStyle.setFont(calibriFont);
+                leftAlignStyle.setFont(arialFont);
                 leftAlignStyle.setBorderTop(BorderStyle.THIN);
                 leftAlignStyle.setBorderBottom(BorderStyle.THIN);
                 leftAlignStyle.setBorderLeft(BorderStyle.THIN);
