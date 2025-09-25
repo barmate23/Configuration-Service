@@ -1,5 +1,5 @@
 services:
-  configurationservice:
+  uploadingservice:
     build:
       context: .
       dockerfile: Dockerfile
