@@ -1810,7 +1810,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             purchaseOrderHead.setSupplier(supplierOptional.get());
                         }
-
                     } else {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.P_SUPPLIER_ID, "SUPPLIER ID NOT PRESENT IN DATABASE"));
                     }
