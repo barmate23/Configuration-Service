@@ -1,9 +1,9 @@
 services:
-  uploadingservice:
+  configurationservice:
     build:
       context: .
       dockerfile: Dockerfile
-    image: configuration:latest
+    image: configurationservice:latest
     container_name: configurationservice
     ports:
       - "8084:8084"
