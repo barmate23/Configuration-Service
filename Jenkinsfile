@@ -4,9 +4,9 @@ pipeline {
     environment {
         COMPOSE_FILE = "docker-compose.uploading.yml"
         REGISTRY_CONTAINER_NAME = "adminserviceregistry"
-        TARGET_SERVICE = "uploadingservice"
+        TARGET_SERVICE = "configurationservice"
         TARGET_CONTAINER_NAME = "configurationservice" // container_name from your compose file
-        TARGET_IMAGE_NAME = "configuration:latest" // image name from your compose file
+        TARGET_IMAGE_NAME = "configurationservice:latest" // image name from your compose file
     }
 
     stages {
