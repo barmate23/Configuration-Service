@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   configurationservice:
     build:
@@ -8,9 +10,9 @@ services:
     ports:
       - "8084:8084"
     networks:
-      - updated_orgadmin_rmscadminnetwork
+      - updated_orgadmin_rmscadminnetwork   # Make sure this network exists
     volumes:
-      - ./logs/uploadingservice:/var/log/uploadingservice   # <-- new
+      - ./logs/uploadingservice:/var/log/uploadingservice
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://adminserviceregistry:8761/eureka
       EUREKA_CLIENT_REGISTER_WITH_EUREKA: "true"
@@ -24,3 +26,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
     restart: on-failure
+
+networks:
+  updated_orgadmin_rmscadminnetwork:
+    external: true
