@@ -1850,8 +1850,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (purchaseOrderDate == null) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PURCHASE_ORDER_DATE, ServiceConstants.PURCHASE_ORDER_DATE_MANDATORY));
-                    } else if (purchaseOrderDate.before(new Date())) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PURCHASE_ORDER_DATE, ServiceConstants.PURCHASE_ORDER_DATE_CANNOT_BE_IN_THE_PAST));
                     }
                     purchaseOrderHead.setPurchaseOrderDate(purchaseOrderDate);
 
