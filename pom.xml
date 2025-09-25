@@ -127,6 +127,19 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
+
+<configuration>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/app/logs/app.log</file>
+        <encoder class="net.logstash.logback.encoder.LoggingEventEncoder" />
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
+
+	
 	<build>
 		<plugins>
 			<plugin>
