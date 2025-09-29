@@ -2797,7 +2797,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         for (PPEHead existingPpeHead : ppePlans) {
                             if (!existingPpeHead.getPlanOrderId().equals(ppeHead.getPlanOrderId()) && Objects.equals(existingPpeHead.getStartDate(), ppeHead.getStartDate()) &&
                                     existingPpeHead.getStartTime().equals(ppeHead.getStartTime()) &&
-                                    existingPpeHead.getProductionShop().equals(ppeHead.getProductionShop())) {
+                                    existingPpeHead.getAssemblyLine().equals(ppeHead.getAssemblyLine())) {
                                 duplicateInList = true;
                             }
                         }
