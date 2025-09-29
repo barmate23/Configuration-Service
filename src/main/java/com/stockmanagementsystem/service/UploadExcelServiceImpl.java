@@ -2598,7 +2598,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         String planId = getCellStringValue(data, ServiceConstants.CELL_INDEX_0, resultResponses, type, headerNames);
                         String sapId = getCellStringValue(data, ServiceConstants.CELL_INDEX_1, resultResponses, type, headerNames);
-                        String bomId = getCellStringValue(data, ServiceConstants.CELL_INDEX_2, resultResponses, type, headerNames);
+                        String bomCode = getCellStringValue(data, ServiceConstants.CELL_INDEX_2, resultResponses, type, headerNames);
                         String productName = getCellStringValue(data, ServiceConstants.CELL_INDEX_3, resultResponses, type, headerNames);
                         String brand = getCellStringValue(data, ServiceConstants.CELL_INDEX_4, resultResponses, type, headerNames);
                         String model = getCellStringValue(data, ServiceConstants.CELL_INDEX_5, resultResponses, type, headerNames);
@@ -2647,8 +2647,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SAP_ID, " SAPID CANNOT BE NULL "));
                         }
 
-                        if (!StringUtils.isEmpty(bomId)) {
-                            Optional<BoMHead> boMHeadOptional = bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomId(false, loginUser.getSubOrgId(), bomId);
+                        if (!StringUtils.isEmpty(bomCode)) {
+                            Optional<BoMHead> boMHeadOptional = bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomERPCode(false, loginUser.getSubOrgId(), bomCode);
                             if (boMHeadOptional.isPresent()) {
                                 ppeHead.setBomHead(boMHeadOptional.get());
                             } else {
@@ -2761,7 +2761,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         ppeHead.setModifiedBy(loginUser.getUserId());
                         ppeHead.setModifiedOn(new Date());
 
-                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomId(false, loginUser.getSubOrgId(), itemId, bomId);
+                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomId(false, loginUser.getSubOrgId(), itemId, bomCode);
                         if (bomLine != null) {
                             ppeLine.setBomLine(bomLine);
                         } else {

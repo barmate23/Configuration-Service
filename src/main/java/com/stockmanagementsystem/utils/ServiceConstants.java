@@ -754,7 +754,7 @@ public class ServiceConstants {
     public static final String PPE_PLAN_ID="Plan/Order ID";
     public static final String PPE_ID="PpeId";
     public static final String SAP_ID="SAP ID";
-    public static final String BOM_ID="BOM ID";
+    public static final String BOM_ID="BOM Code";
     public static final String PRODUCT_NAME="Product Name";
     public static final String BRAND="Brand";
 //    public static final String MODEL="Model";
