@@ -2553,7 +2553,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             List<String> expectedColumns = Arrays.asList(PPE_PLAN_ID, ERP_ID, BOM_ID, PRODUCT_NAME,
                     BRAND, MODEL, VARIANT, COLOR, UOM1, PLAN_QUANTITY, PRODUCTION_SHOP, SHOP_ID, LINE,
                     LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME, ITEM_CODE_PPE, ITEM_NAME_PPE,
-                    ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE, UOM2, STORE_PPE
+                    ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE
             );
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
@@ -2619,8 +2619,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String itemType = getCellStringValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
                         String itemClass = getCellStringValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
                         String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
-                        String uom2 = getCellStringValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
-                        String store = getCellStringValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
 
                         //setting the values to ppehead
                         PPEHead ppeHead = new PPEHead();
@@ -2760,9 +2758,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         ppeHead.setModifiedBy(loginUser.getUserId());
                         ppeHead.setModifiedOn(new Date());
 
-                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomId(false, loginUser.getSubOrgId(), itemId, bomCode);
+                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
                         if (bomLine != null) {
                             ppeLine.setBomLine(bomLine);
+                            ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_ID, " BOM ItemId and PPE ItemId is not matched "));
                         }
@@ -2825,14 +2824,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
                         ppeLine.setOrganizationId(loginUser.getOrgId());
                         ppeLine.setSubOrganizationId(loginUser.getSubOrgId());
-                        ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
                         ppeLine.setRequiredBy(new Date());
                         ppeLine.setIsDeleted(false);
                         ppeLine.setCreatedBy(loginUser.getUserId());
                         ppeLine.setCreatedOn(new Date());
                         ppeLine.setModifiedBy(loginUser.getUserId());
                         ppeLine.setModifiedOn(new Date());
-                        ppeLine.setStore(store);
                         if (duplicateInListByPlanId.isEmpty()) {
                             ppeLine.setPPEHead(ppeHead);
                             ppePlans.add(ppeHead);

@@ -27,7 +27,6 @@ public class BOMLine {
     @Column(name = "Level")
     private Integer level;
 
-
     @Column(name = "stage")
     private String stage;
 

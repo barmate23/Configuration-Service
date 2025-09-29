@@ -1,7 +1,6 @@
 package com.stockmanagementsystem.repository;
 
 import com.stockmanagementsystem.entity.BOMLine;
-import com.stockmanagementsystem.entity.PPELine;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,7 +21,7 @@ public interface BomLineRepository extends JpaRepository<BOMLine,Integer> {
 
     BOMLine findByIsDeletedAndSubOrganizationIdAndId(boolean b, Integer subOrgId, Integer id);
 
-    BOMLine findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomId(boolean b, Integer subOrgId, String itemId, String bomId);
+    BOMLine findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomERPCode(boolean b, Integer subOrgId, String itemId, String bomId);
 
     List<BOMLine> findByIsDeletedAndSubOrganizationIdAndItemItemIdNotInAndBomHeadBomId(boolean b, Integer subOrgId, List<String> ppeHeadLineList, String bomId);
 }
