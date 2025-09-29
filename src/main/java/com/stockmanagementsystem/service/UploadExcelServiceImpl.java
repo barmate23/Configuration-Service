@@ -2786,7 +2786,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         Optional<PPEHead> headOptional = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPlanOrderId(false, loginUser.getSubOrgId(), planId);
 
-                        Optional<PPEHead> existingHeads = ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndProductionShop(false, ppeHead.getStartDate(), startTimeDate, ppeHead.getProductionShop());
+                        Optional<PPEHead> existingHeads = ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndAssemblyLineId(false, ppeHead.getStartDate(), startTimeDate, ppeHead.getAssemblyLine().getId());
 
                         Optional<PPEHead> duplicateInListByPlanId = ppePlans.stream().filter(existingPpeHead ->
                                 existingPpeHead.getPlanOrderId().equals(planId)
