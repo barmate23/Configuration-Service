@@ -2620,8 +2620,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String itemClass = getCellStringValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
                         String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
                         String uom2 = getCellStringValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
-
-                        String store = getCellStringValue(data, ServiceConstants.CELL_INDEX_25, resultResponses, type, headerNames);
+                        String store = getCellStringValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
 
                         //setting the values to ppehead
                         PPEHead ppeHead = new PPEHead();
