@@ -2853,9 +2853,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             for (PPEHead ppeHead : ppePlans) {
                 List<String> ppeItemIdList = ppeLineList.stream()
                         .filter(e -> e.getPPEHead().getPlanOrderId().equals(ppeHead.getPlanOrderId()))
-                        .map(e -> e.getItem().getItemId())
+                        .map(e -> e.getItem().getItemCode())
                         .collect(Collectors.toList());
-                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdNotInAndBomHeadBomId(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomId());
+                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadBomId(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomId());
                 if (extraBomLine.size() != 0) {
                     List<String> itemids = extraBomLine.stream().map(e -> e.getItem().getItemId()).collect(Collectors.toList());
                     resultResponses.add(new ValidationResultResponse(type, null, ServiceConstants.ITEM_ID, "THIS BOM ITEM IDS :" + itemids.toString() + "IS NOT PRESENT IN PLAN/ORDER: " + ppeHead.getPlanOrderId()));
