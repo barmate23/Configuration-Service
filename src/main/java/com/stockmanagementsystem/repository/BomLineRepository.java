@@ -21,7 +21,7 @@ public interface BomLineRepository extends JpaRepository<BOMLine,Integer> {
 
     BOMLine findByIsDeletedAndSubOrganizationIdAndId(boolean b, Integer subOrgId, Integer id);
 
-    BOMLine findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomERPCode(boolean b, Integer subOrgId, String itemId, String bomId);
+    BOMLine findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadBomERPCode(boolean b, Integer subOrgId, String itemId, String bomId);
 
     List<BOMLine> findByIsDeletedAndSubOrganizationIdAndItemItemIdNotInAndBomHeadBomId(boolean b, Integer subOrgId, List<String> ppeHeadLineList, String bomId);
 }

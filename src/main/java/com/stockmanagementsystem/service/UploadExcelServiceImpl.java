@@ -2758,7 +2758,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         ppeHead.setModifiedBy(loginUser.getUserId());
                         ppeHead.setModifiedOn(new Date());
 
-                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
+                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
                         if (bomLine != null) {
                             ppeLine.setBomLine(bomLine);
                             ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
