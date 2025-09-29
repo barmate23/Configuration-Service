@@ -17,4 +17,6 @@ public interface PPEHeadRepository extends JpaRepository<PPEHead,Integer> {
     Optional<PPEHead> findByIsDeletedAndSubOrganizationIdAndPlanOrderId(boolean b, Integer subOrgId, String planId);
 
     Optional<PPEHead> findByIsDeletedAndStartDateAndStartTimeAndProductionShop(boolean b, Date startDate, Date startTimeDate, String productionShop);
+
+    Optional<PPEHead> findByIsDeletedAndStartDateAndStartTimeAndAssemblyLineId(boolean b, Date startDate, Date startTimeDate, Integer id);
 }
