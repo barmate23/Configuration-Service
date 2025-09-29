@@ -1,8 +1,5 @@
 package com.stockmanagementsystem.utils;
 
-import com.stockmanagementsystem.response.ValidationResultResponse;
-import org.apache.catalina.authenticator.SavedRequest;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServiceConstants {
@@ -753,7 +750,7 @@ public class ServiceConstants {
     //Added Constants For PPE Plan Upload Excel
     public static final String PPE_PLAN_ID="Plan/Order ID";
     public static final String PPE_ID="PpeId";
-    public static final String SAP_ID="SAP ID";
+    public static final String ERP_ID ="ERP ID";
     public static final String BOM_ID="BOM Code";
     public static final String PRODUCT_NAME="Product Name";
     public static final String BRAND="Brand";
@@ -763,14 +760,14 @@ public class ServiceConstants {
     public static final String UOM1="UoM";
     public static final String PLAN_QUANTITY="Plan Quantity";
     public static final String PRODUCTION_SHOP="Production Shop";
-    public static final String SHOP_ID="Shop ID";
+    public static final String SHOP_ID="Shop Code";
     public static final String LINE="Line";
-    public static final String LINE_ID="Line ID";
+    public static final String LINE_ID="Line Code";
     public static final String START_DATE="Start Date";
     public static final String START_TIME="Start Time";
     public static final String END_DATE="End Date";
     public static final String END_TIME="End Time";
-    public static final String ITEM_CODE_PPE="Item ID";
+    public static final String ITEM_CODE_PPE="Item Code";
     public static final String ITEM_NAME_PPE="Item Name";
     public static final String ITEM_TYPE="Item Type";
     public static final String ITEM_CLASS_PPE="Item Class";
