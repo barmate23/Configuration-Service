@@ -2550,10 +2550,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             List<String> headerNames = new ArrayList<>();
             Integer count = 0;
 
-            List<String> expectedColumns = Arrays.asList(PPE_PLAN_ID, SAP_ID, BOM_ID, PRODUCT_NAME,
+            List<String> expectedColumns = Arrays.asList(PPE_PLAN_ID, ERP_ID, BOM_ID, PRODUCT_NAME,
                     BRAND, MODEL, VARIANT, COLOR, UOM1, PLAN_QUANTITY, PRODUCTION_SHOP, SHOP_ID, LINE,
                     LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME, ITEM_CODE_PPE, ITEM_NAME_PPE,
-                    ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE, UOM2, REQUIRED_QUANTITY, STORE_PPE
+                    ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE, UOM2, STORE_PPE
             );
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
@@ -2620,7 +2620,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String itemClass = getCellStringValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
                         String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
                         String uom2 = getCellStringValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
-                        Integer requiredQuantity = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
+
                         String store = getCellStringValue(data, ServiceConstants.CELL_INDEX_25, resultResponses, type, headerNames);
 
                         //setting the values to ppehead
@@ -2644,7 +2644,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (!StringUtils.isEmpty(sapId)) {
                             ppeHead.setSapId(sapId);
                         } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SAP_ID, " SAPID CANNOT BE NULL "));
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ID, " SAPID CANNOT BE NULL "));
                         }
 
                         if (!StringUtils.isEmpty(bomCode)) {
@@ -2814,7 +2814,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (ppeLines.size() > 0) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BOM_ID, " This Item Is Already Exist In This Plan "));
                         } else {
-                            Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemId);
+                            Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemId);
                             if (itemOption.isPresent()) {
                                 ppeLine.setItem(itemOption.get());
 //                                ppeLine.setEta(itemOption.get().getLeadTime());
@@ -2826,7 +2826,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
                         ppeLine.setOrganizationId(loginUser.getOrgId());
                         ppeLine.setSubOrganizationId(loginUser.getSubOrgId());
-                        ppeLine.setRequiredQuantity(requiredQuantity);
+                        ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
                         ppeLine.setRequiredBy(new Date());
                         ppeLine.setIsDeleted(false);
                         ppeLine.setCreatedBy(loginUser.getUserId());
