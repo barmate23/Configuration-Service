@@ -100,7 +100,6 @@ public class ReasonController {
         return reasonService.getAllReasonsWithoutPagination();
     }
 
-
     @GetMapping(APIConstants.GET_REASON_BY_CATEGORY)
     public BaseResponse<ReasonCategoryMaster> getAllCategory() {
 
