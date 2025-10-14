@@ -22,6 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -2728,7 +2731,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                 Instant startDateTimeUTC = startDate.toInstant()
                                         .atZone(ZoneId.systemDefault())  // Convert to system zone first
                                         .toLocalDate()                   // Extract date part
-                                        .atTime(starTime.toLocalTime())  // Combine with time part
+                                        .atTime(LocalTime.ofSecondOfDay(starTime.getTime()))  // Combine with time part
                                         .atZone(ZoneId.systemDefault())  // Convert back to ZonedDateTime
                                         .withZoneSameInstant(ZoneId.of("UTC")) // Convert to UTC
                                         .toInstant();
