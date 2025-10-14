@@ -23,7 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -2723,47 +2722,18 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LINE_ID, " Line Id CANNOT BE NULL "));
                         }
                         if (startDate != null) {
-                            if (starTime != null) {
-                                // Convert startDate and startTime to Instant in UTC
-                                Instant currentUTC = Instant.now();
-
-                                // Combine startDate (date) and starTime (time) into a LocalDateTime
-                                Instant startDateTimeUTC = startDate.toInstant()
-                                        .atZone(ZoneId.systemDefault())  // Convert to system zone first
-                                        .toLocalDate()                   // Extract date part
-                                        .atTime(LocalTime.ofSecondOfDay(starTime.getTime()))  // Combine with time part
-                                        .atZone(ZoneId.systemDefault())  // Convert back to ZonedDateTime
-                                        .withZoneSameInstant(ZoneId.of("UTC")) // Convert to UTC
-                                        .toInstant();
-
-                                if (startDateTimeUTC.isAfter(currentUTC)) {
-                                    ppeHead.setStartDate(startDate);
-                                    ppeHead.setStartTime(starTime);
-                                } else {
-                                    resultResponses.add(new ValidationResultResponse(
-                                            type,
-                                            (data.getRowNum() + 1),
-                                            ServiceConstants.START_DATE,
-                                            "PLAN START DATE & TIME MUST BE A FUTURE DATE & TIME "
-                                    ));
-                                }
+                            Date currentDate = new Date();
+                            if (startDate.after(currentDate)) {
+                                ppeHead.setStartDate(startDate);
                             } else {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        ServiceConstants.START_TIME,
-                                        "START TIME CANNOT BE NULL"
-                                ));
+                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"));
                             }
                         } else {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    ServiceConstants.START_DATE,
-                                    "START DATE CANNOT BE NULL"
-                            ));
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
                         }
-
+                        if (starTime != null) {
+                            ppeHead.setStartTime(starTime);
+                        }
                         if (endDate != null) {
                             ppeHead.setEndDate(endDate);
                         }
