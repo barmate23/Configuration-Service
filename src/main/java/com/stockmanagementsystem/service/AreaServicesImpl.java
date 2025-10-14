@@ -86,81 +86,93 @@ public class AreaServicesImpl implements AreaServices {
     @Override
     public BaseResponse<Area> updateAreaById(Integer areaId, Integer storeId, String erpAreaId, String areaName) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),"UPDATE AREA BY ID METHOD START");
+        log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}",
+                loginUser.getLogId(), loginUser.getUserId(), "UPDATE AREA BY ID METHOD START");
+
         BaseResponse<Area> baseResponse = new BaseResponse<>();
         try {
-            Area area = areaRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),areaId);
-            List<Area> areaList = areaRepository.findByIsDeletedAndSubOrganizationIdAndStoreId(false, loginUser.getSubOrgId(), storeId);
-            if(area.getAreaName()!=null && !area.getAreaName().equalsIgnoreCase(areaName)) {
-                // Fetch the area list for the specified store and sub-organization
-                // Check if an area with the same name already exists
-                boolean areaExists = areaList.stream()
-                        .anyMatch(a -> a.getAreaName() != null && a.getAreaName().equalsIgnoreCase(areaName));
-
-                if (!areaExists) {
-                    // If the area doesn't exist, update the area name
-                    area.setAreaName(areaName);
-                } else {
-                    // If the area exists, return an error response
-                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10008E);
-                    baseResponse.setCode(responseMessage.getCode());
-                    baseResponse.setStatus(responseMessage.getStatus());
-                    baseResponse.setMessage(responseMessage.getMessage());
-                    baseResponse.setData(new ArrayList<>());
-                    baseResponse.setLogId(loginUser.getLogId());
-
-                    log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}",
-                            loginUser.getLogId(), loginUser.getUserId(), responseMessage.getMessage());
-
-                    return baseResponse;
-                }
-            }else {
-                area.setAreaName(areaName);
-            }
-
-            if(!areaList.stream().anyMatch(a->a.getErpAreaId()!=null && a.getErpAreaId().equalsIgnoreCase(erpAreaId))){
-                area.setErpAreaId(erpAreaId);
-            }else{
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10009E);
+            Area area = areaRepository.findByIsDeletedAndSubOrganizationIdAndId(false, loginUser.getSubOrgId(), areaId);
+            if (area == null) {
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10010E); // Area not found
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
                 baseResponse.setData(new ArrayList<>());
                 baseResponse.setLogId(loginUser.getLogId());
-                log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
                 return baseResponse;
             }
+
+            // Fetch all areas of this store
+            List<Area> areaList = areaRepository.findByIsDeletedAndSubOrganizationIdAndStoreId(false, loginUser.getSubOrgId(), storeId);
+
+            // Remove the current area from the duplicate check list
+            areaList.removeIf(a -> a.getId().equals(areaId));
+
+            // 🔹 Check if area name already exists
+            boolean areaExists = areaList.stream()
+                    .anyMatch(a -> a.getAreaName() != null && a.getAreaName().equalsIgnoreCase(areaName));
+
+            if (areaExists) {
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10008E); // Duplicate name error
+                baseResponse.setCode(responseMessage.getCode());
+                baseResponse.setStatus(responseMessage.getStatus());
+                baseResponse.setMessage(responseMessage.getMessage());
+                baseResponse.setData(new ArrayList<>());
+                baseResponse.setLogId(loginUser.getLogId());
+                log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}",
+                        loginUser.getLogId(), loginUser.getUserId(), responseMessage.getMessage());
+                return baseResponse;
+            }
+
+            // 🔹 Check if ERP Area ID already exists
+            boolean erpIdExists = areaList.stream()
+                    .anyMatch(a -> a.getErpAreaId() != null && a.getErpAreaId().equalsIgnoreCase(erpAreaId));
+
+            if (erpIdExists) {
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10009E); // Duplicate ERP ID error
+                baseResponse.setCode(responseMessage.getCode());
+                baseResponse.setStatus(responseMessage.getStatus());
+                baseResponse.setMessage(responseMessage.getMessage());
+                baseResponse.setData(new ArrayList<>());
+                baseResponse.setLogId(loginUser.getLogId());
+                log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}",
+                        loginUser.getLogId(), loginUser.getUserId(), responseMessage.getMessage());
+                return baseResponse;
+            }
+
+            // ✅ Update area details
+            area.setAreaName(areaName);
+            area.setErpAreaId(erpAreaId);
             area.setSubOrganizationId(loginUser.getSubOrgId());
             area.setOrganizationId(loginUser.getOrgId());
-            area.setCreatedOn(new Date());
-            area.setCreatedBy(loginUser.getUserId());
-            area.setIsDeleted(false);
             area.setModifiedBy(loginUser.getUserId());
             area.setModifiedOn(new Date());
             areaRepository.save(area);
-            List<Area> areas = new ArrayList<>();
-            areas.add(area);
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10012S);
+            List<Area> updatedAreaList = Collections.singletonList(area);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10012S); // Success
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
-            baseResponse.setData(areas);
+            baseResponse.setData(updatedAreaList);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+
+            log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}",
+                    loginUser.getLogId(), loginUser.getUserId(), responseMessage.getMessage());
         } catch (Exception ex) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10012F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10012F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
-            long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),ex);
+            log.error("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}",
+                    loginUser.getLogId(), loginUser.getUserId(), responseMessage.getMessage(), ex);
         }
-        long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," UPDATE AREA BY ID METHOD EXECUTED TIME :" + (endTime - startTime));
-        return baseResponse;
 
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - AreaServicesImpl - updateAreaById - UserId:{} - {}",
+                loginUser.getLogId(), loginUser.getUserId(), "UPDATE AREA BY ID METHOD EXECUTED TIME: " + (endTime - startTime));
+        return baseResponse;
     }
 
     @Override

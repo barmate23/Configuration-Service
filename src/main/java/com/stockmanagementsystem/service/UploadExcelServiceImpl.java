@@ -1211,15 +1211,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     }
                     if (supplierTanNumber == null || supplierTanNumber.isEmpty()) {
 //                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.TAN_MANDATORY_ERROR_MESSAGE));
-                    }
-                    else if (!validateRegex(supplierTanNumber, ServiceConstants.SUPPLIER_TAN_REGEX)) {
+                    } else if (!validateRegex(supplierTanNumber, ServiceConstants.SUPPLIER_TAN_REGEX)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.INVALID_SUPPLIER_TAN_FORMAT));
                     }
                     if (tanSet.contains(supplierTanNumber)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.DUPLICATE_TAN_ERROR_MESSAGE));
                     } else {
-                        if(supplierTanNumber!=null)
-                        tanSet.add(supplierTanNumber);
+                        if (supplierTanNumber != null)
+                            tanSet.add(supplierTanNumber);
                     }
                     supplier.setSupplierTANNumber(supplierTanNumber);
 
@@ -2319,12 +2318,11 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
 
                         Optional<Stage> stageOptional = stageRepository.findByStageCodeAndAssemblyLineId(stage, assemblyLine1.getId());
-                        if(stageOptional.isEmpty()) {
+                        if (stageOptional.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), headerNames.get(ServiceConstants.CELL_INDEX_6), "The Stage does not exist or is not linked to the given Assembly Line."));
                         } else {
                             bomLine.setStage(stageOptional.get().getStageCode());
                         }
-
                         bomLine.setLevel(level);
                         Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemCode);
                         if (itemOption.isPresent()) {
@@ -2721,21 +2719,46 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LINE_ID, " Line Id CANNOT BE NULL "));
                         }
-
                         if (startDate != null) {
-                            Date currentDate = new Date();
-                            if (startDate.after(currentDate)) {
-                                ppeHead.setStartDate(startDate);
+                            if (starTime != null) {
+                                // Convert startDate and startTime to Instant in UTC
+                                Instant currentUTC = Instant.now();
+
+                                // Combine startDate (date) and starTime (time) into a LocalDateTime
+                                Instant startDateTimeUTC = startDate.toInstant()
+                                        .atZone(ZoneId.systemDefault())  // Convert to system zone first
+                                        .toLocalDate()                   // Extract date part
+                                        .atTime(starTime.toLocalTime())  // Combine with time part
+                                        .atZone(ZoneId.systemDefault())  // Convert back to ZonedDateTime
+                                        .withZoneSameInstant(ZoneId.of("UTC")) // Convert to UTC
+                                        .toInstant();
+
+                                if (startDateTimeUTC.isAfter(currentUTC)) {
+                                    ppeHead.setStartDate(startDate);
+                                    ppeHead.setStartTime(starTime);
+                                } else {
+                                    resultResponses.add(new ValidationResultResponse(
+                                            type,
+                                            (data.getRowNum() + 1),
+                                            ServiceConstants.START_DATE,
+                                            "PLAN START DATE & TIME MUST BE A FUTURE DATE & TIME "
+                                    ));
+                                }
                             } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_TIME,
+                                        "START TIME CANNOT BE NULL"
                                 ));
                             }
                         } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
-                        }
-
-                        if (starTime != null) {
-                            ppeHead.setStartTime(starTime);
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    ServiceConstants.START_DATE,
+                                    "START DATE CANNOT BE NULL"
+                            ));
                         }
 
                         if (endDate != null) {
@@ -3123,7 +3146,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     }
 
     @Override
-    public ResponseEntity<BaseResponse> uploadUserListDetails(MultipartFile file, String type)  {
+    public ResponseEntity<BaseResponse> uploadUserListDetails(MultipartFile file, String type) {
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - UploadExcelServiceImpl - uploadUserListDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ServiceConstants.SPACE + "UPLOAD_USER_LIST_METHOD_STARTED");
 
@@ -3180,6 +3203,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     userList.setFirstName(firstName);
                     userList.setLastName(lastName);
                     userList.setEmailId(email);
+                    userList.setUserId(email);
                     userList.setMobileNo(mobile);
                     userList.setDateOfBirth(dateOfBirth);
                     userList.setDesignation(designation);
@@ -3192,7 +3216,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     userList.setEndDate(endDate);
                     userList.setIsDeleted(false);
                     userList.setOrganization(organizationRepository.findByIsDeletedAndId(false, loginUser.getOrgId()));
-                    userList.setSubOrganization(organizationRepository.findByIsDeletedAndId(false,loginUser.getSubOrgId()));
+                    userList.setSubOrganization(organizationRepository.findByIsDeletedAndId(false, loginUser.getSubOrgId()));
                     userList.setCreatedBy(loginUser.getUserId());
                     userList.setCreatedOn(new Date());
                     userList.setModifiedOn(new Date());
