@@ -22,8 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -2736,23 +2735,27 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 //                        }
 
                         if (startDate != null && starTime != null) {
-                            // Combine startDate and startTime into one Date object
-                            Calendar startCalendar = Calendar.getInstance();
-                            startCalendar.setTime(startDate);
+                            // Convert startDate and startTime to ZonedDateTime in UTC
+                            ZoneId utcZone = ZoneId.of("UTC");
 
-                            Calendar timeCalendar = Calendar.getInstance();
-                            timeCalendar.setTime(starTime);
+                            // Convert startDate to LocalDate in UTC
+                            Instant startDateInstant = startDate.toInstant();
+                            LocalDate startLocalDate = startDateInstant.atZone(utcZone).toLocalDate();
 
-                            // Set hours, minutes, seconds from starTime into startDate
-                            startCalendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
-                            startCalendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
-                            startCalendar.set(Calendar.SECOND, timeCalendar.get(Calendar.SECOND));
-                            startCalendar.set(Calendar.MILLISECOND, 0);
+                            // Convert starTime to LocalTime in UTC
+                            Instant startTimeInstant = starTime.toInstant();
+                            LocalTime startLocalTime = startTimeInstant.atZone(utcZone).toLocalTime();
 
-                            Date planStartDateTime = startCalendar.getTime();
-                            Date currentDateTime = new Date();
+                            // Combine LocalDate and LocalTime
+                            LocalDateTime planStartDateTime = LocalDateTime.of(startLocalDate, startLocalTime);
+                            ZonedDateTime planStartUTC = planStartDateTime.atZone(utcZone);
 
-                            if (planStartDateTime.after(currentDateTime)) {
+                            // Current UTC time
+                            ZonedDateTime currentUTC = ZonedDateTime.now(utcZone);
+
+                            // Compare
+                            if (planStartUTC.isAfter(currentUTC)) {
+                                // Valid: set original values
                                 ppeHead.setStartDate(startDate);
                                 ppeHead.setStartTime(starTime);
                             } else {
@@ -2760,7 +2763,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                         type,
                                         (data.getRowNum() + 1),
                                         ServiceConstants.START_DATE,
-                                        "PLAN START DATE & TIME MUST BE IN THE FUTURE"
+                                        "PLAN START DATE & TIME MUST BE IN THE FUTURE (UTC)"
                                 ));
                             }
 
