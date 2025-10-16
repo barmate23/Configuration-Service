@@ -2721,19 +2721,68 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LINE_ID, " Line Id CANNOT BE NULL "));
                         }
-                        if (startDate != null) {
-                            Date currentDate = new Date();
-                            if (startDate.after(currentDate)) {
+//                        if (startDate != null) {
+//                            Date currentDate = new Date();
+//                            if (startDate.after(currentDate)) {
+//                                ppeHead.setStartDate(startDate);
+//                            } else {
+//                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"));
+//                            }
+//                        } else {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
+//                        }
+//                        if (starTime != null) {
+//                            ppeHead.setStartTime(starTime);
+//                        }
+
+                        if (startDate != null && starTime != null) {
+                            // Combine startDate and startTime into one Date object
+                            Calendar startCalendar = Calendar.getInstance();
+                            startCalendar.setTime(startDate);
+
+                            Calendar timeCalendar = Calendar.getInstance();
+                            timeCalendar.setTime(starTime);
+
+                            // Set hours, minutes, seconds from starTime into startDate
+                            startCalendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
+                            startCalendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
+                            startCalendar.set(Calendar.SECOND, timeCalendar.get(Calendar.SECOND));
+                            startCalendar.set(Calendar.MILLISECOND, 0);
+
+                            Date planStartDateTime = startCalendar.getTime();
+                            Date currentDateTime = new Date();
+
+                            if (planStartDateTime.after(currentDateTime)) {
                                 ppeHead.setStartDate(startDate);
+                                ppeHead.setStartTime(starTime);
                             } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"));
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_DATE,
+                                        "PLAN START DATE & TIME MUST BE IN THE FUTURE"
+                                ));
                             }
+
                         } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
+                            if (startDate == null) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_DATE,
+                                        "START DATE CANNOT BE NULL"
+                                ));
+                            }
+                            if (starTime == null) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_TIME,
+                                        "START TIME CANNOT BE NULL"
+                                ));
+                            }
                         }
-                        if (starTime != null) {
-                            ppeHead.setStartTime(starTime);
-                        }
+
                         if (endDate != null) {
                             ppeHead.setEndDate(endDate);
                         }
