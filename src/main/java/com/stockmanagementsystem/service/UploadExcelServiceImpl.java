@@ -2863,6 +2863,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemId);
                             if (itemOption.isPresent()) {
                                 ppeLine.setItem(itemOption.get());
+                                List<Location> locationList =  locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemOption.get().getId());
+                                ppeLine.setStore(locationList.get(0).getZone().getArea().getStore().getStoreName());
 //                                ppeLine.setEta(itemOption.get().getLeadTime());
 
                             } else {
