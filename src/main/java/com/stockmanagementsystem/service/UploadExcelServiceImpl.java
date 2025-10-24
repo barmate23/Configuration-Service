@@ -22,8 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -2721,19 +2720,72 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LINE_ID, " Line Id CANNOT BE NULL "));
                         }
-                        if (startDate != null) {
-                            Date currentDate = new Date();
-                            if (startDate.after(currentDate)) {
+//                        if (startDate != null) {
+//                            Date currentDate = new Date();
+//                            if (startDate.after(currentDate)) {
+//                                ppeHead.setStartDate(startDate);
+//                            } else {
+//                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"));
+//                            }
+//                        } else {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
+//                        }
+//                        if (starTime != null) {
+//                            ppeHead.setStartTime(starTime);
+//                        }
+
+                        if (startDate != null && starTime != null) {
+                            // Convert startDate and startTime to ZonedDateTime in UTC
+                            ZoneId utcZone = ZoneId.of("UTC");
+
+                            // Convert startDate to LocalDate in UTC
+                            Instant startDateInstant = startDate.toInstant();
+                            LocalDate startLocalDate = startDateInstant.atZone(utcZone).toLocalDate();
+
+                            // Convert starTime to LocalTime in UTC
+                            Instant startTimeInstant = starTime.toInstant();
+                            LocalTime startLocalTime = startTimeInstant.atZone(utcZone).toLocalTime();
+
+                            // Combine LocalDate and LocalTime
+                            LocalDateTime planStartDateTime = LocalDateTime.of(startLocalDate, startLocalTime);
+                            ZonedDateTime planStartUTC = planStartDateTime.atZone(utcZone);
+
+                            // Current UTC time
+                            ZonedDateTime currentUTC = ZonedDateTime.now(utcZone);
+
+                            // Compare
+                            if (planStartUTC.isAfter(currentUTC)) {
+                                // Valid: set original values
                                 ppeHead.setStartDate(startDate);
+                                ppeHead.setStartTime(starTime);
                             } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"));
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_DATE,
+                                        "PLAN START DATE & TIME MUST BE IN THE FUTURE "
+                                ));
                             }
+
                         } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
+                            if (startDate == null) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_DATE,
+                                        "START DATE CANNOT BE NULL"
+                                ));
+                            }
+                            if (starTime == null) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_TIME,
+                                        "START TIME CANNOT BE NULL"
+                                ));
+                            }
                         }
-                        if (starTime != null) {
-                            ppeHead.setStartTime(starTime);
-                        }
+
                         if (endDate != null) {
                             ppeHead.setEndDate(endDate);
                         }
@@ -2811,6 +2863,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemId);
                             if (itemOption.isPresent()) {
                                 ppeLine.setItem(itemOption.get());
+                                List<Location> locationList =  locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemOption.get().getId());
+                                ppeLine.setStore(locationList.get(0).getZone().getArea().getStore().getStoreName());
 //                                ppeLine.setEta(itemOption.get().getLeadTime());
 
                             } else {
