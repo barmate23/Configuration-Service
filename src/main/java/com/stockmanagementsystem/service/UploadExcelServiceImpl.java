@@ -2763,7 +2763,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                         type,
                                         (data.getRowNum() + 1),
                                         ServiceConstants.START_DATE,
-                                        "PLAN START DATE & TIME MUST BE IN THE FUTURE (UTC)"
+                                        "PLAN START DATE & TIME MUST BE IN THE FUTURE "
                                 ));
                             }
 
