@@ -2630,7 +2630,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_ID, " PPEID CANNOT BE NULL "));
                         }
 
-
                         if (!StringUtils.isEmpty(planId)) {
                             ppeHead.setPlanOrderId(planId);
                         } else {
@@ -2794,7 +2793,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             ppeHead.setEndTime(endTime);
                         }
 
-                        PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "CREATED");
+                        PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
                         ppeHead.setPpeStatus(status);
 
 
