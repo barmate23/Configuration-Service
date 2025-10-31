@@ -85,10 +85,10 @@ public class PurchaseOrderLine {
     private PurchaseStatus status;
 
     @Column(name = "RemainingQuantity")
-    private Integer remainingQuantity;
+    private Float remainingQuantity;
 
     @Column(name = "RemainingAmount")
-    private Integer remainingAmount;
+    private Float remainingAmount;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted;
