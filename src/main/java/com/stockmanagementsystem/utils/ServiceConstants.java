@@ -258,6 +258,7 @@ public class ServiceConstants {
 
 
     public static final String QC_REQUIRED = "QC Required(Yes/No)";
+    public static final String INSPECTION = "Inspection";
     public static final String ERP_ITEM_ID="ERP Item ID";
     public static final String ITEM_CLASS = "ItemClass";
     public static final String ITEM_GROUP = "Item Group";
@@ -1048,5 +1049,6 @@ public class ServiceConstants {
     protected static final String DIRECT_INDIRECT_INVALID = "Please enter a value between Direct or Indirect";
     protected static final String SERIAL_BATCH_INVALID = "Please enter a value between Serial, Batch or None";
     protected static final String QC_REQUIRE_MANDATORY = "Qc Required is Mandatory ";
+    protected static final String INSPECTION_REQUIRE_MANDATORY = "Inspection Required is Mandatory ";
     protected static final String USER_LIST_DATA_UPLOAD_FAILED = "Failed to upload user list data";
 }
