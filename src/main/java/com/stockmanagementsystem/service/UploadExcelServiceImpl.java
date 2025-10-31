@@ -1955,6 +1955,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     }
 
                     purchaseOrderLine.setPurchaseOrderQuantity(purchaseOrderQuantity);
+                    purchaseOrderLine.setRemainingQuantity(purchaseOrderQuantity);
 
                     if (subTotal == null || subTotal <= 0) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_TOTAL, ServiceConstants.SUB_TOTAL_MANDATORY));
@@ -1962,6 +1963,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_TOTAL, ServiceConstants.SUBTOTAL_MUST_EQUAL_UNIT_PRICE_MULTIPLIED_BY_PURCHASE_ORDER_QUANTITY));
                     }
                     purchaseOrderLine.setSubTotalRs(subTotal);
+                    purchaseOrderLine.setRemainingAmount(subTotal);
                     if (stateGstPercent != null && stateGstPercent != 0) {
                         if (interStateGstPercent != null && interStateGstPercent != 0) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.INTERSTATE_GST_PERCENTAGE, "IF YOU ARE SELECT STATE GST SO CAN NOT SELECT INTER STATE GST"));
