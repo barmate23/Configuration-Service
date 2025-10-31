@@ -88,15 +88,14 @@ public class Item {
     @Column(name = "CriticalLevel")
     private Integer criticalLevel;
 
-
-
     @Column(name = "alternativeItem")
     private Boolean alternativeItem;
 
     @Column(name = "qcRequired")
     private Boolean qcRequired;
 
-
+    @Column(name = "inspection")
+    private Boolean inspection;
 
     @ManyToOne
     @JoinColumn(name = "DockID")

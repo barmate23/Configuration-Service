@@ -183,7 +183,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ITEM_GROUP,
                     ITEM_CATEGORY,
                     ITEM_SUB_CATEGORY,
-                    TYPE, TYPE_SERIAL, QC_REQUIRED, ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, CODE, TYPES,
+                    TYPE, TYPE_SERIAL, QC_REQUIRED,INSPECTION ,ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, CODE, TYPES,
                     DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, ITEM_QTY, MINIMUM_ORDER_QTY,
                     OPTIMUM_LEVEL, REORDER_LEVEL, SAFETY_LEVEL, CRITICAL_LEVEL, DOCK, DOCKS_NAME
             ));
@@ -229,6 +229,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String typeDirectIndirect = getCellStringValue(data, ServiceConstants.CELL_INDEX_6, resultResponses, type, headerNames);
                         String typeSerialBatch = getCellStringValue(data, ServiceConstants.CELL_INDEX_7, resultResponses, type, headerNames);
                         String isQCRequired = getCellStringValue(data, ServiceConstants.CELL_INDEX_8, resultResponses, type, headerNames);
+                        String inspection = getCellStringValue(data, ServiceConstants.CELL_INDEX_8, resultResponses, type, headerNames);
                         String issueType = getCellStringValue(data, ServiceConstants.CELL_INDEX_9, resultResponses, type, headerNames);
                         String classABC = getCellStringValue(data, ServiceConstants.CELL_INDEX_10, resultResponses, type, headerNames);
                         String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_11, resultResponses, type, headerNames);
@@ -354,6 +355,18 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             }
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.QC_REQUIRED, ServiceConstants.QC_REQUIRE_MANDATORY));
+                        }
+
+                        if (inspection != null) {
+                            if (inspection.equalsIgnoreCase("Yes")) {
+                                item.setInspection(true);
+                            } else if (inspection.equalsIgnoreCase("No")) {
+                                item.setInspection(false);
+                            } else {
+                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.INSPECTION, ServiceConstants.YES_NO));
+                            }
+                        } else {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.INSPECTION, ServiceConstants.INSPECTION_REQUIRE_MANDATORY));
                         }
 
 
