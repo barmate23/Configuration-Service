@@ -47,6 +47,12 @@ public class AcceptedRejectedContainerBarcode {
     @Column(name = "crrContainerCode")
     private String crrContainerCode;
 
+    @Column(name = "containerCode")
+    private String containerCode;
+
+    @Column(name = "containerType")
+    private String containerType;
+
     @Column(name = "isAccepted")
     private Boolean isAccepted;
     @JsonIgnore

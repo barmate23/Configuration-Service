@@ -280,6 +280,7 @@ public class ServiceConstants {
     public static final String ZONEC = "ZONEC";
     public static final String USRLST = "USRLST";
     public static final String USERLIST = "userList";
+    public static final String PACKINGLIST = "PackingList";
 
     protected static final String ERP_SUPPLIER_ID = "ERP Supplier Code";
     public static final String SUPPLIER_NAME = "Supplier Name";
@@ -1048,4 +1049,7 @@ public class ServiceConstants {
     protected static final String QC_REQUIRE_MANDATORY = "Qc Required is Mandatory ";
     protected static final String INSPECTION_REQUIRE_MANDATORY = "Inspection Required is Mandatory ";
     protected static final String USER_LIST_DATA_UPLOAD_FAILED = "Failed to upload user list data";
+    protected static final String FILE_UPLOAD_FAILED = "File upload failed";
+    protected static final int PACKING_LIST_COLUMN_HEADER_ROW_INDEX = 12;
+    protected static final int PACKING_LIST_HEADER_ROW_INDEX = 11;
 }
