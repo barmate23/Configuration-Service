@@ -27,7 +27,7 @@ public class AcceptedRejectedItem {
 
     @ManyToOne
     @JoinColumn(name = "serialBatchNumberId", referencedColumnName = "id")
-    private SerialBatchNumbers serialBatchNumbers;
+    private SerialBatchNumber serialBatchNumbers;
 
     @ManyToOne
     @JoinColumn(name = "reason", referencedColumnName = "id")

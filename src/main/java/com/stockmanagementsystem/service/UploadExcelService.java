@@ -49,7 +49,7 @@ public interface UploadExcelService {
 
     ResponseEntity<BaseResponse> uploadUserListDetails(MultipartFile file, String type);
 
-    ResponseEntity<BaseResponse> uploadPackingList(MultipartFile file, String type,Integer requestId,String requestType);
+    ResponseEntity<BaseResponse> uploadPackingList(MultipartFile file, String type,Integer requestId,String requestType,Boolean isFinalUpload);
 
 //    ResponseEntity<BaseResponse> uploadPurchaseOrders(MultipartFile file, String type) throw,s IOException;
 }
