@@ -3304,23 +3304,204 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         }
     }
 
+//    @Override
+//    public ResponseEntity<BaseResponse> uploadPackingList(MultipartFile file, String type, Integer requestId, String requestType,Boolean isFinalUpload) {
+//        long startTime = System.currentTimeMillis();
+//        log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
+//                loginUser.getLogId(), loginUser.getUserId(), "UPLOAD_PACKING_LIST_METHOD_STARTED");
+//
+//        String logId = loginUser.getLogId();
+//        try {
+//            Workbook workbook = WorkbookFactory.create(file.getInputStream());
+//            Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
+//
+//            List<AcceptedRejectedContainerBarcode> containerBarcodeList = new ArrayList<>();
+//            List<SerialBatchNumber> serialBatchNumberList = new ArrayList<>();
+//            List<ValidationResultResponse> resultResponses = new ArrayList<>();
+//
+//            List<String> headerNames = new ArrayList<>();
+//            Integer count = 0;
+//            boolean hasDataRows = false;
+//
+//            Row headerRow = sheet.getRow(ServiceConstants.PACKING_LIST_HEADER_ROW_INDEX);
+//            if (headerRow == null) {
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Excel file missing header row", null, ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
+//                Cell headerCell = headerRow.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+//                if (headerCell != null) {
+//                    headerNames.add(headerCell.getStringCellValue());
+//                }
+//            }
+//
+//            // ---- Read rows ----
+//            List<Map<String, String>> packingRows = new ArrayList<>();
+//            for (Row row : sheet) {
+//                if (row.getRowNum() <= ServiceConstants.PACKING_LIST_COLUMN_HEADER_ROW_INDEX) continue;
+//
+//                int emptyCellCount = 0;
+//                for (int i = 0; i < row.getLastCellNum() - 1; i++) {
+//                    if (row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null)
+//                        emptyCellCount++;
+//                }
+//
+//                if (emptyCellCount == row.getLastCellNum()) continue; // skip empty rows
+//                hasDataRows = true;
+//
+//                String itemCode = getCellStringValue(row, 1, resultResponses, type, headerNames);
+//                String itemName = getCellStringValue(row, 2, resultResponses, type, headerNames);
+//                String uom = getCellStringValue(row, 3, resultResponses, type, headerNames);
+//                String serialBatchNumber = getCellStringValue(row, 4, resultResponses, type, headerNames);
+//                String containerCode = getCellStringValue(row, 5, resultResponses, type, headerNames);
+//                String containerType = getCellStringValue(row, 6, resultResponses, type, headerNames);
+//
+//                Map<String, String> dataMap = new HashMap<>();
+//                dataMap.put("itemCode", itemCode);
+//                dataMap.put("itemName", itemName);
+//                dataMap.put("uom", uom);
+//                dataMap.put("serialBatchNumber", serialBatchNumber);
+//                dataMap.put("containerCode", containerCode);
+//                dataMap.put("containerType", containerType);
+//                packingRows.add(dataMap);
+//                count++;
+//            }
+//
+//            if (!hasDataRows) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Excel file contains header only, no data rows found", null,
+//                        ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            // ---- Validate duplicate serial numbers in uploaded file ----
+//            List<String> serialNumbers = packingRows.stream()
+//                    .map(m -> m.get("serialBatchNumber"))
+//                    .filter(Objects::nonNull)
+//                    .map(String::trim)
+//                    .filter(s -> !s.isEmpty())
+//                    .collect(Collectors.toList());
+//
+//            Set<String> duplicateSerials = serialNumbers.stream()
+//                    .filter(s -> Collections.frequency(serialNumbers, s) > 1)
+//                    .collect(Collectors.toSet());
+//
+//            if (!duplicateSerials.isEmpty()) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
+//                        null, ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            // ---- Validate duplicate serial numbers already in DB ----
+//            ASNLine asnLine = null;
+//            if (requestType != null && requestType.equalsIgnoreCase("ASN")) {
+//                asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+//            }
+//
+//            if (asnLine == null) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "ASN Line not found for provided requestId/requestType", null,
+//                        ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            List<String> existingSerials = serialBatchNumberRepository
+//                    .findByIsDeletedFalseAndAsnLineId(asnLine.getId())
+//                    .stream()
+//                    .map(SerialBatchNumber::getSerialBatchNumber)
+//                    .collect(Collectors.toList());
+//
+//            List<String> overlap = serialNumbers.stream()
+//                    .filter(existingSerials::contains)
+//                    .collect(Collectors.toList());
+//
+//            if (!overlap.isEmpty()) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Serial Numbers already exist in system: " + String.join(", ", overlap),
+//                        null, ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            // ---- Group by container code ----
+//            Map<String, List<Map<String, String>>> groupedByContainer =
+//                    packingRows.stream()
+//                            .filter(m -> m.get("containerCode") != null && !m.get("containerCode").trim().isEmpty())
+//                            .collect(Collectors.groupingBy(m -> m.get("containerCode")));
+//
+//            Date now = new Date();
+//            Integer orgId = loginUser.getOrgId();
+//            Integer subOrgId = loginUser.getSubOrgId();
+//            Integer userId = loginUser.getUserId();
+//
+//            // ---- Iterate each container group ----
+//            for (Map.Entry<String, List<Map<String, String>>> entry : groupedByContainer.entrySet()) {
+//                String containerCode = entry.getKey();
+//                List<Map<String, String>> serialList = entry.getValue();
+//
+//                AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
+//                barcode.setOrganizationId(orgId);
+//                barcode.setSubOrganizationId(subOrgId);
+//                barcode.setContainerCode(containerCode);
+//                barcode.setContainerType(serialList.get(0).get("containerType"));
+//                barcode.setIsDeleted(false);
+//                barcode.setCreatedBy(userId);
+//                barcode.setCreatedOn(now);
+//                containerBarcodeList.add(barcode);
+//                this.acceptedRejectedContainerBarcodeRepository.save(barcode);
+//
+//                for (Map<String, String> serial : serialList) {
+//                    SerialBatchNumber batch = new SerialBatchNumber();
+//                    batch.setOrganizationId(orgId);
+//                    batch.setSubOrganizationId(subOrgId);
+//                    batch.setSerialBatchNumber(serial.get("serialBatchNumber"));
+//                    batch.setAcceptedRejectedContainerBarcode(barcode);
+//                    batch.setAsnLine(asnLine);
+//                    batch.setIsDeleted(false);
+//                    batch.setCreatedBy(userId);
+//                    batch.setCreatedOn(now);
+//                    serialBatchNumberList.add(batch);
+//                }
+//            }
+//
+//            this.serialBatchNumberRepository.saveAllAndFlush(serialBatchNumberList);
+//
+//            long endTime = System.currentTimeMillis();
+//            log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {} Rows:{} Time:{}ms",
+//                    logId, loginUser.getUserId(), "UPLOAD_PACKING_LIST_EXECUTED", count, (endTime - startTime));
+//
+//            workbook.close();
+//            return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(),
+//                    "Packing List Uploaded Successfully", null, ServiceConstants.SUCCESS_CODE, logId));
+//
+//        } catch (Exception e) {
+//            long endTime = System.currentTimeMillis();
+//            log.error("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
+//                    loginUser.getLogId(), loginUser.getUserId(), "PACKING_LIST_UPLOAD_FAILED", e);
+//            ExceptionLogger.logException(e, logId);
+//            return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                    ServiceConstants.FILE_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
+//        }
+//    }
+
+
     @Override
-    public ResponseEntity<BaseResponse> uploadPackingList(MultipartFile file, String type, Integer requestId, String requestType) {
+    public ResponseEntity<BaseResponse> uploadPackingList(
+            MultipartFile file, String type, Integer requestId,
+            String requestType, Boolean isFinalUpload) {
+
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
                 loginUser.getLogId(), loginUser.getUserId(), "UPLOAD_PACKING_LIST_METHOD_STARTED");
 
         String logId = loginUser.getLogId();
-        try {
-            Workbook workbook = WorkbookFactory.create(file.getInputStream());
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
 
-            List<AcceptedRejectedContainerBarcode> containerBarcodeList = new ArrayList<>();
-            List<SerialBatchNumber> serialBatchNumberList = new ArrayList<>();
             List<ValidationResultResponse> resultResponses = new ArrayList<>();
-
-            List<String> headerNames = new ArrayList<>();
-            Integer count = 0;
+            List<Map<String, String>> packingRows = new ArrayList<>();
             boolean hasDataRows = false;
 
             Row headerRow = sheet.getRow(ServiceConstants.PACKING_LIST_HEADER_ROW_INDEX);
@@ -3329,15 +3510,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         "Excel file missing header row", null, ServiceConstants.ERROR_CODE, logId));
             }
 
-            for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
-                Cell headerCell = headerRow.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-                if (headerCell != null) {
-                    headerNames.add(headerCell.getStringCellValue());
-                }
-            }
-
-            // ---- Read rows ----
-            List<Map<String, String>> packingRows = new ArrayList<>();
+            // ==== Read Data Rows ====
             for (Row row : sheet) {
                 if (row.getRowNum() <= ServiceConstants.PACKING_LIST_COLUMN_HEADER_ROW_INDEX) continue;
 
@@ -3346,36 +3519,51 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null)
                         emptyCellCount++;
                 }
+                if (emptyCellCount == row.getLastCellNum()) continue;
 
-                if (emptyCellCount == row.getLastCellNum()) continue; // skip empty rows
                 hasDataRows = true;
-
-                String itemCode = getCellStringValue(row, 1, resultResponses, type, headerNames);
-                String itemName = getCellStringValue(row, 2, resultResponses, type, headerNames);
-                String uom = getCellStringValue(row, 3, resultResponses, type, headerNames);
-                String serialBatchNumber = getCellStringValue(row, 4, resultResponses, type, headerNames);
-                String containerCode = getCellStringValue(row, 5, resultResponses, type, headerNames);
-                String containerType = getCellStringValue(row, 6, resultResponses, type, headerNames);
-
                 Map<String, String> dataMap = new HashMap<>();
-                dataMap.put("itemCode", itemCode);
-                dataMap.put("itemName", itemName);
-                dataMap.put("uom", uom);
-                dataMap.put("serialBatchNumber", serialBatchNumber);
-                dataMap.put("containerCode", containerCode);
-                dataMap.put("containerType", containerType);
+                dataMap.put("itemCode", getCellStringValue(row, 1, resultResponses, type, null));
+                dataMap.put("itemName", getCellStringValue(row, 2, resultResponses, type, null));
+                dataMap.put("uom", getCellStringValue(row, 3, resultResponses, type, null));
+                dataMap.put("serialBatchNumber", getCellStringValue(row, 4, resultResponses, type, null));
+                dataMap.put("containerCode", getCellStringValue(row, 5, resultResponses, type, null));
+                dataMap.put("containerType", getCellStringValue(row, 6, resultResponses, type, null));
                 packingRows.add(dataMap);
-                count++;
             }
 
             if (!hasDataRows) {
-                workbook.close();
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
                         "Excel file contains header only, no data rows found", null,
                         ServiceConstants.ERROR_CODE, logId));
             }
 
-            // ---- Validate duplicate serial numbers in uploaded file ----
+            // ==== Group by Item Code and Container ====
+            Map<String, Map<String, List<String>>> itemToContainerSerials = new HashMap<>();
+
+            for (Map<String, String> row : packingRows) {
+                String itemCode = row.get("itemCode");
+                String container = row.get("containerCode");
+                String serial = row.get("serialBatchNumber");
+
+                itemToContainerSerials
+                        .computeIfAbsent(itemCode, k -> new HashMap<>())
+                        .computeIfAbsent(container, k -> new ArrayList<>())
+                        .add(serial);
+            }
+
+            // ==== If FINAL upload → Validate and Save ====
+            ASNLine asnLine = null;
+            if ("ASN".equalsIgnoreCase(requestType)) {
+                asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+            }
+            if (asnLine == null) {
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                        "ASN Line not found for provided requestId/requestType", null,
+                        ServiceConstants.ERROR_CODE, logId));
+            }
+
+            // Validate duplicates (same logic as before)
             List<String> serialNumbers = packingRows.stream()
                     .map(m -> m.get("serialBatchNumber"))
                     .filter(Objects::nonNull)
@@ -3386,25 +3574,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Set<String> duplicateSerials = serialNumbers.stream()
                     .filter(s -> Collections.frequency(serialNumbers, s) > 1)
                     .collect(Collectors.toSet());
-
             if (!duplicateSerials.isEmpty()) {
-                workbook.close();
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
                         "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
                         null, ServiceConstants.ERROR_CODE, logId));
-            }
-
-            // ---- Validate duplicate serial numbers already in DB ----
-            ASNLine asnLine = null;
-            if (requestType != null && requestType.equalsIgnoreCase("ASN")) {
-                asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
-            }
-
-            if (asnLine == null) {
-                workbook.close();
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "ASN Line not found for provided requestId/requestType", null,
-                        ServiceConstants.ERROR_CODE, logId));
             }
 
             List<String> existingSerials = serialBatchNumberRepository
@@ -3412,71 +3585,98 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     .stream()
                     .map(SerialBatchNumber::getSerialBatchNumber)
                     .collect(Collectors.toList());
-
             List<String> overlap = serialNumbers.stream()
                     .filter(existingSerials::contains)
                     .collect(Collectors.toList());
-
             if (!overlap.isEmpty()) {
-                workbook.close();
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
                         "Serial Numbers already exist in system: " + String.join(", ", overlap),
                         null, ServiceConstants.ERROR_CODE, logId));
             }
 
-            // ---- Group by container code ----
-            Map<String, List<Map<String, String>>> groupedByContainer =
-                    packingRows.stream()
-                            .filter(m -> m.get("containerCode") != null && !m.get("containerCode").trim().isEmpty())
-                            .collect(Collectors.groupingBy(m -> m.get("containerCode")));
 
+            // ==== If NOT final upload → build summary only ====
+            if (!Boolean.TRUE.equals(isFinalUpload)) {
+                List<PackingSummaryResponse> summaryList = new ArrayList<>();
+
+                for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
+                    String itemCode = itemEntry.getKey();
+                    Map<String, List<String>> containerMap = itemEntry.getValue();
+
+                    // Get first item name (from any row)
+                    String itemName = packingRows.stream()
+                            .filter(r -> r.get("itemCode").equals(itemCode))
+                            .map(r -> r.get("itemName"))
+                            .findFirst().orElse("");
+
+                    List<PackingSummaryResponse.ContainerSummary> containerSummaries =
+                            containerMap.entrySet().stream()
+                                    .map(e -> new PackingSummaryResponse.ContainerSummary(
+                                            e.getKey(), e.getValue()))
+                                    .collect(Collectors.toList());
+
+                    int totalContainers = containerSummaries.size();
+                    int totalQty = containerSummaries.stream()
+                            .mapToInt(c -> c.getSerialNumbers().size())
+                            .sum();
+
+                    summaryList.add(new PackingSummaryResponse(
+                            itemName, itemCode, totalContainers, totalQty, containerSummaries));
+                }
+
+                return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(),
+                        "Packing summary generated successfully (preview mode)",
+                        summaryList, ServiceConstants.SUCCESS_CODE, logId));
+            }
+
+
+            // ==== Save Logic ====
             Date now = new Date();
             Integer orgId = loginUser.getOrgId();
             Integer subOrgId = loginUser.getSubOrgId();
             Integer userId = loginUser.getUserId();
 
-            // ---- Iterate each container group ----
-            for (Map.Entry<String, List<Map<String, String>>> entry : groupedByContainer.entrySet()) {
-                String containerCode = entry.getKey();
-                List<Map<String, String>> serialList = entry.getValue();
+            for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
+                Map<String, List<String>> containerMap = itemEntry.getValue();
 
-                AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
-                barcode.setOrganizationId(orgId);
-                barcode.setSubOrganizationId(subOrgId);
-                barcode.setContainerCode(containerCode);
-                barcode.setContainerType(serialList.get(0).get("containerType"));
-                barcode.setIsDeleted(false);
-                barcode.setCreatedBy(userId);
-                barcode.setCreatedOn(now);
-                containerBarcodeList.add(barcode);
-                this.acceptedRejectedContainerBarcodeRepository.save(barcode);
+                for (Map.Entry<String, List<String>> entry : containerMap.entrySet()) {
+                    String containerCode = entry.getKey();
+                    List<String> serials = entry.getValue();
 
-                for (Map<String, String> serial : serialList) {
-                    SerialBatchNumber batch = new SerialBatchNumber();
-                    batch.setOrganizationId(orgId);
-                    batch.setSubOrganizationId(subOrgId);
-                    batch.setSerialBatchNumber(serial.get("serialBatchNumber"));
-                    batch.setAcceptedRejectedContainerBarcode(barcode);
-                    batch.setAsnLine(asnLine);
-                    batch.setIsDeleted(false);
-                    batch.setCreatedBy(userId);
-                    batch.setCreatedOn(now);
-                    serialBatchNumberList.add(batch);
+                    AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
+                    barcode.setOrganizationId(orgId);
+                    barcode.setSubOrganizationId(subOrgId);
+                    barcode.setContainerCode(containerCode);
+                    barcode.setIsDeleted(false);
+                    barcode.setCreatedBy(userId);
+                    barcode.setCreatedOn(now);
+                    acceptedRejectedContainerBarcodeRepository.save(barcode);
+
+                    ASNLine finalAsnLine = asnLine;
+                    List<SerialBatchNumber> batchList = serials.stream()
+                            .map(serial -> {
+                                SerialBatchNumber s = new SerialBatchNumber();
+                                s.setOrganizationId(orgId);
+                                s.setSubOrganizationId(subOrgId);
+                                s.setSerialBatchNumber(serial);
+                                s.setAcceptedRejectedContainerBarcode(barcode);
+                                s.setAsnLine(finalAsnLine);
+                                s.setIsDeleted(false);
+                                s.setCreatedBy(userId);
+                                s.setCreatedOn(now);
+                                return s;
+                            }).collect(Collectors.toList());
+                    serialBatchNumberRepository.saveAll(batchList);
                 }
             }
 
-            this.serialBatchNumberRepository.saveAllAndFlush(serialBatchNumberList);
-
             long endTime = System.currentTimeMillis();
-            log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {} Rows:{} Time:{}ms",
-                    logId, loginUser.getUserId(), "UPLOAD_PACKING_LIST_EXECUTED", count, (endTime - startTime));
+            log.info("LogId:{} - uploadPackingList - saved in {}ms", logId, (endTime - startTime));
 
-            workbook.close();
             return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(),
                     "Packing List Uploaded Successfully", null, ServiceConstants.SUCCESS_CODE, logId));
 
         } catch (Exception e) {
-            long endTime = System.currentTimeMillis();
             log.error("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
                     loginUser.getLogId(), loginUser.getUserId(), "PACKING_LIST_UPLOAD_FAILED", e);
             ExceptionLogger.logException(e, logId);

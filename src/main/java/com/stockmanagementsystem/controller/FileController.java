@@ -126,7 +126,7 @@ public class FileController {
 
 
     @PostMapping({APIConstants.FILE_UPLOAD})
-    public ResponseEntity<BaseResponse> uploadExcelFile(@RequestPart("file") MultipartFile file,@RequestParam("type") String type,@RequestParam(required = false) String requestType,@RequestParam(required = false) Integer requestId) throws IOException, ValidationFailureException {
+    public ResponseEntity<BaseResponse> uploadExcelFile(@RequestPart("file") MultipartFile file,@RequestParam("type") String type,@RequestParam(required = false) String requestType,@RequestParam(required = false) Integer requestId,@RequestParam(required = false) Boolean isFinalUpload) throws IOException, ValidationFailureException {
 
         log.info("FileController----uploadExcelFile Method Execution start with input parameter :" + type);
         String logID=null;
@@ -190,7 +190,7 @@ public class FileController {
                 stringResponseEntity =this.uploadExcelService.uploadUserListDetails(file,type);
                 break;
             case ServiceConstants.PACKINGLIST:
-                stringResponseEntity =this.uploadExcelService.uploadPackingList(file,type,requestId,requestType);
+                stringResponseEntity =this.uploadExcelService.uploadPackingList(file,type,requestId,requestType,isFinalUpload);
                 break;
         }
 
