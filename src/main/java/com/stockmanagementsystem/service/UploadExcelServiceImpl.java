@@ -3510,9 +3510,17 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         "Excel file missing header row", null, ServiceConstants.ERROR_CODE, logId));
             }
 
+            List<String> headerNames = new ArrayList<>();
+            for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
+                Cell headerCell = headerRow.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                if (headerCell != null) {
+                    headerNames.add(headerCell.getStringCellValue());
+                }
+            }
+
             // ==== Read Data Rows ====
             for (Row row : sheet) {
-                if (row.getRowNum() <= ServiceConstants.PACKING_LIST_COLUMN_HEADER_ROW_INDEX) continue;
+                if (row.getRowNum() <= ServiceConstants.PACKING_LIST_HEADER_ROW_INDEX) continue;
 
                 int emptyCellCount = 0;
                 for (int i = 0; i < row.getLastCellNum() - 1; i++) {
@@ -3523,28 +3531,38 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                 hasDataRows = true;
                 Map<String, String> dataMap = new HashMap<>();
-                dataMap.put("itemCode", getCellStringValue(row, 1, resultResponses, type, null));
-                dataMap.put("itemName", getCellStringValue(row, 2, resultResponses, type, null));
-                dataMap.put("uom", getCellStringValue(row, 3, resultResponses, type, null));
-                dataMap.put("serialBatchNumber", getCellStringValue(row, 4, resultResponses, type, null));
-                dataMap.put("containerCode", getCellStringValue(row, 5, resultResponses, type, null));
-                dataMap.put("containerType", getCellStringValue(row, 6, resultResponses, type, null));
+                dataMap.put("itemCode", getCellStringValue(row, 1, resultResponses, type, headerNames));
+                dataMap.put("itemName", getCellStringValue(row, 2, resultResponses, type, headerNames));
+                dataMap.put("uom", getCellStringValue(row, 3, resultResponses, type, headerNames));
+                dataMap.put("serialBatchNumber", getCellStringValue(row, 4, resultResponses, type, headerNames));
+                dataMap.put("containerCode", getCellStringValue(row, 5, resultResponses, type, headerNames));
+                dataMap.put("containerType", getCellStringValue(row, 6, resultResponses, type, headerNames));
+
+                // 🔹 Skip blank rows early
+                if (isBlank(dataMap.get("itemCode")) ||
+                        isBlank(dataMap.get("containerCode")) ||
+                        isBlank(dataMap.get("serialBatchNumber"))) {
+                    log.warn("Skipping blank row at index {}", row.getRowNum());
+                    continue;
+                }
+
                 packingRows.add(dataMap);
             }
 
-            if (!hasDataRows) {
+            if (!hasDataRows || packingRows.isEmpty()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "Excel file contains header only, no data rows found", null,
-                        ServiceConstants.ERROR_CODE, logId));
+                        "Excel file contains header only, no valid data rows found",
+                        null, ServiceConstants.ERROR_CODE, logId));
             }
 
             // ==== Group by Item Code and Container ====
             Map<String, Map<String, List<String>>> itemToContainerSerials = new HashMap<>();
-
             for (Map<String, String> row : packingRows) {
                 String itemCode = row.get("itemCode");
                 String container = row.get("containerCode");
                 String serial = row.get("serialBatchNumber");
+
+                if (isBlank(itemCode) || isBlank(container) || isBlank(serial)) continue; // extra safety
 
                 itemToContainerSerials
                         .computeIfAbsent(itemCode, k -> new HashMap<>())
@@ -3552,7 +3570,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         .add(serial);
             }
 
-            // ==== If FINAL upload → Validate and Save ====
+            // 🔹 Remove invalid keys if somehow still present
+            itemToContainerSerials.entrySet().removeIf(e -> isBlank(e.getKey()));
+
+            // ==== Validate ASN ====
             ASNLine asnLine = null;
             if ("ASN".equalsIgnoreCase(requestType)) {
                 asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
@@ -3563,7 +3584,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         ServiceConstants.ERROR_CODE, logId));
             }
 
-            // Validate duplicates (same logic as before)
+            // ==== Validate duplicate serial numbers ====
             List<String> serialNumbers = packingRows.stream()
                     .map(m -> m.get("serialBatchNumber"))
                     .filter(Objects::nonNull)
@@ -3585,6 +3606,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     .stream()
                     .map(SerialBatchNumber::getSerialBatchNumber)
                     .collect(Collectors.toList());
+
             List<String> overlap = serialNumbers.stream()
                     .filter(existingSerials::contains)
                     .collect(Collectors.toList());
@@ -3594,43 +3616,62 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         null, ServiceConstants.ERROR_CODE, logId));
             }
 
-
             // ==== If NOT final upload → build summary only ====
             if (!Boolean.TRUE.equals(isFinalUpload)) {
                 List<PackingSummaryResponse> summaryList = new ArrayList<>();
 
-                for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
-                    String itemCode = itemEntry.getKey();
-                    Map<String, List<String>> containerMap = itemEntry.getValue();
+                if (!itemToContainerSerials.isEmpty()) {
+                    for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
 
-                    // Get first item name (from any row)
-                    String itemName = packingRows.stream()
-                            .filter(r -> r.get("itemCode").equals(itemCode))
-                            .map(r -> r.get("itemName"))
-                            .findFirst().orElse("");
+                        String itemCode = itemEntry.getKey();
+                        if (isBlank(itemCode)) continue; // skip blanks
+                        Map<String, List<String>> containerMap = itemEntry.getValue();
+                        if (containerMap == null || containerMap.isEmpty()) continue;
 
-                    List<PackingSummaryResponse.ContainerSummary> containerSummaries =
-                            containerMap.entrySet().stream()
-                                    .map(e -> new PackingSummaryResponse.ContainerSummary(
-                                            e.getKey(), e.getValue()))
-                                    .collect(Collectors.toList());
+                        // ---- Safely get item name ----
+                        String itemName = packingRows.stream()
+                                .filter(r -> itemCode.equals(r.get("itemCode")))
+                                .map(r -> r.getOrDefault("itemName", ""))
+                                .findFirst()
+                                .orElse("");
 
-                    int totalContainers = containerSummaries.size();
-                    int totalQty = containerSummaries.stream()
-                            .mapToInt(c -> c.getSerialNumbers().size())
-                            .sum();
+                        // ---- Safely build container summaries ----
+                        List<PackingSummaryResponse.ContainerSummary> containerSummaries = containerMap.entrySet().stream()
+                                .filter(e -> !isBlank(e.getKey()))
+                                .map(e -> {
+                                    String containerCode = e.getKey();
+                                    List<String> serials = e.getValue() == null
+                                            ? Collections.emptyList()
+                                            : e.getValue().stream().filter(Objects::nonNull).collect(Collectors.toList());
+                                    return new PackingSummaryResponse.ContainerSummary(containerCode, serials);
+                                })
+                                .collect(Collectors.toList());
 
-                    summaryList.add(new PackingSummaryResponse(
-                            itemName, itemCode, totalContainers, totalQty, containerSummaries));
+                        int totalContainers = containerSummaries.size();
+                        int totalQty = containerSummaries.stream()
+                                .mapToInt(c -> c.getSerialNumbers() != null ? c.getSerialNumbers().size() : 0)
+                                .sum();
+
+                        summaryList.add(new PackingSummaryResponse(
+                                itemName,
+                                itemCode,
+                                totalContainers,
+                                totalQty,
+                                containerSummaries
+                        ));
+                    }
                 }
 
-                return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(),
+                return ResponseEntity.ok(new BaseResponse<>(
+                        HttpStatus.OK.value(),
                         "Packing summary generated successfully (preview mode)",
-                        summaryList, ServiceConstants.SUCCESS_CODE, logId));
+                        summaryList,
+                        ServiceConstants.SUCCESS_CODE,
+                        logId
+                ));
             }
 
-
-            // ==== Save Logic ====
+            // ==== FINAL upload: Save Data ====
             Date now = new Date();
             Integer orgId = loginUser.getOrgId();
             Integer subOrgId = loginUser.getSubOrgId();
@@ -3638,10 +3679,13 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
                 Map<String, List<String>> containerMap = itemEntry.getValue();
+                if (containerMap == null || containerMap.isEmpty()) continue;
 
                 for (Map.Entry<String, List<String>> entry : containerMap.entrySet()) {
                     String containerCode = entry.getKey();
                     List<String> serials = entry.getValue();
+
+                    if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
 
                     AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
                     barcode.setOrganizationId(orgId);
@@ -3654,6 +3698,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     ASNLine finalAsnLine = asnLine;
                     List<SerialBatchNumber> batchList = serials.stream()
+                            .filter(Objects::nonNull)
                             .map(serial -> {
                                 SerialBatchNumber s = new SerialBatchNumber();
                                 s.setOrganizationId(orgId);
@@ -3665,7 +3710,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                 s.setCreatedBy(userId);
                                 s.setCreatedOn(now);
                                 return s;
-                            }).collect(Collectors.toList());
+                            })
+                            .collect(Collectors.toList());
                     serialBatchNumberRepository.saveAll(batchList);
                 }
             }
@@ -3683,6 +3729,11 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
                     ServiceConstants.FILE_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
         }
+    }
+
+    // 🔹 Utility method
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
 
