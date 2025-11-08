@@ -167,6 +167,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     @Autowired
     private AsnLineRepository asnLineRepository;
 
+    @Autowired
+    private CommonMasterRepository commonMasterRepository;
+
+    @Autowired
+    private StockMovementRepository stockMovementRepository;
+
     @Override
     public ResponseEntity<BaseResponse> uploadItemDetail(MultipartFile file, String type) throws IOException {
         long startTime = System.currentTimeMillis();
@@ -3677,6 +3683,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Integer subOrgId = loginUser.getSubOrgId();
             Integer userId = loginUser.getUserId();
 
+            int totalContainers = itemToContainerSerials.values().stream()
+                    .mapToInt(m -> m != null ? m.size() : 0)
+                    .sum();
+
+            int sequenceCounter = 1; // start from 1
+
+            CommonMaster packingCompletedStatus = this.commonMasterRepository.findByTypeAndIsDeletedFalse("PCKSLP");
+
             for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
                 Map<String, List<String>> containerMap = itemEntry.getValue();
                 if (containerMap == null || containerMap.isEmpty()) continue;
@@ -3687,10 +3701,25 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
 
+                    // ✅ Generate unique packing slip number
+                    String packingSlipNumber = generatePackingSlipNumber(sequenceCounter);
+
+                    // ✅ Get container type from first matching Excel row
+                    String containerType = packingRows.stream()
+                            .filter(r -> containerCode.equals(r.get("containerCode")))
+                            .map(r -> r.getOrDefault("containerType", ""))
+                            .findFirst()
+                            .orElse("");
+
+                    // ✅ Create and save barcode entity
                     AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
                     barcode.setOrganizationId(orgId);
                     barcode.setSubOrganizationId(subOrgId);
                     barcode.setContainerCode(containerCode);
+                    barcode.setContainerType(containerType);
+                    barcode.setPackingSlipNumber(packingSlipNumber); // new field
+                    barcode.setStatus(packingCompletedStatus);
+                    barcode.setPackingSequence(sequenceCounter + " of " + totalContainers); // new field
                     barcode.setIsDeleted(false);
                     barcode.setCreatedBy(userId);
                     barcode.setCreatedOn(now);
@@ -3713,6 +3742,26 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             })
                             .collect(Collectors.toList());
                     serialBatchNumberRepository.saveAll(batchList);
+
+
+// Collect StockMovement objects for batch save
+                    List<StockMovement> stockMovementList = batchList.stream()
+                            .map(serialBatchNumber -> {
+                                StockMovement sm = new StockMovement();
+                                sm.setOrganizationId(orgId);
+                                sm.setSubOrganizationId(subOrgId);
+                                sm.setSerialBatchNumbers(serialBatchNumber);
+                                sm.setItem(finalAsnLine.getItem());
+                                sm.setIsDeleted(false);
+                                sm.setCreatedBy(userId);
+                                sm.setCreatedOn(now);
+                                return sm;
+                            })
+                            .collect(Collectors.toList());
+
+                    // Save all StockMovement objects in one batch
+                    this.stockMovementRepository.saveAll(stockMovementList);
+                    sequenceCounter++;
                 }
             }
 
@@ -3736,6 +3785,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         return s == null || s.trim().isEmpty();
     }
 
+    // 🔹 Utility method
+    private String generatePackingSlipNumber(int sequence) {
+        String datePart = new java.text.SimpleDateFormat("yyyyMMdd").format(new Date());
+        String seqPart = String.format("%03d", sequence); // e.g., 001, 002
+        return "PKG-" + datePart + "-" + seqPart;
+    }
 
 
 }
