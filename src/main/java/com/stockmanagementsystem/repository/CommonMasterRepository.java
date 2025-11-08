@@ -13,4 +13,6 @@ public interface CommonMasterRepository extends JpaRepository<CommonMaster,Integ
     List<CommonMaster> findByIsDeletedAndType(boolean b, String type);
 
     CommonMaster findByIsDeletedAndTypeAndId(boolean b, String zonec, Integer statusId);
+
+    CommonMaster findByTypeAndIsDeletedFalse(String pckslp);
 }

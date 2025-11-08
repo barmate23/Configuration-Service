@@ -35,6 +35,10 @@ public class StockMovement {
     @JoinColumn(name = "AcceptedRejectedContainerBarcodeId", referencedColumnName = "id")
     private AcceptedRejectedContainerBarcode acceptedRejectedContainerBarcode;
 
+    @ManyToOne
+    @JoinColumn(name = "serialBatchNumberId")
+    private SerialBatchNumber serialBatchNumbers;
+
 //    @ManyToOne
 //    @JoinColumn(name = "serialBatchNumberId")
 //    private SerialBatchNumber serialBatchNumbers;
