@@ -36,6 +36,11 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
     @Autowired
     private LocationRepository locationRepository;
+
+
+    @Autowired
+    HolidayRepository holidayRepository;
+
     @Autowired
     private AssemblyLineRepository assemblyLineRepository;
 
@@ -198,7 +203,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ITEM_GROUP,
                     ITEM_CATEGORY,
                     ITEM_SUB_CATEGORY,
-                    TYPE, TYPE_SERIAL, QC_REQUIRED,INSPECTION ,ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, CODE, TYPES,
+                    TYPE, TYPE_SERIAL, QC_REQUIRED, INSPECTION, ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, CODE, TYPES,
                     DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, ITEM_QTY, MINIMUM_ORDER_QTY,
                     OPTIMUM_LEVEL, REORDER_LEVEL, SAFETY_LEVEL, CRITICAL_LEVEL, DOCK, DOCKS_NAME
             ));
@@ -2584,6 +2589,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME, ITEM_CODE_PPE, ITEM_NAME_PPE,
                     ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE
             );
+
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
@@ -2605,6 +2611,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     headerNames.add(headerName);
                 }
             }
+
             Map<String, List<String>> headLineMap = new HashMap<>();
             for (Row data : sheet) {
 
@@ -2711,6 +2718,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             ppeHead.setColor(color);
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BOM_ID, " COLOR CANNOT BE NULL "));
+                        }
+
+                        if (isDateOnHoliday(startDate)) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "Production Start Date should Not be on Holiday "));
                         }
 
                         if (!StringUtils.isEmpty(uom1)) {
@@ -2892,7 +2903,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemId);
                             if (itemOption.isPresent()) {
                                 ppeLine.setItem(itemOption.get());
-                                List<Location> locationList =  locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemOption.get().getId());
+                                List<Location> locationList = locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemOption.get().getId());
                                 ppeLine.setStore(locationList.get(0).getZone().getArea().getStore().getStoreName());
 //                                ppeLine.setEta(itemOption.get().getLeadTime());
 
@@ -2965,6 +2976,26 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         }
     }
 
+    private boolean isDateOnHoliday(Date time) {
+        Boolean isInDate = false;
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(time);
+
+        // ✅ Check if date is holiday
+        List<Holiday> holidayList = holidayRepository.findByDateAndIsDeletedAndSubOrganizationId(cal.getTime(), false, loginUser.getSubOrgId());
+
+        if (!holidayList.isEmpty()) {
+            isInDate = true;
+        }
+
+        // ✅ Check if date is Sunday (Calendar.SUNDAY = 1)
+        if (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+            isInDate = true;
+        }
+        return isInDate;
+
+
+    }
 
     public String getStringValue(Cell cell, List<ValidationResultResponse> resultResponses, String type, Integer rowIndex, String headerName) {
         if (cell != null) {
@@ -3791,6 +3822,5 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         String seqPart = String.format("%03d", sequence); // e.g., 001, 002
         return "PKG-" + datePart + "-" + seqPart;
     }
-
 
 }
