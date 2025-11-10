@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface SerialBatchNumberRepository extends JpaRepository<SerialBatchNumber,Integer> {
     List<SerialBatchNumber> findByIsDeletedFalseAndAsnLineId(Integer id);
+
+    List<SerialBatchNumber> findByIsDeletedFalseAndAsnLineIdOrderByAcceptedRejectedContainerBarcodePackingSlipNumberDesc(Integer requestId);
 }
