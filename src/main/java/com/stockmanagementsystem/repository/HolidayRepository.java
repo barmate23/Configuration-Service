@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -48,4 +49,6 @@ public interface HolidayRepository extends JpaRepository<Holiday,Integer> {
    Page<Holiday> findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndDateBetweenOrderByDateAsc(Integer orgId, Integer subOrgId, boolean b, Date startDate, Date endDate, PageRequest pageable);
 
    Page<Holiday> findByOrganizationIdAndSubOrganizationIdAndIsDeletedOrderByDateAsc(Integer orgId, Integer subOrgId, boolean b, PageRequest pageable);
+
+    List<Holiday> findByDateAndIsDeletedAndSubOrganizationId(Date time, boolean b, Integer subOrgId);
 }
