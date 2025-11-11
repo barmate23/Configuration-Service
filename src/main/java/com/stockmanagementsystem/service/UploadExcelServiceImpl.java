@@ -3687,37 +3687,19 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     .mapToInt(m -> m != null ? m.size() : 0)
                     .sum();
 
-            int sequenceCounter = 1; // default
-            List<SerialBatchNumber> seq = serialBatchNumberRepository
-                    .findByIsDeletedFalseAndAsnLineIdOrderByAcceptedRejectedContainerBarcodePackingSlipNumberDesc(requestId);
+            int sequenceCounter = 1; // start from 1
+            List<SerialBatchNumber> seq=this.serialBatchNumberRepository.findByIsDeletedFalseAndAsnLineIdOrderByAcceptedRejectedContainerBarcodePackingSlipNumberDesc(requestId);
 
-            String lastPackingSlipNumber = null;
-            int lastSequence = 0;
-
-// ✅ Step 1: Get last slip number and extract numeric sequence
-            if (seq != null && !seq.isEmpty() && seq.get(0).getAcceptedRejectedContainerBarcode() != null) {
-                lastPackingSlipNumber = seq.get(0).getAcceptedRejectedContainerBarcode().getPackingSlipNumber();
-
-                // Parse sequence from last slip (PKG-2025K11-007 -> 7)
-                try {
-                    if (lastPackingSlipNumber != null && lastPackingSlipNumber.startsWith("PKG-")) {
-                        String[] parts = lastPackingSlipNumber.split("-");
-                        if (parts.length == 3) {
-                            lastSequence = Integer.parseInt(parts[2]);
-                        }
-                    }
-                } catch (NumberFormatException e) {
-                    log.warn("Failed to parse sequence number from last slip: {}", lastPackingSlipNumber, e);
-                }
+            String packingSlipNumber;
+            if (seq != null && !seq.isEmpty() && seq.get(0).getAcceptedRejectedContainerBarcode()!= null) {
+                packingSlipNumber = seq.get(0).getAcceptedRejectedContainerBarcode().getPackingSlipNumber();
             } else {
-                // fallback if no previous record
-                lastPackingSlipNumber = null;
-                lastSequence = 0;
+                packingSlipNumber = "PL-" + System.currentTimeMillis(); // fallback or new auto-generated
             }
 
-            CommonMaster packingCompletedStatus = commonMasterRepository.findByTypeAndIsDeletedFalse("PCKSLP");
 
-            int nextSequence = lastSequence;
+
+            CommonMaster packingCompletedStatus = this.commonMasterRepository.findByTypeAndIsDeletedFalse("PCKSLP");
 
             for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
                 Map<String, List<String>> containerMap = itemEntry.getValue();
@@ -3729,34 +3711,30 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
 
-                    // ✅ Step 2: Increment last sequence
-                    nextSequence++;
+                    // ✅ Generate unique packing slip number
+                     String nextPackingSlipNumber = generateNextPackingSlipNumber(packingSlipNumber);
 
-                    // ✅ Step 3: Generate new unique slip number using the sequence
-                    String nextPackingSlipNumber = generateNextPackingSlipNumberForSequence(nextSequence);
-
-                    // ✅ Step 4: Get container type
+                    // ✅ Get container type from first matching Excel row
                     String containerType = packingRows.stream()
                             .filter(r -> containerCode.equals(r.get("containerCode")))
                             .map(r -> r.getOrDefault("containerType", ""))
                             .findFirst()
                             .orElse("");
 
-                    // ✅ Create barcode entity
+                    // ✅ Create and save barcode entity
                     AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
                     barcode.setOrganizationId(orgId);
                     barcode.setSubOrganizationId(subOrgId);
                     barcode.setContainerCode(containerCode);
                     barcode.setContainerType(containerType);
-                    barcode.setPackingSlipNumber(nextPackingSlipNumber);
+                    barcode.setPackingSlipNumber(nextPackingSlipNumber); // new field
                     barcode.setStatus(packingCompletedStatus);
-                    barcode.setPackingSequence(sequenceCounter + " of " + totalContainers);
+                    barcode.setPackingSequence(sequenceCounter + " of " + totalContainers); // new field
                     barcode.setIsDeleted(false);
                     barcode.setCreatedBy(userId);
                     barcode.setCreatedOn(now);
                     acceptedRejectedContainerBarcodeRepository.save(barcode);
 
-                    // Create SerialBatchNumber entries
                     ASNLine finalAsnLine = asnLine;
                     List<SerialBatchNumber> batchList = serials.stream()
                             .filter(Objects::nonNull)
@@ -3775,7 +3753,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             .collect(Collectors.toList());
                     serialBatchNumberRepository.saveAll(batchList);
 
-                    // Stock movement creation
+
+// Collect StockMovement objects for batch save
                     List<StockMovement> stockMovementList = batchList.stream()
                             .map(serialBatchNumber -> {
                                 StockMovement sm = new StockMovement();
@@ -3789,8 +3768,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                 return sm;
                             })
                             .collect(Collectors.toList());
-                    stockMovementRepository.saveAll(stockMovementList);
 
+                    // Save all StockMovement objects in one batch
+                    this.stockMovementRepository.saveAll(stockMovementList);
                     sequenceCounter++;
                 }
             }
@@ -3815,17 +3795,36 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         return s == null || s.trim().isEmpty();
     }
 
-    private String generateNextPackingSlipNumberForSequence(int sequenceNumber) {
+    private String generateNextPackingSlipNumber(String lastPackingSlipNumber) {
+        // Define month-to-letter map (A=Jan, B=Feb, ..., L=Dec)
         String[] monthLetters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
 
+        // Get current date components
         LocalDate today = LocalDate.now();
         String year = String.valueOf(today.getYear());
         String monthLetter = monthLetters[today.getMonthValue() - 1];
         String day = String.format("%02d", today.getDayOfMonth());
 
-        return String.format("PKG-%s%s%s-%03d", year, monthLetter, day, sequenceNumber);
-    }
+        // Default starting sequence
+        int nextSequence = 1;
 
+        // Extract numeric part if last slip number is valid
+        if (lastPackingSlipNumber != null && lastPackingSlipNumber.startsWith("PKG-")) {
+            try {
+                // Split: PKG-20251110-010 → ["PKG", "20251110", "010"]
+                String[] parts = lastPackingSlipNumber.split("-");
+                if (parts.length == 3) {
+                    String seqPart = parts[2];
+                    nextSequence = Integer.parseInt(seqPart) + 1;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse last packing slip number: {}", lastPackingSlipNumber);
+            }
+        }
+
+        // Format: PKG-YYYYMDD-SEQ (e.g., PKG-2025K10-011)
+        return String.format("PKG-%s%s%s-%03d", year, monthLetter, day, nextSequence);
+    }
 
 
 
