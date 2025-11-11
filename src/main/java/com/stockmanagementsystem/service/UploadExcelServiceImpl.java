@@ -3816,6 +3816,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 if (parts.length == 3) {
                     String seqPart = parts[2];
                     nextSequence = Integer.parseInt(seqPart) + 1;
+
                 }
             } catch (Exception e) {
                 log.warn("Failed to parse last packing slip number: {}", lastPackingSlipNumber);
