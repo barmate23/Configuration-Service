@@ -13,4 +13,6 @@ public interface AcceptedRejectedContainerBarcodeRepository extends JpaRepositor
     List<AcceptedRejectedContainerBarcode> findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerAsnLineId(boolean b, Boolean isAccepted, Integer subOrgId, Integer asnLineId);
 
     List<AcceptedRejectedContainerBarcode> findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerPurchaseOrderLineId(boolean b, Boolean isAccepted, Integer subOrgId, Integer poLineId);
+
+    boolean existsByPackingSlipNumber(String nextSlip);
 }
