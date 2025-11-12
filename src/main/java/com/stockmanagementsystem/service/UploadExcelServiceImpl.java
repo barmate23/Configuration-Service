@@ -3774,6 +3774,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     sequenceCounter++;
                 }
             }
+//          Updating Total Container in ASN Line
+            ASNLine line = this.asnLineRepository.findByIsDeletedFalseAndId(requestId);
+            if (line != null) {
+                line.setNumberOfContainer(totalContainers);
+                this.asnLineRepository.save(line);
+            }
 
             long endTime = System.currentTimeMillis();
             log.info("LogId:{} - uploadPackingList - saved in {}ms", logId, (endTime - startTime));
