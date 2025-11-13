@@ -2804,23 +2804,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                         "ERROR PROCESSING START DATE/TIME"
                                 ));
                             }
-                        } else {
-                            if (startDate == null) {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        ServiceConstants.START_DATE,
-                                        "START DATE CANNOT BE NULL"
-                                ));
-                            }
-                            if (starTime == null) {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        ServiceConstants.START_TIME,
-                                        "START TIME CANNOT BE NULL"
-                                ));
-                            }
                         }
 
                         // End date/time validations (if present)
@@ -2835,8 +2818,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
                         ppeHead.setPpeStatus(status);
-
-
                         ppeHead.setOrganizationId(loginUser.getOrgId());
                         ppeHead.setSubOrganizationId(loginUser.getSubOrgId());
                         ppeHead.setIsDeleted(false);
