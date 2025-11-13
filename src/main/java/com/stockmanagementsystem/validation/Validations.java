@@ -15,6 +15,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -466,6 +469,59 @@ public class Validations extends ServiceConstants {
         }
         return null;
     }
+
+
+    public LocalTime getCellTimeValueForPPE(Row row, int cellIndex,
+                                            List<ValidationResultResponse> resultResponses,
+                                            String type, List<String> headerNames) {
+        Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+
+        if (cell == null) {
+            return null;
+        }
+
+        if (cell.getCellType() != null) {
+            CellType cellType = cell.getCellType();
+
+            if (cellType == CellType.NUMERIC) {
+                // Excel stores time as a fraction of a day in numeric form
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    Date date = cell.getDateCellValue();
+                    return date.toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalTime();
+                }
+            } else if (cellType == CellType.STRING) {
+                String cellValue = cell.getStringCellValue().trim();
+                if (!cellValue.isEmpty()) {
+                    // Strictly enforce 24-hour format (HH:mm or HH:mm:ss)
+                    try {
+                        DateTimeFormatter formatter;
+                        if (cellValue.matches("^([01]\\d|2[0-3]):[0-5]\\d$")) {
+                            formatter = DateTimeFormatter.ofPattern("HH:mm");
+                        } else if (cellValue.matches("^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$")) {
+                            formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+                        } else {
+                            // Invalid time format -> log or record validation error
+                            ValidationResultResponse response = new ValidationResultResponse();
+                            response.setErrorMessage("Invalid time format at column: " + headerNames.get(cellIndex)
+                                    + ". Expected 24-hour format (HH:mm or HH:mm:ss).");
+                            resultResponses.add(response);
+                            return null;
+                        }
+                        return LocalTime.parse(cellValue, formatter);
+                    } catch (Exception e) {
+                        ValidationResultResponse response = new ValidationResultResponse();
+                        response.setErrorMessage("Error parsing time value at column: " + headerNames.get(cellIndex));
+                        resultResponses.add(response);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
 
 
     public Integer getNumberOfItem(){

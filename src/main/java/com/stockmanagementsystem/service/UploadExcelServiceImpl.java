@@ -21,6 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
@@ -2640,9 +2641,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String line = getCellStringValue(data, ServiceConstants.CELL_INDEX_12, resultResponses, type, headerNames);
                         String lineID = getCellStringValue(data, ServiceConstants.CELL_INDEX_13, resultResponses, type, headerNames);
                         Date startDate = getCellDateValue(data, ServiceConstants.CELL_INDEX_14, resultResponses, type, headerNames);
-                        Date starTime = getCellDateValueForPPE(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
+                        LocalTime starTime = getCellTimeValueForPPE(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
                         Date endDate = getCellDateValueForPPE(data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
-                        Date endTime = getCellDateValueForPPE(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
+                        LocalTime endTime = getCellTimeValueForPPE(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
                         String itemId = getCellStringValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
                         String itemName = getCellStringValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
                         String itemType = getCellStringValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
@@ -2764,38 +2765,45 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 //                        }
 
                         if (startDate != null && starTime != null) {
-                            // Convert startDate and startTime to ZonedDateTime in UTC
-                            ZoneId utcZone = ZoneId.of("UTC");
+                            try {
+                                // Define UTC zone
+                                ZoneId utcZone = ZoneId.of("UTC");
 
-                            // Convert startDate to LocalDate in UTC
-                            Instant startDateInstant = startDate.toInstant();
-                            LocalDate startLocalDate = startDateInstant.atZone(utcZone).toLocalDate();
+                                // Convert startDate (java.util.Date) to LocalDate
+                                LocalDate startLocalDate = startDate.toInstant()
+                                        .atZone(utcZone)
+                                        .toLocalDate();
 
-                            // Convert starTime to LocalTime in UTC
-                            Instant startTimeInstant = starTime.toInstant();
-                            LocalTime startLocalTime = startTimeInstant.atZone(utcZone).toLocalTime();
+                                // starTime is already a LocalTime (from your getCellTimeValueForPPE)
+                                LocalDateTime planStartDateTime = LocalDateTime.of(startLocalDate, starTime);
 
-                            // Combine LocalDate and LocalTime
-                            LocalDateTime planStartDateTime = LocalDateTime.of(startLocalDate, startLocalTime);
-                            ZonedDateTime planStartUTC = planStartDateTime.atZone(utcZone);
+                                // Convert to ZonedDateTime in UTC
+                                ZonedDateTime planStartUTC = planStartDateTime.atZone(utcZone);
 
-                            // Current UTC time
-                            ZonedDateTime currentUTC = ZonedDateTime.now(utcZone);
+                                // Current UTC time
+                                ZonedDateTime currentUTC = ZonedDateTime.now(utcZone);
 
-                            // Compare
-                            if (planStartUTC.isAfter(currentUTC)) {
-                                // Valid: set original values
-                                ppeHead.setStartDate(startDate);
-                                ppeHead.setStartTime(starTime);
-                            } else {
+                                // Compare
+                                if (planStartUTC.isAfter(currentUTC)) {
+                                    // Valid — save values
+                                    ppeHead.setStartDate(startDate);
+                                    ppeHead.setStartTime(Time.valueOf(starTime)); // convert LocalTime → java.sql.Time if needed
+                                } else {
+                                    resultResponses.add(new ValidationResultResponse(
+                                            type,
+                                            (data.getRowNum() + 1),
+                                            ServiceConstants.START_DATE,
+                                            "PLAN START DATE & TIME MUST BE IN THE FUTURE"
+                                    ));
+                                }
+                            } catch (Exception e) {
                                 resultResponses.add(new ValidationResultResponse(
                                         type,
                                         (data.getRowNum() + 1),
                                         ServiceConstants.START_DATE,
-                                        "PLAN START DATE & TIME MUST BE IN THE FUTURE "
+                                        "ERROR PROCESSING START DATE/TIME"
                                 ));
                             }
-
                         } else {
                             if (startDate == null) {
                                 resultResponses.add(new ValidationResultResponse(
@@ -2815,13 +2823,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             }
                         }
 
+                        // End date/time validations (if present)
                         if (endDate != null) {
                             ppeHead.setEndDate(endDate);
                         }
 
                         if (endTime != null) {
-                            ppeHead.setEndTime(endTime);
+                            ppeHead.setEndTime(Time.valueOf(endTime)); // endTime is also LocalTime
                         }
+
 
                         PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
                         ppeHead.setPpeStatus(status);
