@@ -2818,8 +2818,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
                         ppeHead.setPpeStatus(status);
-
-
                         ppeHead.setOrganizationId(loginUser.getOrgId());
                         ppeHead.setSubOrganizationId(loginUser.getSubOrgId());
                         ppeHead.setIsDeleted(false);
