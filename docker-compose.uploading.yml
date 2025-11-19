@@ -1,9 +1,11 @@
+version: '3.8'
+
 services:
-  uploadingservice:
+  configurationservice:  # ✅ Service name fixed
     build:
       context: .
       dockerfile: Dockerfile
-    image: configuration:latest
+    image: configurationservice:latest  # ✅ Image name aligned
     container_name: configurationservice
     ports:
       - "8084:8084"
@@ -18,11 +20,17 @@ services:
       EUREKA_INSTANCE_ENABLE_SELF_PRESERVATION: "false"
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,eureka,shutdown
 
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/postgres
+      SPRING_DATASOURCE_URL: jdbc:postgresql://adminpostgres:5432/postgres
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-    restart: on-failure
+            # HikariCP specific settings
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 5
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 2
+      SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT: 300000    # 5 minutes
+      SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT: 30000  # 30 seconds
+      SPRING_DATASOURCE_HIKARI_MAX_LIFETIME: 1800000    # 30 minutes
+    
 
 networks:
   updated_orgadmin_rmscadminnetwork:

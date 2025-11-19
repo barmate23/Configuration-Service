@@ -22,6 +22,7 @@ public class CommonMaster {
 
     @Column(name = "type")
     private String type;
+
     @Column(name = "OrganizationId")
     private Integer organizationId;
 
