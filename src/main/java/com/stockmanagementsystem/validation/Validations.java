@@ -501,15 +501,15 @@ public class Validations extends ServiceConstants {
             }
 
             // ✅ Strictly allow only “HH:mm” now
-            if (!cellValue.matches("^([01]\\d|2[0-3]):[0-5]\\d$")) {
-                resultResponses.add(new ValidationResultResponse(
-                        type,
-                        (data.getRowNum() + 1),
-                        headerNames.get(cellIndex),
-                        "INVALID TIME FORMAT - Expected HH:mm (e.g., 15:00)"
-                ));
-                return null;
-            }
+//            if (!cellValue.matches("^([01]\\d|2[0-3]):[0-5]\\d$")) {
+//                resultResponses.add(new ValidationResultResponse(
+//                        type,
+//                        (data.getRowNum() + 1),
+//                        headerNames.get(cellIndex),
+//                        "INVALID TIME FORMAT - Expected HH:mm (e.g., 15:00)"
+//                ));
+//                return null;
+//            }
 
             // ✅ Parse the valid time
             LocalTime parsedTime = LocalTime.parse(cellValue, DateTimeFormatter.ofPattern("HH:mm"));
