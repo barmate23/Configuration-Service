@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.*;
@@ -2661,8 +2662,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_ID, " PPEID CANNOT BE NULL "));
                         }
 
+                        Optional<PPEHead> ppeHead1 = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPlanOrderId(false, loginUser.getSubOrgId(), planId);
+
                         if (!StringUtils.isEmpty(planId)) {
-                            ppeHead.setPlanOrderId(planId);
+                            if(ppeHead1.isPresent()){
+                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_PLAN_ID, " Plan Id Already Exist in Database "));
+                            } else {
+                                ppeHead.setPlanOrderId(planId);
+                            }
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_PLAN_ID, " PLANID CANNOT BE NULL "));
                         }
@@ -2820,6 +2827,32 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             }
                         }
 
+                        // Validate that start date/time is not after end date/time
+                        if (startDate != null && starTime != null && endDate != null && endTime != null) {
+
+                            ZoneId utcZone = ZoneId.of("UTC");
+
+                            // Convert start date/time to UTC
+                            LocalDate startLocalDate = startDate.toInstant().atZone(utcZone).toLocalDate();
+                            LocalTime startLocalTime = starTime.toInstant().atZone(utcZone).toLocalTime();
+                            LocalDateTime startDateTime = LocalDateTime.of(startLocalDate, startLocalTime);
+
+                            // Convert end date/time to UTC
+                            LocalDate endLocalDate = endDate.toInstant().atZone(utcZone).toLocalDate();
+                            LocalTime endLocalTime = endTime.toInstant().atZone(utcZone).toLocalTime();
+                            LocalDateTime endDateTime = LocalDateTime.of(endLocalDate, endLocalTime);
+
+                            // Compare
+                            if (startDateTime.isAfter(endDateTime)) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.END_DATE,
+                                        "START DATE & TIME CANNOT BE AFTER END DATE & TIME"
+                                ));
+                            }
+                        }
+
                         if (endDate != null) {
                             ppeHead.setEndDate(endDate);
                         }
@@ -2830,7 +2863,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
                         ppeHead.setPpeStatus(status);
-
 
                         ppeHead.setOrganizationId(loginUser.getOrgId());
                         ppeHead.setSubOrganizationId(loginUser.getSubOrgId());
@@ -2947,8 +2979,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             }
             if (resultResponses.size() == 0) {
                 this.ppeHeadRepository.saveAll(ppePlans);
-
-
                 this.ppeLineRepository.saveAll(ppeLineList);
 
                 log.error("LogId:{} - UploadExcelServiceImpl - uploadPpeDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + ServiceConstants.UPLOAD_PPE_DETAIL_METHOD_EXECUTED + (endTime - startTime));
