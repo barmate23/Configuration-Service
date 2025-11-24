@@ -6,6 +6,7 @@ import com.stockmanagementsystem.repository.*;
 import com.stockmanagementsystem.request.HolidayRequest;
 import com.stockmanagementsystem.request.ShiftRequest;
 import com.stockmanagementsystem.request.UserShiftRequest;
+import com.stockmanagementsystem.request.WeeklyOffRequest;
 import com.stockmanagementsystem.response.*;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import com.stockmanagementsystem.utils.ServiceConstants;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.stockmanagementsystem.utils.GlobalMessages.getResponseMessages;
 
@@ -39,6 +41,9 @@ public class CalenderServiceImpl implements CalenderService {
 
     @Autowired
     ShiftRepository shiftRepository;
+
+    @Autowired
+    WeeklyOffDaysRepository weeklyOffDaysRepository;
 
     @Autowired
     ShiftMapperRepository shiftMapperRepository;
@@ -1263,6 +1268,90 @@ public class CalenderServiceImpl implements CalenderService {
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(userResponseList);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+        } catch (Exception e) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10061F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " FETCHED USERS LIST TIME :" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<WeeklyOffDays> getWeeklyOff() {
+
+        long startTime = System.currentTimeMillis();
+        String logId = loginUser.getLogId();
+        Integer userId = loginUser.getUserId();
+
+        log.info("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - START", logId, userId);
+
+        BaseResponse<WeeklyOffDays> baseResponse = new BaseResponse<>();
+
+        try {
+
+            List<WeeklyOffDays> weeklyOffDaysList = weeklyOffDaysRepository.findByIsChecked(true);
+
+            // 🔹 HARD–CODED SUCCESS MESSAGE
+            baseResponse.setCode(200);
+            baseResponse.setStatus(1);
+            baseResponse.setMessage("Weekly off days fetched successfully.");
+            baseResponse.setData(weeklyOffDaysList);
+            baseResponse.setLogId(logId);
+
+            log.info("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - SUCCESS - Weekly off days fetched successfully.",
+                    logId, userId);
+
+        } catch (Exception e) {
+
+            // 🔹 HARD–CODED FAILURE MESSAGE
+            baseResponse.setCode(500);
+            baseResponse.setStatus(0);
+            baseResponse.setMessage("Failed to fetch weekly off days.");
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(logId);
+
+            log.error("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - ERROR - Failed to fetch weekly off days.",
+                    logId, userId, e);
+        }
+
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - END - ExecutionTime:{}ms",
+                logId, userId, (endTime - startTime));
+
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<WeeklyOffDays> saveWeeklyOff(WeeklyOffRequest weeklyOffRequest) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET USERS START");
+        BaseResponse<WeeklyOffDays> baseResponse = new BaseResponse<>();
+        try {
+            List<WeeklyOffDays> weeklyOffDaysList = weeklyOffDaysRepository.findAll();
+            Map<String, String> weeklyValueMap = weeklyOffRequest.getDays().stream().collect(Collectors.toMap(k -> k, v -> v));
+            weeklyOffDaysList.forEach(weeklyOffDays -> {
+                if (weeklyValueMap.containsValue(weeklyOffDays.getDay())) {
+                    weeklyOffDays.setIsChecked(true);
+                } else {
+                    weeklyOffDays.setIsChecked(false);
+                }
+            });
+
+            weeklyOffDaysRepository.saveAll(weeklyOffDaysList);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10064S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(weeklyOffDaysList);
             baseResponse.setLogId(loginUser.getLogId());
             log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
