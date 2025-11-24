@@ -4,6 +4,7 @@ import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.request.HolidayRequest;
 import com.stockmanagementsystem.request.ShiftRequest;
 import com.stockmanagementsystem.request.UserShiftRequest;
+import com.stockmanagementsystem.request.WeeklyOffRequest;
 import com.stockmanagementsystem.response.*;
 import com.stockmanagementsystem.service.CalenderService;
 import com.stockmanagementsystem.utils.APIConstants;
@@ -25,36 +26,36 @@ public class CalenderController {
     CalenderService calenderService;
 
     @GetMapping({APIConstants.GET_HOLIDAYTYPE})
-    public BaseResponse<HolidayTypeResponse> getHolidayType(){
+    public BaseResponse<HolidayTypeResponse> getHolidayType() {
         return calenderService.getHolidayType();
     }
 
     @GetMapping(APIConstants.GET_HOLIDAY)
     public ResponseEntity<BaseResponse> getAllHoliday(@RequestParam(defaultValue = "1") int page,
-                                                   @RequestParam(defaultValue = "10") int pageSize){
-        return calenderService.getAllHoliday(page,pageSize);
+                                                      @RequestParam(defaultValue = "10") int pageSize) {
+        return calenderService.getAllHoliday(page, pageSize);
     }
 
     @PostMapping(APIConstants.SAVE_HOLIDAY)
-    public BaseResponse saveHoliday(@RequestBody HolidayRequest holidayRequest){
+    public BaseResponse saveHoliday(@RequestBody HolidayRequest holidayRequest) {
         return calenderService.saveHoliday(holidayRequest);
     }
 
     @PutMapping(APIConstants.UPDATE_HOLIDAY)
-    public BaseResponse<Holiday> updateHolidayCalender(@RequestBody HolidayRequest holidayRequest,@PathVariable Integer holidayId){
-        return calenderService.updateByHolidayId(holidayRequest,holidayId);
+    public BaseResponse<Holiday> updateHolidayCalender(@RequestBody HolidayRequest holidayRequest, @PathVariable Integer holidayId) {
+        return calenderService.updateByHolidayId(holidayRequest, holidayId);
     }
 
     @DeleteMapping(APIConstants.DELETE_HOLIDAY)
-    public BaseResponse<Holiday> deleteHolidayById(@PathVariable Integer holidayId){
-      return calenderService.deleteByHolidayId(holidayId);
+    public BaseResponse<Holiday> deleteHolidayById(@PathVariable Integer holidayId) {
+        return calenderService.deleteByHolidayId(holidayId);
     }
 
     @GetMapping({APIConstants.GET_DAY})
     public ResponseEntity<BaseResponse<List<DayResponse>>> getDays() {
         BaseResponse<List<DayResponse>> response = calenderService.getDay();
-            return ResponseEntity.ok(response);
-       }
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping(APIConstants.GET_HOLIDAYS)
     public ResponseEntity<BaseResponse> getAllHoliday(
@@ -63,11 +64,11 @@ public class CalenderController {
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year) {
 
-        return calenderService.getAllHoliday(page, pageSize, month,year);
+        return calenderService.getAllHoliday(page, pageSize, month, year);
     }
 
     @PostMapping(APIConstants.SAVE_SHIFT)
-    public BaseResponse saveShift(@RequestBody ShiftRequest shiftRequest){
+    public BaseResponse saveShift(@RequestBody ShiftRequest shiftRequest) {
         return calenderService.saveShift(shiftRequest);
     }
 
@@ -100,18 +101,29 @@ public class CalenderController {
     }
 
     @PostMapping(APIConstants.SAVE_USERS_SHIFT)
-    public BaseResponse saveUsersShift(@RequestBody UserShiftRequest userShiftMappperRequest){
+    public BaseResponse saveUsersShift(@RequestBody UserShiftRequest userShiftMappperRequest) {
         return calenderService.saveUsersShift(userShiftMappperRequest);
     }
-      @GetMapping(APIConstants.GET_USER)
-      public BaseResponse<List<UserResponse>> getUsers() {
-          return calenderService.getUser();
-      }
+
+    @GetMapping(APIConstants.GET_USER)
+    public BaseResponse<List<UserResponse>> getUsers() {
+        return calenderService.getUser();
+    }
 
     @GetMapping(APIConstants.GET_USERS_BY_SHIFT)
     public ResponseEntity<BaseResponse> getUsersByShiftMapperId(@PathVariable Integer shiftId) {
         BaseResponse response = calenderService.getUsersByShiftId(shiftId);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping(APIConstants.GET_WEEKLY_OFF)
+    public BaseResponse<WeeklyOffDays> getWeeklyOff() {
+        return calenderService.getWeeklyOff();
+    }
+
+    @PostMapping(APIConstants.SAVE_WEEKLY_OFF)
+    public BaseResponse<WeeklyOffDays> saveWeeklyOff(@RequestBody WeeklyOffRequest weeklyOffRequest) {
+        return calenderService.saveWeeklyOff(weeklyOffRequest);
     }
 
     @PostMapping(APIConstants.UPLOAD_USERS)
@@ -120,9 +132,10 @@ public class CalenderController {
         BaseResponse response = calenderService.saveUsersShift(file, shiftId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
     @DeleteMapping(APIConstants.DELETE_USER_FROM_SHIFT)
-    public BaseResponse<UserShiftMapper> deleteUserByShiftIdAndUserId(@PathVariable Integer shiftId,@PathVariable Integer userId){
-        return calenderService.deleteUsersByShiftId(shiftId,userId);
+    public BaseResponse<UserShiftMapper> deleteUserByShiftIdAndUserId(@PathVariable Integer shiftId, @PathVariable Integer userId) {
+        return calenderService.deleteUsersByShiftId(shiftId, userId);
     }
 
     @GetMapping(APIConstants.GET_USERS)
@@ -134,6 +147,7 @@ public class CalenderController {
 
         return ResponseEntity.status(HttpStatus.OK).body(users);
     }
+
     @GetMapping(APIConstants.GET_SHIFTS)
     public ResponseEntity<BaseResponse> getAllShifts(
             @RequestParam(defaultValue = "1") int page,
@@ -142,6 +156,7 @@ public class CalenderController {
         BaseResponse response = calenderService.getAllShiftWithYearAndDays(page, pageSize);
         return ResponseEntity.ok().body(response);
     }
+
     @GetMapping(APIConstants.GET_USER_NOT_IN_SHIFT)
     public BaseResponse<UserResponse> getUsers(@PathVariable Integer shiftId) {
         return calenderService.getUserNotAddedInShift(shiftId);
