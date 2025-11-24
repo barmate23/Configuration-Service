@@ -97,28 +97,8 @@ public class CalenderServiceImpl implements CalenderService {
         log.info("LogId:{} - CalenderServiceImpl - saveHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " SAVE HOLIDAY START");
         BaseResponse baseResponse = new BaseResponse();
         try {
-            Holiday existingHoliday = holidayRepository.findBySubOrganizationIdAndIsDeletedAndDateOrSubOrganizationIdAndIsDeletedAndHolidayName(loginUser.getSubOrgId(), false, holidayRequest.getDate(), loginUser.getSubOrgId(), false, holidayRequest.getHolidayName());
             // Holiday existingHoliday = holidayRepository.findBySubOrganizationIdAndIsDeletedAndDateOrHolidayName( loginUser.getSubOrgId(),false,holidayRequest.getDate(), holidayRequest.getHolidayName());
-            if (existingHoliday != null) {
-                LocalDate existingHolidayDate = existingHoliday.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate holidayRequestDate = holidayRequest.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-//                if (existingHolidayDate.equals(holidayRequestDate)) {
-//                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10033E);
-//                    baseResponse.setCode(responseMessage.getCode());
-//                    baseResponse.setStatus(responseMessage.getStatus());
-//                    baseResponse.setMessage(responseMessage.getMessage());
-//                    baseResponse.setLogId(loginUser.getLogId());
-//                    baseResponse.setData(new ArrayList<>());
-//                } else if (existingHoliday.getHolidayName().equals(holidayRequest.getHolidayName())) {
-//                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10032E);
-//                    baseResponse.setCode(responseMessage.getCode());
-//                    baseResponse.setStatus(responseMessage.getStatus());
-//                    baseResponse.setMessage(responseMessage.getMessage());
-//                    baseResponse.setLogId(loginUser.getLogId());
-//                    baseResponse.setData(new ArrayList<>());
-//                }
-                return baseResponse;
-            }
+
             Holiday holiday = new Holiday();
             holiday.setHolidayName(holidayRequest.getHolidayName());
             holiday.setDate(holidayRequest.getDate());
