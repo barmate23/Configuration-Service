@@ -254,7 +254,7 @@ public class ServiceConstants {
     public static final String TYPE_SERIAL= "Type (Serial / Batch / None)";
 
 
-    public static final String QC_REQUIRED = "QC Required(Yes/No)";
+    public static final String QC_REQUIRED = "QC Required(Yes/No/Certificate)";
     public static final String INSPECTION = "Inspection";
     public static final String ERP_ITEM_ID="ERP Item ID";
     public static final String ITEM_CLASS = "ItemClass";

@@ -53,6 +53,18 @@ public class CalenderServiceImpl implements CalenderService {
     @Autowired
     UserRepository userRepository;
 
+    private static final Map<String, String> DAY_CODE_MAP = new HashMap<>();
+
+    static {
+        DAY_CODE_MAP.put("MONDAY", "MON");
+        DAY_CODE_MAP.put("TUESDAY", "TUE");
+        DAY_CODE_MAP.put("WEDNESDAY", "WED");
+        DAY_CODE_MAP.put("THURSDAY", "THU");
+        DAY_CODE_MAP.put("FRIDAY", "FRI");
+        DAY_CODE_MAP.put("SATURDAY", "SAT");
+        DAY_CODE_MAP.put("SUNDAY", "SUN");
+    }
+
     @Override
     public BaseResponse<HolidayTypeResponse> getHolidayType() {
         long startTime = System.currentTimeMillis();
@@ -415,6 +427,7 @@ public class CalenderServiceImpl implements CalenderService {
         try {
             long shiftCount =
                     shiftRepository.countByOrganizationIdAndSubOrganizationIdAndIsDeleted(loginUser.getOrgId(), loginUser.getSubOrgId(), false);
+            List<WeeklyOffDays> weeklyOffDays = weeklyOffDaysRepository.findByIsChecked(true);
             if (shiftCount >= 4) {
                 ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10037E);
                 response.setCode(responseMessage.getCode());
@@ -446,16 +459,25 @@ public class CalenderServiceImpl implements CalenderService {
             shift.setCreatedBy(loginUser.getUserId());
             shift.setCreatedOn(new Date());
 
-            Shift savedShift = shiftRepository.save(shift);
 
             Date year = shiftRequest.getYear();
+
+            List<ShiftMapper> shiftMapperList = new ArrayList<>();
 
             for (Integer dayId : shiftRequest.getDay()) {
                 Day day = dayRepository.findById(dayId)
                         .orElseThrow(() -> new IllegalArgumentException("DAY NOT FOUND"));
 
+                if(weeklyOffDays.contains(DAY_CODE_MAP.get(day.getDay()))){
+                    response.setCode(500);
+                    response.setStatus(0);
+                    response.setMessage("You can not add shift on weekly off day: " day.getDay());
+                    response.setData(Collections.emptyList());
+                    response.setLogId(loginUser.getLogId());
+                    return response;
+                }
                 ShiftMapper shiftMapper = new ShiftMapper();
-                shiftMapper.setShift(savedShift);
+                shiftMapper.setShift(shift);
                 shiftMapper.setYear(year);
                 shiftMapper.setDay(day);
                 shiftMapper.setOrganizationId(loginUser.getOrgId());
@@ -463,10 +485,13 @@ public class CalenderServiceImpl implements CalenderService {
                 shiftMapper.setIsDeleted(false);
                 shiftMapper.setCreatedBy(loginUser.getUserId());
                 shiftMapper.setCreatedOn(new Date());
-                shiftMapperRepository.save(shiftMapper);
+                shiftMapperList.add(shiftMapper);
             }
             List<Object> responseData = new ArrayList<>();
-            responseData.add(new ShiftsResponse(savedShift.getId(), savedShift.getShiftName(), savedShift.getShiftStart(), savedShift.getShiftEnd()));
+            shiftRepository.save(shift);
+            shiftMapperRepository.saveAll(shiftMapperList);
+
+            responseData.add(new ShiftsResponse(shift.getId(), shift.getShiftName(), shift.getShiftStart(), shift.getShiftEnd()));
 
             ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10052S);
             response.setCode(responseMessage.getCode());
@@ -496,6 +521,8 @@ public class CalenderServiceImpl implements CalenderService {
         BaseResponse response = new BaseResponse();
         try {
             Optional<Shift> optionalShift = shiftRepository.findByIdAndSubOrganizationIdAndIsDeleted(shiftId, loginUser.getSubOrgId(), false);
+            List<WeeklyOffDays> weeklyOffDays = weeklyOffDaysRepository.findByIsChecked(true);
+
             if (optionalShift.isPresent()) {
                 Shift existingShift = optionalShift.get();
 
@@ -540,6 +567,14 @@ public class CalenderServiceImpl implements CalenderService {
                     Day newDay = dayRepository.findById(newDayId)
                             .orElseThrow(() -> new IllegalArgumentException("DAY NOT FOUND"));
 
+                    if(weeklyOffDays.contains(DAY_CODE_MAP.get(newDay.getDay()))){
+                        response.setCode(500);
+                        response.setStatus(0);
+                        response.setMessage("You can not add shift on weekly off day :" + newDay.getDay());
+                        response.setData(Collections.emptyList());
+                        response.setLogId(loginUser.getLogId());
+                        return response;
+                    }
                     ShiftMapper newMapper = new ShiftMapper();
                     newMapper.setShift(savedShift);
                     newMapper.setYear(year);
@@ -1186,7 +1221,16 @@ public class CalenderServiceImpl implements CalenderService {
                     shiftResponseList.setYearResponse(shiftMapper.getYear());
                 }
 
-                shiftResponseList.setShiftMapperResponses(new ArrayList<>(shiftMapperResponses));
+                // Convert Set to List
+                List<ShiftMapperResponse> sortedList = new ArrayList<>(shiftMapperResponses);
+
+                // Sort by ID
+                sortedList.sort(Comparator.comparing(shiftMapperResponse -> {
+                    return shiftMapperResponse.getDay().getDayId();
+                }));
+
+                // Set the sorted list into response
+                shiftResponseList.setShiftMapperResponses(sortedList);
                 shiftResponses.add(shiftResponseList);
             }
             ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10063S);
