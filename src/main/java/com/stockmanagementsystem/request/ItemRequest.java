@@ -36,6 +36,7 @@ public class ItemRequest {
     private Integer safetyStockLevel;
     private Integer criticalLevel;
     private Boolean isDays;
+    private Boolean inspection;
     private Integer leadTime;
     private Integer dockId;
     private ContainerRequest containerRequest;

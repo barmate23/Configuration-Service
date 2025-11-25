@@ -89,19 +89,7 @@ public class ItemServicesImpl implements ItemService {
         try{
             Item item = new Item();
             item.setItemId(generateItemId(1));
-            Item erpItemId=itemRepository.findBySubOrganizationIdAndErpItemId(loginUser.getSubOrgId(),itemRequest.getErpItemId());
-            if(erpItemId==null){
-                item.setErpItemId(itemRequest.getErpItemId());
-            }else {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10013E);
-                baseResponse.setCode(responseMessage.getCode());
-                baseResponse.setStatus(responseMessage.getStatus());
-                baseResponse.setMessage(responseMessage.getMessage());
-                baseResponse.setData(new ArrayList<>());
-                baseResponse.setLogId(loginUser.getLogId());
-                log.info("LogId:{} - ItemServicesImpl - saveItem - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
-                return baseResponse;
-            }
+
             item.setName(itemRequest.getItemName());
             item.setDescription(itemRequest.getDescription());
             item.setItemGroup(itemRequest.getItemGroup());
@@ -131,6 +119,7 @@ public class ItemServicesImpl implements ItemService {
             item.setModifiedOn(new Date()); // Assuming no modification initially
             item.setItemCode(itemRequest.getItemCode());
             item.setQcRequired(itemRequest.isQcRequired());
+            item.setInspection(itemRequest.getInspection());
 
             // Set Dock
             Optional<Dock> optionalDock = dockRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),itemRequest.getDockId());
@@ -356,23 +345,6 @@ public class ItemServicesImpl implements ItemService {
         try{
             Optional<Item> item = itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),itemId);
 
-         if(item.get().getErpItemId().equals(itemRequest.getErpItemId())) {
-             item.get().setErpItemId(itemRequest.getErpItemId());
-         }else {
-             Item erpItemId = itemRepository.findBySubOrganizationIdAndErpItemId(loginUser.getSubOrgId(), itemRequest.getErpItemId());
-             if (erpItemId == null) {
-                 item.get().setErpItemId(itemRequest.getErpItemId());
-             } else {
-                 ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10017E);
-                 baseResponse.setCode(responseMessage.getCode());
-                 baseResponse.setStatus(responseMessage.getStatus());
-                 baseResponse.setMessage(responseMessage.getMessage());
-                 baseResponse.setData(new ArrayList<>());
-                 baseResponse.setLogId(loginUser.getLogId());
-                 log.info("LogId:{} - ItemServicesImpl - updateItem - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
-                 return baseResponse;
-             }
-         }
             item.get().setName(itemRequest.getItemName());
             item.get().setDescription(itemRequest.getDescription());
             item.get().setItemGroup(itemRequest.getItemGroup());
@@ -402,6 +374,7 @@ public class ItemServicesImpl implements ItemService {
 //            item.get().setAlternativeItem(itemRequest.getAlternativeI);
             item.get().setItemCode(itemRequest.getItemCode());
             item.get().setQcRequired(itemRequest.isQcRequired());
+            item.get().setInspection(itemRequest.getInspection());
             // Set Dock
             Optional<Dock> optionalDock = dockRepository.findById(itemRequest.getDockId());
             if (optionalDock.isPresent()) {
