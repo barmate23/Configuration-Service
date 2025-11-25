@@ -471,7 +471,7 @@ public class CalenderServiceImpl implements CalenderService {
                 if(weeklyOffDays.contains(DAY_CODE_MAP.get(day.getDay()))){
                     response.setCode(500);
                     response.setStatus(0);
-                    response.setMessage("You can not add shift on weekly off day: " day.getDay());
+                    response.setMessage("You can not add shift on weekly off day: "+ day.getDay());
                     response.setData(Collections.emptyList());
                     response.setLogId(loginUser.getLogId());
                     return response;
