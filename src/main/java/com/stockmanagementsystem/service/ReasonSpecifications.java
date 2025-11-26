@@ -41,7 +41,7 @@ public class ReasonSpecifications {
             }
 
             if (reasonCategory != null ) {
-                predicates.add(root.get("reasonCategory").in(reasonCategory));
+                predicates.add(root.get("reasonCategoryMaster").get("reasonCategoryCode").in(reasonCategory));
             }
 
             if (itemName != null && !itemName.isEmpty()) {
