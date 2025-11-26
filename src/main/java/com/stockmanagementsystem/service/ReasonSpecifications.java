@@ -40,8 +40,8 @@ public class ReasonSpecifications {
                 predicates.add(criteriaBuilder.isNull(root.get("isUserCreated")));
             }
 
-            if (reasonCategory != null ) {
-                predicates.add(root.get("reasonCategory").in(reasonCategory));
+            if (reasonCategory != null && !reasonCategory.isEmpty()) {
+                predicates.add(root.get("reasonCategoryMaster").get("reasonCategoryName").in(reasonCategory));
             }
 
             if (itemName != null && !itemName.isEmpty()) {
