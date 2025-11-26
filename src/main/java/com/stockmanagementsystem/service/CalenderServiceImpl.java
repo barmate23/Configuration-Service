@@ -151,35 +151,6 @@ public class CalenderServiceImpl implements CalenderService {
         return baseResponse;
     }
 
-    @Override
-    public ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize) {
-        long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET HOLIDAY LIST START");
-        BaseResponse baseResponse = new BaseResponse();
-        ResponseEntity responseEntity = null;
-        try {
-            PageRequest pageable = PageRequest.of((page - 1) * 10, pageSize, Sort.by(Sort.Direction.DESC, "holidayId"));
-            Page<Holiday> holidayList = holidayRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeleted(loginUser.getOrgId(), loginUser.getSubOrgId(), false, pageable);
-            baseResponse.setData(holidayList.getContent());
-
-            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10047S);
-            baseResponse.setCode(responseMessage.getCode());
-            baseResponse.setStatus(responseMessage.getStatus());
-            baseResponse.setMessage(responseMessage.getMessage());
-            baseResponse.setLogId(loginUser.getLogId());
-            baseResponse.setTotalRecordCount(holidayList.getTotalElements());
-            baseResponse.setTotalPageCount(holidayList.getTotalPages());
-            responseEntity = ResponseEntity.ok().body(baseResponse);
-            log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
-        } catch (Exception e) {
-            long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " FAILED TO FETCH HOLIDAY LIST :" + (endTime - startTime), e);
-            responseEntity = ResponseEntity.badRequest().body("FAILED TO FETCH HOLIDAY LIST FROM DB");
-        }
-        long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " FETCHED HOLIDAY LIST TIME :" + (endTime - startTime));
-        return responseEntity;
-    }
 
     @Override
     public BaseResponse deleteByHolidayId(Integer holidayId) {
@@ -337,58 +308,20 @@ public class CalenderServiceImpl implements CalenderService {
     }
 
     @Override
-    public ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize, Integer month, Integer year) {
+    public ResponseEntity<BaseResponse> getAllHoliday() {
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET HOLIDAYS START");
         BaseResponse baseResponse = new BaseResponse();
         ResponseEntity responseEntity = null;
 
         try {
-            PageRequest pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.ASC, "date"));
-            Page<Holiday> holidayList;
+            List<Holiday> holidayList;
 
-            if (month != null || year != null) {
-                Calendar calendarStart = Calendar.getInstance();
-                Calendar calendarEnd = Calendar.getInstance();
-
-                if (year == null) {
-                    year = calendarStart.get(Calendar.YEAR);
-                }
-
-                calendarStart.set(Calendar.YEAR, year);
-                calendarEnd.set(Calendar.YEAR, year);
-
-                if (month != null) {
-                    calendarStart.set(Calendar.MONTH, month - 1);
-                    calendarEnd.set(Calendar.MONTH, month - 1);
-                } else {
-                    calendarStart.set(Calendar.MONTH, Calendar.JANUARY);
-                    calendarEnd.set(Calendar.MONTH, Calendar.DECEMBER);
-                }
-
-                calendarStart.set(Calendar.DAY_OF_MONTH, 1);
-                calendarStart.set(Calendar.HOUR_OF_DAY, 0);
-                calendarStart.set(Calendar.MINUTE, 0);
-                calendarStart.set(Calendar.SECOND, 0);
-                Date startDate = calendarStart.getTime();
-
-                calendarEnd.set(Calendar.DAY_OF_MONTH, calendarEnd.getActualMaximum(Calendar.DAY_OF_MONTH));
-                calendarEnd.set(Calendar.HOUR_OF_DAY, 23);
-                calendarEnd.set(Calendar.MINUTE, 59);
-                calendarEnd.set(Calendar.SECOND, 59);
-                Date endDate = calendarEnd.getTime();
-
-
-                holidayList = holidayRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndDateBetween(
-                        loginUser.getOrgId(), loginUser.getSubOrgId(), false, startDate, endDate, pageable);
-
-            } else {
                 holidayList = holidayRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeleted(
-                        loginUser.getOrgId(), loginUser.getSubOrgId(), false, pageable);
-            }
+                        loginUser.getOrgId(), loginUser.getSubOrgId(), false);
 
             List<HolidayResponse> holidayResponses = new ArrayList<>();
-            for (Holiday savedHoliday : holidayList.getContent()) {
+            for (Holiday savedHoliday : holidayList) {
                 HolidayResponse holidayResponse = new HolidayResponse();
                 holidayResponse.setHolidayId(savedHoliday.getId());
                 holidayResponse.setDate(savedHoliday.getDate());
@@ -404,8 +337,6 @@ public class CalenderServiceImpl implements CalenderService {
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(holidayResponses);
             baseResponse.setLogId(loginUser.getLogId());
-            baseResponse.setTotalRecordCount(holidayList.getTotalElements());
-            baseResponse.setTotalPageCount(holidayList.getTotalPages());
             responseEntity = ResponseEntity.ok().body(baseResponse);
             log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {

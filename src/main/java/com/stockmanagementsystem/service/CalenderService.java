@@ -16,14 +16,13 @@ public interface CalenderService {
 
     BaseResponse saveHoliday(HolidayRequest holidayRequest);
 
-    ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize);
 
     BaseResponse deleteByHolidayId(Integer holidayId);
     BaseResponse<Holiday> updateByHolidayId(HolidayRequest holidayRequest,Integer holidayId);
 
     BaseResponse<List<DayResponse>> getDay();
 
-    ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize, Integer month, Integer year);
+    ResponseEntity<BaseResponse> getAllHoliday();
 
     BaseResponse saveShift(ShiftRequest ShiftRequest);
 

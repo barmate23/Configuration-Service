@@ -22,7 +22,6 @@ public class APIConstants {
     public static final String COMMON_MASTER_CONTROLLER="/commonMaster";
 
     public static final String GET_HOLIDAYTYPE="/getHolidayType";
-    public static final String GET_HOLIDAY="/getHoliday";
     public static final String SAVE_HOLIDAY="/saveHoliday";
     public static final String UPDATE_HOLIDAY="/updateHoliday/{holidayId}";
     public static final String DELETE_HOLIDAY="/delete/{holidayId}";
