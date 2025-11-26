@@ -234,7 +234,7 @@ public class ReasonServiceImpl implements ReasonService {
     }
 
     @Override
-    public BaseResponse<List<ReasonResponse>> searchReasons(Integer pageNumber, Integer pageSize, List<String> reasonId, List<String> reasonCategory, List<String> itemName, Boolean userCreatedReason) {
+    public BaseResponse<List<ReasonResponse>> searchReasons(Integer pageNumber, Integer pageSize, List<String> reasonId, String reasonCategory, List<String> itemName, Boolean userCreatedReason) {
 
 
         long startTime = System.currentTimeMillis();
