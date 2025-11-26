@@ -30,11 +30,6 @@ public class CalenderController {
         return calenderService.getHolidayType();
     }
 
-    @GetMapping(APIConstants.GET_HOLIDAY)
-    public ResponseEntity<BaseResponse> getAllHoliday(@RequestParam(defaultValue = "1") int page,
-                                                      @RequestParam(defaultValue = "10") int pageSize) {
-        return calenderService.getAllHoliday(page, pageSize);
-    }
 
     @PostMapping(APIConstants.SAVE_HOLIDAY)
     public BaseResponse saveHoliday(@RequestBody HolidayRequest holidayRequest) {
@@ -58,13 +53,9 @@ public class CalenderController {
     }
 
     @GetMapping(APIConstants.GET_HOLIDAYS)
-    public ResponseEntity<BaseResponse> getAllHoliday(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) Integer month,
-            @RequestParam(required = false) Integer year) {
+    public ResponseEntity<BaseResponse> getAllHoliday() {
 
-        return calenderService.getAllHoliday(page, pageSize, month, year);
+        return calenderService.getAllHoliday( );
     }
 
     @PostMapping(APIConstants.SAVE_SHIFT)

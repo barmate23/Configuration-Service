@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface HolidayRepository extends JpaRepository<Holiday,Integer> {
 
-   Page<Holiday> findByOrganizationIdAndSubOrganizationIdAndIsDeleted(Integer orgId, Integer subOrgId,boolean active, Pageable pageable);
+   List<Holiday> findByOrganizationIdAndSubOrganizationIdAndIsDeleted(Integer orgId, Integer subOrgId,boolean active);
 
    Optional<Holiday> findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndId(Integer orgId, Integer subOrgId,boolean b, Integer holidayId);
    Holiday findHolidayByOrganizationIdAndSubOrganizationIdAndIsDeletedAndId(Integer orgId, Integer subOrgId,boolean active, Integer holidayId);
