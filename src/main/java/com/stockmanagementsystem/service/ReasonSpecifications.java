@@ -12,7 +12,7 @@ import java.util.List;
 public class ReasonSpecifications {
     public static Specification<Reason> withFilters(
             List<String> reasonId,
-            List<String> reasonCategory,
+            String reasonCategory,
             List<String> itemName,
             Boolean isUserCreated,
             boolean activeOnly,
@@ -40,7 +40,7 @@ public class ReasonSpecifications {
                 predicates.add(criteriaBuilder.isNull(root.get("isUserCreated")));
             }
 
-            if (reasonCategory != null && !reasonCategory.isEmpty()) {
+            if (reasonCategory != null ) {
                 predicates.add(root.get("reasonCategory").in(reasonCategory));
             }
 
