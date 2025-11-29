@@ -16,12 +16,12 @@ public interface BomLineRepository extends JpaRepository<BOMLine,Integer> {
 
     Page<BOMLine> findByIsDeletedAndBomHeadId(boolean b, Integer id, Pageable pageable);
 
-    Page<BOMLine> findByIsDeletedAndSubOrganizationIdAndBomHeadId(boolean b, Integer subOrgId, Integer id, Pageable pageable);
-    List<BOMLine> findByIsDeletedAndSubOrganizationIdAndBomHeadId(boolean b, Integer subOrgId, Integer id);
+    Page<BOMLine> findByIsDeletedAndSubOrganizationIdAndBomHeadIdId(boolean b, Integer subOrgId, Integer id, Pageable pageable);
+    List<BOMLine> findByIsDeletedAndSubOrganizationIdAndBomHeadIdId(boolean b, Integer subOrgId, Integer id);
 
     BOMLine findByIsDeletedAndSubOrganizationIdAndId(boolean b, Integer subOrgId, Integer id);
 
-    BOMLine findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadBomERPCode(boolean b, Integer subOrgId, String itemId, String bomId);
+    BOMLine findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadIdBomERPCode(boolean b, Integer subOrgId, String itemId, String bomId);
 
-    List<BOMLine> findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadBomERPCode(boolean b, Integer subOrgId, List<String> ppeHeadLineList, String bomId);
+    List<BOMLine> findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadIdBomERPCode(boolean b, Integer subOrgId, List<String> ppeHeadLineList, String bomId);
 }
