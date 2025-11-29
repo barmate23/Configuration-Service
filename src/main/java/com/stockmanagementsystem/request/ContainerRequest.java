@@ -14,5 +14,7 @@ public class ContainerRequest {
     private Float weight;
     private Integer itemQty;
     private Integer minimumOrderQty;
+    private String containerCapacityUom;
+    private Float containerCapacity;
 
 }

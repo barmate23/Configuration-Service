@@ -38,7 +38,7 @@ public class BOMLine {
     private Item item;
 
     @Column(name = "Quantity")
-    private Integer quantity;
+    private Float quantity;
 
     @Column(name = "UnitOfMeasure", length = 20)
     private String unitOfMeasure;

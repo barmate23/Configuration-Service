@@ -29,8 +29,6 @@ public class ItemRequest {
     private String uom;
     private Float itemUnitWeight;
     private String physicalForm;
-    private String containerCapacityUom;
-    private Float containerCapacity;
     private Float itemUnitRate;
     private String currency;
     private Integer alternativeItemId;

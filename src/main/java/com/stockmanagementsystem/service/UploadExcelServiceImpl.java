@@ -372,7 +372,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.QC_REQUIRED, ServiceConstants.QC_REQUIRE_MANDATORY));
                         }
 
-
                         if (uom == null || uom.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
                                     ServiceConstants.UOM, ServiceConstants.UOM_MANDATORY));
@@ -429,35 +428,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             ));
                         }
                         item.setPhysicalForm(physicalForm);
-
-                        // Container Capacity UOM: e.g. LTR, KG, NOS
-                        if (containerCapacityUom == null || containerCapacityUom.isEmpty()) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Container Capacity UOM",
-                                    "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."
-                            ));
-                        } else if (!validateRegex(containerCapacityUom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Container Capacity UOM",
-                                    "Invalid Container Capacity UOM format."
-                            ));
-                        }
-                        item.setContainerCapacityUom(containerCapacityUom);
-
-                        // Container Capacity: > 0
-                        if (containerCapacity == null || containerCapacity <= 0) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Container Capacity",
-                                    "Container Capacity is mandatory and must be greater than 0."
-                            ));
-                        }
-                        item.setContainerCapacity(containerCapacity);
 
 
                         List<String> classList = new ArrayList<>(Arrays.asList("A", "B", "C"));
@@ -542,6 +512,35 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (itemOptional.isEmpty() && resultResponses.size() == 0) {
                             Container container = new Container();
                             container.setItem(item);
+
+                            // Container Capacity UOM: e.g. LTR, KG, NOS
+                            if (containerCapacityUom == null || containerCapacityUom.isEmpty()) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        "Container Capacity UOM",
+                                        "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."
+                                ));
+                            } else if (!validateRegex(containerCapacityUom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        "Container Capacity UOM",
+                                        "Invalid Container Capacity UOM format."
+                                ));
+                            }
+
+                            container.setContainerCapacityUom(containerCapacityUom);
+                            // Container Capacity: > 0
+                            if (containerCapacity == null || containerCapacity <= 0) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        "Container Capacity",
+                                        "Container Capacity is mandatory and must be greater than 0."
+                                ));
+                            }
+                            container.setContainerCapacity(containerCapacity);
 
                             if (code == null || code.isEmpty()) {
                                 resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CODE, ServiceConstants.CODE_MANDATORY));
@@ -2369,7 +2368,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         Integer level = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_0, resultResponses, type, headerNames);
                         String itemCode = getCellStringValue(data, ServiceConstants.CELL_INDEX_1, resultResponses, type, headerNames);
                         String itemName = getCellStringValue(data, ServiceConstants.CELL_INDEX_2, resultResponses, type, headerNames);
-                        Integer quantity = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_3, resultResponses, type, headerNames);
+                        Float quantity = getCellFloatValue(data, ServiceConstants.CELL_INDEX_3, resultResponses, type, headerNames);
                         String uom = getCellStringValue(data, ServiceConstants.CELL_INDEX_4, resultResponses, type, headerNames);
                         String classABC = getCellStringValue(data, ServiceConstants.CELL_INDEX_5, resultResponses, type, headerNames);
                         String stage = getCellStringValue(data, ServiceConstants.CELL_INDEX_6, resultResponses, type, headerNames);
@@ -2441,6 +2440,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     public ResponseEntity<BaseResponse> uploadEquipmentDetail(MultipartFile file, String type, String logId) throws IOException {
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - UploadExcelServiceImpl - uploadEquipmentDetail - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ServiceConstants.SPACE + ServiceConstants.UPLOAD_EQUIPMENT_DETAIL_METHOD_STARTED);
+
 
         try {
             // Read the Excel file and perform validation
