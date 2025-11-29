@@ -267,6 +267,10 @@ public class ServiceConstants {
     public static final String ITEM_SUB_CATEGORY ="Item Subcategory";
     public static final String ITEM_UNIT_WEIGHT = " Item Unit Weight";
 
+    public static final String PHYSICAL_FORM = "Physical Form";
+    public static final String CONTAINER_CAPACITY_UOM = "Container Capacity UOM";
+    public static final String CONTAINER_CAPACITY = "Container Capacity";
+
     public static final String UOM = "UOM";
     public static final String SUPPLIER_ID = "Supplier ID";
     public static final String USR = "USR";
@@ -630,6 +634,7 @@ public class ServiceConstants {
     public static final Integer CELL_INDEX_49 = 49;
     public static final Integer CELL_INDEX_50 = 50;
     public static final Integer CELL_INDEX_51 = 51;
+
 
     public static final Integer INTERNAL_SERVER_ERROR=500;
 

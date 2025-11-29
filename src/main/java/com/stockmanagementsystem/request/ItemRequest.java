@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import java.util.Date;
 
 @Data
@@ -27,6 +28,9 @@ public class ItemRequest {
     private String source;
     private String uom;
     private Float itemUnitWeight;
+    private String physicalForm;
+    private String containerCapacityUom;
+    private Float containerCapacity;
     private Float itemUnitRate;
     private String currency;
     private Integer alternativeItemId;
