@@ -200,8 +200,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ITEM_GROUP,
                     ITEM_CATEGORY,
                     ITEM_SUB_CATEGORY,
-                    TYPE, TYPE_SERIAL, QC_REQUIRED,INSPECTION ,ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, CODE, TYPES,
-                    DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, ITEM_QTY, MINIMUM_ORDER_QTY,
+                    TYPE, TYPE_SERIAL, QC_REQUIRED,ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT,PHYSICAL_FORM, CONTAINER_CAPACITY_UOM,CONTAINER_CAPACITY, CODE, TYPES,
+                    DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, MINIMUM_ORDER_QTY,
                     OPTIMUM_LEVEL, REORDER_LEVEL, SAFETY_LEVEL, CRITICAL_LEVEL, DOCK, DOCKS_NAME
             ));
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
@@ -251,27 +251,34 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_11, resultResponses, type, headerNames);
                         String source = getCellStringValue(data, ServiceConstants.CELL_INDEX_12, resultResponses, type, headerNames);
                         String uom = getCellStringValue(data, ServiceConstants.CELL_INDEX_13, resultResponses, type, headerNames);
-
                         Float itemUnitWeight = getCellFloatValue(data, ServiceConstants.CELL_INDEX_14, resultResponses, type, headerNames);
-                        String code = getCellStringValue(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
-                        String types = getCellStringValue(data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
-                        String dimensionUOM = getCellStringValue(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
 
-                        Float width = getCellFloatValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
-                        Float height = getCellFloatValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
-                        Float length = getCellFloatValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
-                        Float circumference = getCellFloatValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
-                        Float weight = getCellFloatValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
+                        String physicalForm   = getCellStringValue(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
 
-                        Integer itemQty = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
-                        Integer minimumOrderQty = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
-                        Integer optimumLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_25, resultResponses, type, headerNames);
-                        Integer reorderLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_26, resultResponses, type, headerNames);
-                        Integer safetyLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_27, resultResponses, type, headerNames);
-                        Integer criticalLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_28, resultResponses, type, headerNames);
+                        String containerCapacityUom = getCellStringValue(
+                                data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
 
-                        String dockId = getCellStringValue(data, ServiceConstants.CELL_INDEX_29, resultResponses, type, headerNames);
-                        String dockName = getCellStringValue(data, ServiceConstants.CELL_INDEX_30, resultResponses, type, headerNames);
+                        Float containerCapacity = getCellFloatValue(
+                                data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
+
+                        String code = getCellStringValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
+                        String types = getCellStringValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
+                        String dimensionUOM = getCellStringValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
+
+                        Float width = getCellFloatValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
+                        Float height = getCellFloatValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
+                        Float length = getCellFloatValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
+                        Float circumference = getCellFloatValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
+                        Float weight = getCellFloatValue(data, ServiceConstants.CELL_INDEX_25, resultResponses, type, headerNames);
+
+                        Integer minimumOrderQty = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_26, resultResponses, type, headerNames);
+                        Integer optimumLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_27, resultResponses, type, headerNames);
+                        Integer reorderLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_28, resultResponses, type, headerNames);
+                        Integer safetyLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_29, resultResponses, type, headerNames);
+                        Integer criticalLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_30, resultResponses, type, headerNames);
+
+                        String dockId = getCellStringValue(data, ServiceConstants.CELL_INDEX_31, resultResponses, type, headerNames);
+                        String dockName = getCellStringValue(data, ServiceConstants.CELL_INDEX_32, resultResponses, type, headerNames);
                         // Create a new Item object and set its properties
                         Item item = new Item();
                         item.setSubOrganizationId(loginUser.getSubOrgId());
@@ -287,9 +294,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (itemName == null || itemName.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_NAME, ServiceConstants.ITEM_NAME_MANDATORY));
                         }
-//                        else if (!validateRegex(itemName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_NAME, ServiceConstants.INVALID_ITEM_NAME_FORMAT));
-//                        }
+
                         item.setName(itemName);
                         if (itemCode == null || itemCode.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_CODE, ServiceConstants.ITEM_CODE_MANDATORY));
@@ -303,22 +308,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             itemCodeSet.add(itemCode);
                         }
                         item.setItemCode(itemCode);
-//                        if (erpItemId == null || erpItemId.isEmpty()) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ITEM_ID, ServiceConstants.ERP_ITEM_ID_MANDATORY));
-//                        } else if (!validateRegex(erpItemId, ServiceConstants.ID_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ITEM_ID, ServiceConstants.INVALID_ERP_ITEM_ID_FORMAT));
-//                        }
-//                        if (erpItemIdSet.contains(erpItemId)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ITEM_ID, ServiceConstants.DUPLICATE_ERP_ITEM_ID));
-//                        } else {
-//                            erpItemIdSet.add(erpItemId);
-//                        }
-//                        item.setErpItemId(erpItemId);
-//                        if (itemDescription == null || itemDescription.isEmpty()) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_DESCRIPTION, ServiceConstants.ITEM_DESCRIPTION_MANDATORY));
-//                        } else if (!validateRegex(itemDescription, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_DESCRIPTION, ServiceConstants.INVALID_ITEM_DESCRIPTION_FORMAT));
-//                        }
+
                         item.setDescription(itemDescription);
 
                         if (itemGroup == null || itemGroup.isEmpty()) {
@@ -383,13 +373,16 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
 
 
+                        if (uom == null || uom.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
+                                    ServiceConstants.UOM, ServiceConstants.UOM_MANDATORY));
+                        } else if (!validateRegex(uom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
+                                    ServiceConstants.UOM, ServiceConstants.INVALID_UOM_FORMAT));
+                        }
+                        item.setUom(uom);
 
-//                        if (currency == null || currency.isEmpty()) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CURRENCY, ServiceConstants.CURRENCY_MANDATORY));
-//                        } else if (!validateRegex(currency, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CURRENCY, ServiceConstants.INVALID_CURRENCY_FORMAT));
-//                        }
-//                        item.setCurrency(currency);
+
                         List<String> serialBatchList = new ArrayList<>(Arrays.asList("Serial", "Batch", "None"));
                         if (!serialBatchList.stream().anyMatch(li -> li.equalsIgnoreCase(typeSerialBatch))) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.TYPE_SERIAL_BATCH, ServiceConstants.SERIAL_BATCH_INVALID));
@@ -417,10 +410,55 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
                         item.setSource(source);
 
-//                        if (itemUnitRate == null) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_UNIT_RATE, ServiceConstants.ITEM_UNIT_RATE_MANDATORY));
-//                        }
-//                        item.setItemUnitRate(itemUnitRate);
+                        // ====================================================
+                        List<String> allowedPhysicalForms = Arrays.asList("SOLID", "LIQUID", "GAS");
+
+                        if (physicalForm == null || physicalForm.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Physical Form",
+                                    "Physical Form is mandatory (SOLID / LIQUID / GAS)."
+                            ));
+                        } else if (allowedPhysicalForms.stream().noneMatch(f -> f.equalsIgnoreCase(physicalForm))) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Physical Form",
+                                    "Physical Form must be SOLID, LIQUID or GAS."
+                            ));
+                        }
+                        item.setPhysicalForm(physicalForm);
+
+                        // Container Capacity UOM: e.g. LTR, KG, NOS
+                        if (containerCapacityUom == null || containerCapacityUom.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Container Capacity UOM",
+                                    "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."
+                            ));
+                        } else if (!validateRegex(containerCapacityUom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Container Capacity UOM",
+                                    "Invalid Container Capacity UOM format."
+                            ));
+                        }
+                        item.setContainerCapacityUom(containerCapacityUom);
+
+                        // Container Capacity: > 0
+                        if (containerCapacity == null || containerCapacity <= 0) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Container Capacity",
+                                    "Container Capacity is mandatory and must be greater than 0."
+                            ));
+                        }
+                        item.setContainerCapacity(containerCapacity);
+
 
                         List<String> classList = new ArrayList<>(Arrays.asList("A", "B", "C"));
                         if (!classList.stream().anyMatch(li -> li.equalsIgnoreCase(classABC))) {
@@ -527,10 +565,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             }
                             container.setLength(length);
 
-                            if (itemQty == null) {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_QTY, ServiceConstants.ITEM_QTY_MANDATORY));
-                            }
-                            container.setItemQty(itemQty);
 
                             if (dimensionUOM == null || dimensionUOM.isEmpty()) {
                                 resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DIMENSION_UOM, ServiceConstants.DIMENSION_UOM_MANDATORY));

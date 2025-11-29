@@ -103,6 +103,9 @@ public class ItemServicesImpl implements ItemService {
             item.setSource(itemRequest.getSource());
             item.setUom(itemRequest.getUom());
             item.setItemUnitWeight(itemRequest.getItemUnitWeight());
+            item.setContainerCapacity(itemRequest.getContainerCapacity());
+            item.setContainerCapacityUom(itemRequest.getContainerCapacityUom());
+            item.setPhysicalForm(itemRequest.getPhysicalForm());
             item.setItemUnitRate(itemRequest.getItemUnitRate());
             item.setCurrency(itemRequest.getCurrency());
             item.setOptimumLevel(itemRequest.getOptimumLevel());
@@ -358,6 +361,9 @@ public class ItemServicesImpl implements ItemService {
             item.get().setSource(itemRequest.getSource());
             item.get().setUom(itemRequest.getUom());
             item.get().setItemUnitWeight(itemRequest.getItemUnitWeight());
+            item.get().setPhysicalForm(itemRequest.getPhysicalForm());
+            item.get().setContainerCapacityUom(itemRequest.getContainerCapacityUom());
+            item.get().setContainerCapacity(itemRequest.getContainerCapacity());
             item.get().setItemUnitRate(itemRequest.getItemUnitRate());
             item.get().setCurrency(itemRequest.getCurrency());
             item.get().setOptimumLevel(itemRequest.getOptimumLevel());
