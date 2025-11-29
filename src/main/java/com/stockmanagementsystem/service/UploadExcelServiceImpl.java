@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.sql.Time;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
@@ -499,12 +500,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             items.add(item);
                             StockBalance stockBalance = new StockBalance();
                             stockBalance.setItemId(item);
-                            stockBalance.setBalanceQuantity(0);
+                            stockBalance.setBalanceQuantity(0.0F);
                             stockBalance.setIsDeleted(false);
                             stockBalance.setCreatedBy(loginUser.getUserId());
-                            stockBalance.setCreatedOn(new Date());
+                            stockBalance.setCreatedOn(Timestamp.valueOf(LocalDateTime.now()));
                             stockBalance.setModifiedBy(loginUser.getUserId());
-                            stockBalance.setModifiedOn(new Date());
+                            stockBalance.setModifiedOn(Timestamp.valueOf(LocalDateTime.now()));
                             stockBalance.setOrganizationId(loginUser.getOrgId());
                             stockBalance.setSubOrganizationId(loginUser.getSubOrgId());
                             stockBalances.add(stockBalance);
@@ -2393,7 +2394,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), headerNames.get(ServiceConstants.CELL_INDEX_3), "This Item not Present in Database"));
                         }
-                        bomLine.setBomHead(boMHead);
+                        bomLine.setBomHeadId(boMHead);
                         bomLine.setQuantity(quantity);
                         bomLine.setUnitOfMeasure(uom);
                         bomLine.setClassType(classABC);
@@ -2406,8 +2407,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         bomLine.setSubOrganizationId(loginUser.getSubOrgId());
                         bomLine.setIsActive(true);
                         bomLine.setIsDeleted(false);
-                        bomLine.setCreatedOn(new Date());
-                        bomLine.setModifiedOn(new Date());
+                        bomLine.setCreatedOn(Timestamp.valueOf(LocalDateTime.now()));
+                        bomLine.setModifiedOn(Timestamp.valueOf(LocalDateTime.now()));
                         bomLines.add(bomLine);
                         count++;
                     }
@@ -2890,7 +2891,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         ppeHead.setModifiedBy(loginUser.getUserId());
                         ppeHead.setModifiedOn(new Date());
 
-                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
+                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadIdBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
                         if (bomLine != null) {
                             ppeLine.setBomLine(bomLine);
                             ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
@@ -2989,7 +2990,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         .filter(e -> e.getPPEHead().getPlanOrderId().equals(ppeHead.getPlanOrderId()))
                         .map(e -> e.getItem().getItemCode())
                         .collect(Collectors.toList());
-                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomERPCode());
+                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadIdBomERPCode(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomERPCode());
                 if (extraBomLine.size() != 0) {
                     List<String> itemids = extraBomLine.stream().map(e -> e.getItem().getItemId()).collect(Collectors.toList());
                     resultResponses.add(new ValidationResultResponse(type, null, ServiceConstants.ITEM_ID, "THIS BOM ITEM IDS :" + itemids.toString() + "IS NOT PRESENT IN PLAN/ORDER: " + ppeHead.getPlanOrderId()));

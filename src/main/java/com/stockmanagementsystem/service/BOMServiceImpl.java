@@ -16,6 +16,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -108,7 +110,7 @@ public class BOMServiceImpl implements BOMService {
         List<BOMLine> bomLines=new ArrayList<>();
         try {
             final Pageable pageable = (Pageable) PageRequest.of((int) pageNo, (int) pageSize);
-            Page<BOMLine> pageResult = this.bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadId(false,loginUser.getSubOrgId(),id, pageable);
+            Page<BOMLine> pageResult = this.bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadIdId(false,loginUser.getSubOrgId(),id, pageable);
             baseResponse.setTotalPageCount(pageResult.getTotalPages());
             bomLines=pageResult.getContent();
             baseResponse.setTotalRecordCount(pageResult.getTotalElements());
@@ -139,7 +141,7 @@ public class BOMServiceImpl implements BOMService {
         log.info("LogId:{} - BOMServiceImpl - getAllBomLineByBomId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET ALL BOM LINE BY BOM HEAD ID METHOD START");
         BaseResponse<BOMLine> baseResponse = new BaseResponse<>();
         try {
-            List<BOMLine> bomLines= this.bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadId(false,loginUser.getSubOrgId(),id);
+            List<BOMLine> bomLines= this.bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadIdId(false,loginUser.getSubOrgId(),id);
             ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10074S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
@@ -189,7 +191,7 @@ public class BOMServiceImpl implements BOMService {
             bomHeadRepository.save(boMHead);
             for (BOMLineRequest bomLineRequest:bomHeadRequest.getBomLineRequests()) {
                 BOMLine bomLine =new BOMLine();
-                bomLine.setBomHead(boMHead);
+                bomLine.setBomHeadId(boMHead);
                 bomLine.setLevel(bomLineRequest.getLevel());
                 bomLine.setLineNumber(bomLineRequest.getLineNumber());
                 Optional<Item> itemOptional=itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),bomLineRequest.getItemId());
@@ -214,8 +216,8 @@ public class BOMServiceImpl implements BOMService {
                 bomLine.setOrganizationId(loginUser.getOrgId());
                 bomLine.setSubOrganizationId(loginUser.getSubOrgId());
                 bomLine.setCreatedBy(loginUser.getUserId());
-                bomLine.setCreatedOn(new Date());
-                bomLine.setModifiedOn(new Date());
+                bomLine.setCreatedOn(Timestamp.valueOf(LocalDateTime.now()));
+                bomLine.setModifiedOn(Timestamp.valueOf(LocalDateTime.now()));
                 bomLine.setModifiedBy(loginUser.getUserId());
                 bomLineRepository.save(bomLine);
             }
@@ -270,7 +272,7 @@ public class BOMServiceImpl implements BOMService {
                 }else {
                    bomLine =new BOMLine();
                 }
-                bomLine.setBomHead(boMHead);
+                bomLine.setBomHeadId(boMHead);
                 bomLine.setLevel(bomLineRequest.getLevel());
                 bomLine.setLineNumber(bomLineRequest.getLineNumber());
                 Optional<Item> itemOptional=itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),bomLineRequest.getItemId());
@@ -292,8 +294,8 @@ public class BOMServiceImpl implements BOMService {
                 bomLine.setBomNotes(bomLineRequest.getBomNotes());
                 bomLine.setIsDeleted(false);
                 bomLine.setCreatedBy(loginUser.getUserId());
-                bomLine.setCreatedOn(new Date());
-                bomLine.setModifiedOn(new Date());
+                bomLine.setCreatedOn(Timestamp.valueOf(LocalDateTime.now()));
+                bomLine.setModifiedOn(Timestamp.valueOf(LocalDateTime.now()));
                 bomLine.setModifiedBy(loginUser.getUserId());
                 bomLine.setOrganizationId(loginUser.getOrgId());
                 bomLine.setSubOrganizationId(loginUser.getSubOrgId());
@@ -330,7 +332,7 @@ public class BOMServiceImpl implements BOMService {
         try {
             BoMHead boMHead=bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),id);
             boMHead.setIsDeleted(true);
-            List<BOMLine> bomLines=bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadId(false,loginUser.getSubOrgId(),id);
+            List<BOMLine> bomLines=bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadIdId(false,loginUser.getSubOrgId(),id);
             bomHeadRepository.save(boMHead);
             ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10077S);
             baseResponse.setCode(responseMessage.getCode());

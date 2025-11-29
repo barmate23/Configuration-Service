@@ -36,13 +36,13 @@ public class ASNOrderLine {
     private Item item;
 
     @Column(name = "RequiredQuentity")
-    private Integer requiredQuantity;
+    private Float requiredQuantity;
 
     @Column(name = "AllocatedQuentity")
-    private Integer allocatedQuantity;
+    private Float allocatedQuantity;
 
     @Column(name = "balanceQuantity")
-    private Integer balanceQuantity;
+    private Float balanceQuantity;
 
     @Column(name = "InvoiceQuantity")
     private Integer invoiceQuantity;
@@ -52,6 +52,14 @@ public class ASNOrderLine {
 
     @Column(name = "mode")
     private Integer mode;
+
+    //add new column
+    @ManyToOne
+    private Reason reason;
+
+    //add new column
+    @Column(name = "ReasonDocumentId")
+    private Integer reasonDocumentId;
 
     @ManyToOne
     @JoinColumn(name = "StatusId")
