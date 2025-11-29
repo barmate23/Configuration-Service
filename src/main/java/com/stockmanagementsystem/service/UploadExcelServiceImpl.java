@@ -2441,6 +2441,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - UploadExcelServiceImpl - uploadEquipmentDetail - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ServiceConstants.SPACE + ServiceConstants.UPLOAD_EQUIPMENT_DETAIL_METHOD_STARTED);
 
+
         try {
             // Read the Excel file and perform validation
             Workbook workbook = WorkbookFactory.create(file.getInputStream());
