@@ -34,7 +34,7 @@ public class PPELine {
     private BOMLine bomLine;
 
     @Column(name = "requiredQuantity")
-    private Integer requiredQuantity;
+    private Float requiredQuantity;
 
     //Changed type to Date
     @Column(name = "requiredBy")
