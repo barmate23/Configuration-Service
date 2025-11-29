@@ -47,6 +47,18 @@ public class AcceptedRejectedContainerBarcode {
     @Column(name = "crrContainerCode")
     private String crrContainerCode;
 
+    @Column(name = "containerCode")
+    private String containerCode;
+
+    @Column(name = "containerType")
+    private String containerType;
+
+    @Column(name = "packing_slip_number", unique = true)
+    private String packingSlipNumber;
+
+    @Column(name = "packing_sequence", length = 20)
+    private String packingSequence;
+
     @Column(name = "isAccepted")
     private Boolean isAccepted;
     @JsonIgnore

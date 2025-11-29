@@ -107,7 +107,7 @@ public class BarcodePrintServiceImpl implements BarcodePrintService{
                         }
                         break;
                     case "LOCATION":
-                        List<Location> locations = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneId(false, loginUser.getSubOrgId(), zoneId);
+                        List<Location> locations = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(false, loginUser.getSubOrgId(), zoneId);
                         SubModule locationSubModule = subModuleRepository.findByIsDeletedAndSubModuleCode(false, "LCSN");
                         for (Location location : locations) {
                             PrintQueueDetail printQueueDetail = createPrintQueueDetail(barcodeMaster, deviceMaster, location.getLocationId(), ServiceConstants.QUEUED, locationSubModule, date);

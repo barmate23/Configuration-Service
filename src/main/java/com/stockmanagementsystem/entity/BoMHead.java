@@ -39,7 +39,6 @@ public class BoMHead {
     @Column(name = "BomERPCode")
     private String bomERPCode;
 
-
     @Column(name = "Date")
     private Date date;
 

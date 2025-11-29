@@ -66,19 +66,12 @@
 			<version>5.0.0</version> <!-- Use the latest version available -->
 		</dependency>
 
-		<dependency>
-    <groupId>net.logstash.logback</groupId>
-    <artifactId>logstash-logback-encoder</artifactId>
-    <version>7.4</version>
-</dependency>
-
 
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 			<version>3.1.5</version>
 		</dependency>
-
 
 		<dependency>
 			<groupId>io.springfox</groupId>
@@ -133,23 +126,6 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
-<configuration>
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/var/log/uploadservice.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/var/log/uploadservice-%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>3650</maxHistory>
-        </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LoggingEventEncoder"/>
-    </appender>
-
-    <root level="INFO">
-        <appender-ref ref="FILE"/>
-    </root>
-</configuration>
-
-
 	
 	<build>
 		<plugins>

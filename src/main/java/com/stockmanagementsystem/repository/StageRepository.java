@@ -9,9 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface StageRepository extends JpaRepository<Stage,Integer> {
+
+    Optional<Stage> findByStageCodeAndAssemblyLineId(String stage, Integer id);
 
     List<Stage> findByAssemblyLineId(Integer assemblyLineId);
 
@@ -20,8 +23,8 @@ public interface StageRepository extends JpaRepository<Stage,Integer> {
     Stage findByIsDeletedAndId(boolean b, Integer id);
 
     Page<Stage> findByIsDeleted(boolean b, Pageable pageable);
-
     Page<Stage> findByIsDeletedAndAssemblyLineId(boolean b, Integer id, Pageable pageable);
+
     List<Stage> findByIsDeletedAndAssemblyLineId(boolean b, Integer id);
 
     List<Stage> findByIsDeletedAndSubOrganizationId(boolean b, Integer subOrgId);

@@ -73,7 +73,7 @@ public interface LocationRepository extends JpaRepository<Location,Integer>, Jpa
 
     Page<Location> findByIsDeletedAndIdInOrItemIdIn(boolean b, List<Integer> locationId, List<Integer> itemId, Pageable pageable);
 
-    List<Location> findByIsDeletedAndSubOrganizationIdAndZoneId(boolean b, Integer subOrgId, Integer zoneId);
+    List<Location> findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(boolean b, Integer subOrgId, Integer zoneId);
 
 
     List<Location> findByIsDeletedAndSubOrganizationId(boolean b, Integer subOrgId);
@@ -98,4 +98,6 @@ public interface LocationRepository extends JpaRepository<Location,Integer>, Jpa
     Location findByIsDeletedAndSubOrganizationIdAndId(boolean b, Integer subOrgId, Integer locationId);
 
     List<Location> findByIsDeletedAndSubOrganizationIdAndZoneAreaStoreId(boolean b, Integer subOrgId, Integer id);
+
+    List<Location> findByIsDeletedAndSubOrganizationIdAndItemId(boolean b, Integer subOrgId, Integer id);
 }

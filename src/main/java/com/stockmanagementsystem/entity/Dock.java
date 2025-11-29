@@ -44,13 +44,11 @@ public class Dock {
     @Column(name = "IsDeleted")
     private Boolean isDeleted;
 
-
     @Column(name = "CreatedOn")
     private Date createdOn;
 
     @Column(name = "CreatedBy")
     private Integer createdBy;
-
 
     @Column(name = "ModifiedOn")
     private Date modifiedOn;

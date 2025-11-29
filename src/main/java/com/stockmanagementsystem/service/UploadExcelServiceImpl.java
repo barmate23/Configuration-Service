@@ -20,8 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.time.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +40,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     private LocationRepository locationRepository;
     @Autowired
     private AssemblyLineRepository assemblyLineRepository;
+
+    @Autowired
+    private StageRepository stageRepository;
 
     @Autowired
     private ItemRepository itemRepository;
@@ -154,6 +160,21 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     @Autowired
     private ReasonCategoryMasterRepository masterRepository;
 
+    @Autowired
+    private AcceptedRejectedContainerBarcodeRepository acceptedRejectedContainerBarcodeRepository;
+
+    @Autowired
+    private SerialBatchNumberRepository serialBatchNumberRepository;
+
+    @Autowired
+    private AsnLineRepository asnLineRepository;
+
+    @Autowired
+    private CommonMasterRepository commonMasterRepository;
+
+    @Autowired
+    private StockMovementRepository stockMovementRepository;
+
     @Override
     public ResponseEntity<BaseResponse> uploadItemDetail(MultipartFile file, String type) throws IOException {
         long startTime = System.currentTimeMillis();
@@ -179,8 +200,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ITEM_GROUP,
                     ITEM_CATEGORY,
                     ITEM_SUB_CATEGORY,
-                    TYPE, TYPE_SERIAL, QC_REQUIRED,INSPECTION ,ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, CODE, TYPES,
-                    DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, ITEM_QTY, MINIMUM_ORDER_QTY,
+                    TYPE, TYPE_SERIAL, QC_REQUIRED,ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT,PHYSICAL_FORM, CONTAINER_CAPACITY_UOM,CONTAINER_CAPACITY, CODE, TYPES,
+                    DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, MINIMUM_ORDER_QTY,
                     OPTIMUM_LEVEL, REORDER_LEVEL, SAFETY_LEVEL, CRITICAL_LEVEL, DOCK, DOCKS_NAME
             ));
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
@@ -225,29 +246,39 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String typeDirectIndirect = getCellStringValue(data, ServiceConstants.CELL_INDEX_6, resultResponses, type, headerNames);
                         String typeSerialBatch = getCellStringValue(data, ServiceConstants.CELL_INDEX_7, resultResponses, type, headerNames);
                         String isQCRequired = getCellStringValue(data, ServiceConstants.CELL_INDEX_8, resultResponses, type, headerNames);
-                        String inspection = getCellStringValue(data, ServiceConstants.CELL_INDEX_8, resultResponses, type, headerNames);
                         String issueType = getCellStringValue(data, ServiceConstants.CELL_INDEX_9, resultResponses, type, headerNames);
                         String classABC = getCellStringValue(data, ServiceConstants.CELL_INDEX_10, resultResponses, type, headerNames);
                         String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_11, resultResponses, type, headerNames);
                         String source = getCellStringValue(data, ServiceConstants.CELL_INDEX_12, resultResponses, type, headerNames);
                         String uom = getCellStringValue(data, ServiceConstants.CELL_INDEX_13, resultResponses, type, headerNames);
                         Float itemUnitWeight = getCellFloatValue(data, ServiceConstants.CELL_INDEX_14, resultResponses, type, headerNames);
-                        String code = getCellStringValue(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
-                        String types = getCellStringValue(data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
-                        String dimensionUOM = getCellStringValue(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
-                        Float width = getCellFloatValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
-                        Float height = getCellFloatValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
-                        Float length = getCellFloatValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
-                        Float circumference = getCellFloatValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
-                        Float weight = getCellFloatValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
-                        Integer itemQty = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
-                        Integer minimumOrderQty = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
-                        Integer optimumLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_25, resultResponses, type, headerNames);
-                        Integer reorderLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_26, resultResponses, type, headerNames);
-                        Integer safetyLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_27, resultResponses, type, headerNames);
-                        Integer criticalLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_28, resultResponses, type, headerNames);
-                        String dockId = getCellStringValue(data, ServiceConstants.CELL_INDEX_29, resultResponses, type, headerNames);
-                        String dockName = getCellStringValue(data, ServiceConstants.CELL_INDEX_30, resultResponses, type, headerNames);
+
+                        String physicalForm   = getCellStringValue(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
+
+                        String containerCapacityUom = getCellStringValue(
+                                data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
+
+                        Float containerCapacity = getCellFloatValue(
+                                data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
+
+                        String code = getCellStringValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
+                        String types = getCellStringValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
+                        String dimensionUOM = getCellStringValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
+
+                        Float width = getCellFloatValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
+                        Float height = getCellFloatValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
+                        Float length = getCellFloatValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
+                        Float circumference = getCellFloatValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
+                        Float weight = getCellFloatValue(data, ServiceConstants.CELL_INDEX_25, resultResponses, type, headerNames);
+
+                        Integer minimumOrderQty = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_26, resultResponses, type, headerNames);
+                        Integer optimumLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_27, resultResponses, type, headerNames);
+                        Integer reorderLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_28, resultResponses, type, headerNames);
+                        Integer safetyLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_29, resultResponses, type, headerNames);
+                        Integer criticalLevel = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_30, resultResponses, type, headerNames);
+
+                        String dockId = getCellStringValue(data, ServiceConstants.CELL_INDEX_31, resultResponses, type, headerNames);
+                        String dockName = getCellStringValue(data, ServiceConstants.CELL_INDEX_32, resultResponses, type, headerNames);
                         // Create a new Item object and set its properties
                         Item item = new Item();
                         item.setSubOrganizationId(loginUser.getSubOrgId());
@@ -263,9 +294,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (itemName == null || itemName.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_NAME, ServiceConstants.ITEM_NAME_MANDATORY));
                         }
-//                        else if (!validateRegex(itemName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_NAME, ServiceConstants.INVALID_ITEM_NAME_FORMAT));
-//                        }
+
                         item.setName(itemName);
                         if (itemCode == null || itemCode.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_CODE, ServiceConstants.ITEM_CODE_MANDATORY));
@@ -279,22 +308,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             itemCodeSet.add(itemCode);
                         }
                         item.setItemCode(itemCode);
-//                        if (erpItemId == null || erpItemId.isEmpty()) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ITEM_ID, ServiceConstants.ERP_ITEM_ID_MANDATORY));
-//                        } else if (!validateRegex(erpItemId, ServiceConstants.ID_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ITEM_ID, ServiceConstants.INVALID_ERP_ITEM_ID_FORMAT));
-//                        }
-//                        if (erpItemIdSet.contains(erpItemId)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ITEM_ID, ServiceConstants.DUPLICATE_ERP_ITEM_ID));
-//                        } else {
-//                            erpItemIdSet.add(erpItemId);
-//                        }
-//                        item.setErpItemId(erpItemId);
-//                        if (itemDescription == null || itemDescription.isEmpty()) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_DESCRIPTION, ServiceConstants.ITEM_DESCRIPTION_MANDATORY));
-//                        } else if (!validateRegex(itemDescription, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_DESCRIPTION, ServiceConstants.INVALID_ITEM_DESCRIPTION_FORMAT));
-//                        }
+
                         item.setDescription(itemDescription);
 
                         if (itemGroup == null || itemGroup.isEmpty()) {
@@ -344,34 +358,30 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (isQCRequired != null) {
                             if (isQCRequired.equalsIgnoreCase("yes")) {
                                 item.setQcRequired(true);
+                                item.setInspection(false);
+
                             } else if (isQCRequired.equalsIgnoreCase("No")) {
                                 item.setQcRequired(false);
-                            } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.QC_REQUIRED, ServiceConstants.YES_NO));
+                                item.setInspection(false);
+
+                            } else if(isQCRequired.equalsIgnoreCase("Certificate")){
+                                item.setQcRequired(true);
+                                item.setInspection(true);
                             }
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.QC_REQUIRED, ServiceConstants.QC_REQUIRE_MANDATORY));
                         }
 
-                        if (inspection != null) {
-                            if (inspection.equalsIgnoreCase("Yes")) {
-                                item.setInspection(true);
-                            } else if (inspection.equalsIgnoreCase("No")) {
-                                item.setInspection(false);
-                            } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.INSPECTION, ServiceConstants.YES_NO));
-                            }
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.INSPECTION, ServiceConstants.INSPECTION_REQUIRE_MANDATORY));
+                        if (uom == null || uom.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
+                                    ServiceConstants.UOM, ServiceConstants.UOM_MANDATORY));
+                        } else if (!validateRegex(uom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
+                                    ServiceConstants.UOM, ServiceConstants.INVALID_UOM_FORMAT));
                         }
+                        item.setUom(uom);
 
 
-//                        if (currency == null || currency.isEmpty()) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CURRENCY, ServiceConstants.CURRENCY_MANDATORY));
-//                        } else if (!validateRegex(currency, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CURRENCY, ServiceConstants.INVALID_CURRENCY_FORMAT));
-//                        }
-//                        item.setCurrency(currency);
                         List<String> serialBatchList = new ArrayList<>(Arrays.asList("Serial", "Batch", "None"));
                         if (!serialBatchList.stream().anyMatch(li -> li.equalsIgnoreCase(typeSerialBatch))) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.TYPE_SERIAL_BATCH, ServiceConstants.SERIAL_BATCH_INVALID));
@@ -399,10 +409,55 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
                         item.setSource(source);
 
-//                        if (itemUnitRate == null) {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_UNIT_RATE, ServiceConstants.ITEM_UNIT_RATE_MANDATORY));
-//                        }
-//                        item.setItemUnitRate(itemUnitRate);
+                        // ====================================================
+                        List<String> allowedPhysicalForms = Arrays.asList("SOLID", "LIQUID", "GAS");
+
+                        if (physicalForm == null || physicalForm.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Physical Form",
+                                    "Physical Form is mandatory (SOLID / LIQUID / GAS)."
+                            ));
+                        } else if (allowedPhysicalForms.stream().noneMatch(f -> f.equalsIgnoreCase(physicalForm))) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Physical Form",
+                                    "Physical Form must be SOLID, LIQUID or GAS."
+                            ));
+                        }
+                        item.setPhysicalForm(physicalForm);
+
+                        // Container Capacity UOM: e.g. LTR, KG, NOS
+                        if (containerCapacityUom == null || containerCapacityUom.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Container Capacity UOM",
+                                    "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."
+                            ));
+                        } else if (!validateRegex(containerCapacityUom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Container Capacity UOM",
+                                    "Invalid Container Capacity UOM format."
+                            ));
+                        }
+                        item.setContainerCapacityUom(containerCapacityUom);
+
+                        // Container Capacity: > 0
+                        if (containerCapacity == null || containerCapacity <= 0) {
+                            resultResponses.add(new ValidationResultResponse(
+                                    type,
+                                    (data.getRowNum() + 1),
+                                    "Container Capacity",
+                                    "Container Capacity is mandatory and must be greater than 0."
+                            ));
+                        }
+                        item.setContainerCapacity(containerCapacity);
+
 
                         List<String> classList = new ArrayList<>(Arrays.asList("A", "B", "C"));
                         if (!classList.stream().anyMatch(li -> li.equalsIgnoreCase(classABC))) {
@@ -445,9 +500,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         item.setCreatedOn(new Date());
                         if (dockName == null || dockName.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.DOCK_NAME_MANDATORY));
-                        } else if (!validateRegex(dockName, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.INVALID_DOCK_NAME_FORMAT));
                         }
+//                        else if (!validateRegex(dockName, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_NAME, ServiceConstants.INVALID_DOCK_NAME_FORMAT));
+//                        }
                         if (dockId == null || dockId.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_ID, ServiceConstants.DOCK_ID_MANDATORY));
                         }
@@ -508,10 +564,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             }
                             container.setLength(length);
 
-                            if (itemQty == null) {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_QTY, ServiceConstants.ITEM_QTY_MANDATORY));
-                            }
-                            container.setItemQty(itemQty);
 
                             if (dimensionUOM == null || dimensionUOM.isEmpty()) {
                                 resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DIMENSION_UOM, ServiceConstants.DIMENSION_UOM_MANDATORY));
@@ -1037,19 +1089,19 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 //                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ADDRESS_1, ServiceConstants.INVALID_ADDRESS_1_FORMAT));
 //                    }
                     supplier.setAddress1(address1);
-                    if (address2 != null && !address2.isEmpty()) {
-//                        if (!validateRegex(address2, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ADDRESS_2, ServiceConstants.INVALID_ADDRESS_2_FORMAT));
-//                        }
-
-                    }
+//                    if (address2 != null && !address2.isEmpty()) {
+////                        if (!validateRegex(address2, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ADDRESS_2, ServiceConstants.INVALID_ADDRESS_2_FORMAT));
+////                        }
+//
+//                    }
                     supplier.setAddress2(address2);
-
-                    if (locality != null && !locality.isEmpty()) {
-                        if (!validateRegex(locality, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LOCALITY, ServiceConstants.INVALID_LOCALITY_FORMAT));
-                        }
-                    }
+//
+//                    if (locality != null && !locality.isEmpty()) {
+//                        if (!validateRegex(locality, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LOCALITY, ServiceConstants.INVALID_LOCALITY_FORMAT));
+//                        }
+//                    }
                     supplier.setLocality(locality);
 
                     if (district == null || district.isEmpty()) {
@@ -1107,9 +1159,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     supplier.setSupplierPANNumber(supplierPanCardNumber);
                     if (contactPersonName != null && !contactPersonName.isEmpty()) {
                         // Add any specific validation for contactPersonName if needed
-                        if (!validateRegex(contactPersonName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) { // Assuming you have a regex for names
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CONTACT_PERSON_NAME, ServiceConstants.INVALID_NAME_FORMAT_ERROR_MESSAGE));
-                        }
+//                        if (!validateRegex(contactPersonName, ServiceConstants.NAME_FIRST_LETTER_CAPITAL_REGEX)) { // Assuming you have a regex for names
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CONTACT_PERSON_NAME, ServiceConstants.INVALID_NAME_FORMAT_ERROR_MESSAGE));
+//                        }
                     }
                     supplier.setContactPersonName(contactPersonName);
                     if (designation != null && !designation.isEmpty()) {
@@ -1130,9 +1182,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (primaryPhone == null || primaryPhone.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.PRIMARY_PHONE_MANDATORY));
-                    } else if (!validateRegex(primaryPhone, ServiceConstants.PHONE_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.INVALID__PHONE_FORMAT_ERROR_MESSAGE));
                     }
+//                    else if (!validateRegex(primaryPhone, ServiceConstants.PHONE_REGEX)) {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.INVALID__PHONE_FORMAT_ERROR_MESSAGE));
+//                    }
                     if (phoneSet.contains(primaryPhone)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRIMARY_PHONE, ServiceConstants.DUPLICATE_PHONE_ERROR_MESSAGE));
                     } else {
@@ -1201,9 +1254,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (erpSupplierId == null || erpSupplierId.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.ERP_ID_MANDATORY_ERROR_MESSAGE));
-                    } else if (!validateRegex(erpSupplierId, ServiceConstants.ID_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.INVALID_ERP_SUPPLIER_ID_FORMAT));
                     }
+//                    else if (!validateRegex(erpSupplierId, ServiceConstants.ID_REGEX)) {
+////                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.INVALID_ERP_SUPPLIER_ID_FORMAT));
+////                    }
                     if (erpSupplierIdSet.contains(erpSupplierId)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.DUPLICATE_ERP_ID_ERROR_MESSAGE));
                     } else {
@@ -1216,17 +1270,16 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
 
                     }
-
-
                     if (supplierTanNumber == null || supplierTanNumber.isEmpty()) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.TAN_MANDATORY_ERROR_MESSAGE));
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.TAN_MANDATORY_ERROR_MESSAGE));
                     } else if (!validateRegex(supplierTanNumber, ServiceConstants.SUPPLIER_TAN_REGEX)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.INVALID_SUPPLIER_TAN_FORMAT));
                     }
                     if (tanSet.contains(supplierTanNumber)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.DUPLICATE_TAN_ERROR_MESSAGE));
                     } else {
-                        tanSet.add(supplierTanNumber);
+                        if (supplierTanNumber != null)
+                            tanSet.add(supplierTanNumber);
                     }
                     supplier.setSupplierTANNumber(supplierTanNumber);
 
@@ -1251,9 +1304,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     if (fullBranchAddress == null || fullBranchAddress.isEmpty()) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.FULL_BRANCH_ADDRESS_MANDATORY));
-                    } else if (!validateRegex(supplierPrimaryBanker, ServiceConstants.ADDRESS_REGEX)) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.INVALID_FULL_BRANCH_ADDRESS_FORMAT));
                     }
+//                    else  {
+//                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.INVALID_FULL_BRANCH_ADDRESS_FORMAT));
+//                    }
                     supplier.setFullBranchAddress(fullBranchAddress);
 
                     if (country == null || country.isEmpty()) {
@@ -1280,24 +1334,24 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.VILLAGE, ServiceConstants.INVALID_VILLAGE_NAME_FORMAT));
                     }
                     supplier.setVillage(village);
-                    if (building != null && !building.isEmpty()) {
-                        if (!validateRegex(building, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BUILDING, ServiceConstants.INVALID_BUILDING_FORMAT));
-                        }
-                    }
+//                    if (building != null && !building.isEmpty()) {
+////                        if (!validateRegex(building, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BUILDING, ServiceConstants.INVALID_BUILDING_FORMAT));
+////                        }
+//                    }
                     supplier.setBuilding(building);
-                    if (street != null && !street.isEmpty()) {
-                        if (!validateRegex(street, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.STREET, ServiceConstants.INVALID_STREET_FORMAT));
-                        }
-                    }
+//                    if (street != null && !street.isEmpty()) {
+////                        if (!validateRegex(street, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.STREET, ServiceConstants.INVALID_STREET_FORMAT));
+////                        }
+//                    }
                     supplier.setStreet(street);
 
-                    if (subLocality != null && !subLocality.isEmpty()) {
-                        if (!validateRegex(subLocality, ServiceConstants.ADDRESS_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_LOCALITY, ServiceConstants.INVALID_SUB_LOCALITY_FORMAT));
-                        }
-                    }
+//                    if (subLocality != null && !subLocality.isEmpty()) {
+////                        if (!validateRegex(subLocality, ServiceConstants.ADDRESS_REGEX)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_LOCALITY, ServiceConstants.INVALID_SUB_LOCALITY_FORMAT));
+////                        }
+//                    }
                     supplier.setSubLocality(subLocality);
 
                     if (alternatePhone != null && !alternatePhone.isEmpty()) {
@@ -1816,7 +1870,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             purchaseOrderHead.setSupplier(supplierOptional.get());
                         }
-
                     } else {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.P_SUPPLIER_ID, "SUPPLIER ID NOT PRESENT IN DATABASE"));
                     }
@@ -1848,17 +1901,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         cal.set(year + 1, Calendar.MARCH, 31);  // Set to 31st March of the next year
                         Date expectedDeliverByDate = cal.getTime();
 
-                        if (!deliverByDate.equals(expectedDeliverByDate)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DELIVER_BY_DATE, "DELIVER BY DATE MUST BE 31-MAR-" + (year + 1)));
-                        }
+//                        if (!deliverByDate.equals(expectedDeliverByDate)) {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DELIVER_BY_DATE, "DELIVER BY DATE MUST BE 31-MAR-" + (year + 1)));
+//                        }
                     }
 
                     purchaseOrderHead.setDeliverByDate(deliverByDate);
 
                     if (purchaseOrderDate == null) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PURCHASE_ORDER_DATE, ServiceConstants.PURCHASE_ORDER_DATE_MANDATORY));
-                    } else if (purchaseOrderDate.before(new Date())) {
-                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PURCHASE_ORDER_DATE, ServiceConstants.PURCHASE_ORDER_DATE_CANNOT_BE_IN_THE_PAST));
                     }
                     purchaseOrderHead.setPurchaseOrderDate(purchaseOrderDate);
 
@@ -1951,6 +2002,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     }
 
                     purchaseOrderLine.setPurchaseOrderQuantity(purchaseOrderQuantity);
+                    purchaseOrderLine.setRemainingQuantity(purchaseOrderQuantity);
 
                     if (subTotal == null || subTotal <= 0) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_TOTAL, ServiceConstants.SUB_TOTAL_MANDATORY));
@@ -1958,6 +2010,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUB_TOTAL, ServiceConstants.SUBTOTAL_MUST_EQUAL_UNIT_PRICE_MULTIPLIED_BY_PURCHASE_ORDER_QUANTITY));
                     }
                     purchaseOrderLine.setSubTotalRs(subTotal);
+                    purchaseOrderLine.setRemainingAmount(subTotal);
                     if (stateGstPercent != null && stateGstPercent != 0) {
                         if (interStateGstPercent != null && interStateGstPercent != 0) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.INTERSTATE_GST_PERCENTAGE, "IF YOU ARE SELECT STATE GST SO CAN NOT SELECT INTER STATE GST"));
@@ -2325,7 +2378,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String bomNotes = getCellStringValue(data, ServiceConstants.CELL_INDEX_10, resultResponses, type, headerNames);
                         // Create a new Store object and set its properties
                         BOMLine bomLine = new BOMLine();
-                        bomLine.setStage(stage);
+
+
+                        Optional<Stage> stageOptional = stageRepository.findByStageCodeAndAssemblyLineId(stage, assemblyLine1.getId());
+                        if (stageOptional.isEmpty()) {
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), headerNames.get(ServiceConstants.CELL_INDEX_6), "The Stage does not exist or is not linked to the given Assembly Line."));
+                        } else {
+                            bomLine.setStage(stageOptional.get().getStageCode());
+                        }
                         bomLine.setLevel(level);
                         Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemCode);
                         if (itemOption.isPresent()) {
@@ -2551,10 +2611,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             List<String> headerNames = new ArrayList<>();
             Integer count = 0;
 
-            List<String> expectedColumns = Arrays.asList(PPE_PLAN_ID, SAP_ID, BOM_ID, PRODUCT_NAME,
+            List<String> expectedColumns = Arrays.asList(PPE_PLAN_ID, ERP_ID, BOM_ID, PRODUCT_NAME,
                     BRAND, MODEL, VARIANT, COLOR, UOM1, PLAN_QUANTITY, PRODUCTION_SHOP, SHOP_ID, LINE,
                     LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME, ITEM_CODE_PPE, ITEM_NAME_PPE,
-                    ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE, UOM2, REQUIRED_QUANTITY, STORE_PPE
+                    ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE
             );
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
@@ -2599,7 +2659,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         String planId = getCellStringValue(data, ServiceConstants.CELL_INDEX_0, resultResponses, type, headerNames);
                         String sapId = getCellStringValue(data, ServiceConstants.CELL_INDEX_1, resultResponses, type, headerNames);
-                        String bomId = getCellStringValue(data, ServiceConstants.CELL_INDEX_2, resultResponses, type, headerNames);
+                        String bomCode = getCellStringValue(data, ServiceConstants.CELL_INDEX_2, resultResponses, type, headerNames);
                         String productName = getCellStringValue(data, ServiceConstants.CELL_INDEX_3, resultResponses, type, headerNames);
                         String brand = getCellStringValue(data, ServiceConstants.CELL_INDEX_4, resultResponses, type, headerNames);
                         String model = getCellStringValue(data, ServiceConstants.CELL_INDEX_5, resultResponses, type, headerNames);
@@ -2612,17 +2672,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String line = getCellStringValue(data, ServiceConstants.CELL_INDEX_12, resultResponses, type, headerNames);
                         String lineID = getCellStringValue(data, ServiceConstants.CELL_INDEX_13, resultResponses, type, headerNames);
                         Date startDate = getCellDateValue(data, ServiceConstants.CELL_INDEX_14, resultResponses, type, headerNames);
-                        Date starTime = getCellDateValueForPPE(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
+                        LocalTime starTime = getCellTimeValueForPPE(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
                         Date endDate = getCellDateValueForPPE(data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
-                        Date endTime = getCellDateValueForPPE(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
+                        LocalTime endTime = getCellTimeValueForPPE(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
                         String itemId = getCellStringValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
                         String itemName = getCellStringValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
                         String itemType = getCellStringValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
                         String itemClass = getCellStringValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
                         String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
-                        String uom2 = getCellStringValue(data, ServiceConstants.CELL_INDEX_23, resultResponses, type, headerNames);
-                        Integer requiredQuantity = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_24, resultResponses, type, headerNames);
-                        String store = getCellStringValue(data, ServiceConstants.CELL_INDEX_25, resultResponses, type, headerNames);
 
                         //setting the values to ppehead
                         PPEHead ppeHead = new PPEHead();
@@ -2635,9 +2692,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_ID, " PPEID CANNOT BE NULL "));
                         }
 
+                        Optional<PPEHead> ppeHead1 = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPlanOrderId(false, loginUser.getSubOrgId(), planId);
 
                         if (!StringUtils.isEmpty(planId)) {
-                            ppeHead.setPlanOrderId(planId);
+                            if(ppeHead1.isPresent()){
+                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_PLAN_ID, " Plan Id Already Exist in Database "));
+                            } else {
+                                ppeHead.setPlanOrderId(planId);
+                            }
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_PLAN_ID, " PLANID CANNOT BE NULL "));
                         }
@@ -2645,11 +2707,11 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (!StringUtils.isEmpty(sapId)) {
                             ppeHead.setSapId(sapId);
                         } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SAP_ID, " SAPID CANNOT BE NULL "));
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ID, " SAPID CANNOT BE NULL "));
                         }
 
-                        if (!StringUtils.isEmpty(bomId)) {
-                            Optional<BoMHead> boMHeadOptional = bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomId(false, loginUser.getSubOrgId(), bomId);
+                        if (!StringUtils.isEmpty(bomCode)) {
+                            Optional<BoMHead> boMHeadOptional = bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomERPCode(false, loginUser.getSubOrgId(), bomCode);
                             if (boMHeadOptional.isPresent()) {
                                 ppeHead.setBomHead(boMHeadOptional.get());
                             } else {
@@ -2725,21 +2787,86 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LINE_ID, " Line Id CANNOT BE NULL "));
                         }
+//                        if (startDate != null) {
+//                            Date currentDate = new Date();
+//                            if (startDate.after(currentDate)) {
+//                                ppeHead.setStartDate(startDate);
+//                            } else {
+//                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"));
+//                            }
+//                        } else {
+//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
+//                        }
+//                        if (starTime != null) {
+//                            ppeHead.setStartTime(starTime);
+//                        }
 
-                        if (startDate != null) {
-                            Date currentDate = new Date();
-                            if (startDate.after(currentDate)) {
-                                ppeHead.setStartDate(startDate);
-                            } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"
+                        if (startDate != null && starTime != null) {
+                            try {
+                                // Define UTC zone
+                                ZoneId utcZone = ZoneId.of("UTC");
+
+                                // Convert startDate (java.util.Date) to LocalDate
+                                LocalDate startLocalDate = startDate.toInstant()
+                                        .atZone(utcZone)
+                                        .toLocalDate();
+
+                                // starTime is already a LocalTime (from your getCellTimeValueForPPE)
+                                LocalDateTime planStartDateTime = LocalDateTime.of(startLocalDate, starTime);
+
+                                // Convert to ZonedDateTime in UTC
+                                ZonedDateTime planStartUTC = planStartDateTime.atZone(utcZone);
+
+                                // Current UTC time
+                                ZonedDateTime currentUTC = ZonedDateTime.now(utcZone);
+
+                                // Compare
+                                if (planStartUTC.isAfter(currentUTC)) {
+                                    // Valid — save values
+                                    ppeHead.setStartDate(startDate);
+                                    ppeHead.setStartTime(Time.valueOf(starTime)); // convert LocalTime → java.sql.Time if needed
+                                } else {
+                                    resultResponses.add(new ValidationResultResponse(
+                                            type,
+                                            (data.getRowNum() + 1),
+                                            ServiceConstants.START_DATE,
+                                            "PLAN START DATE & TIME MUST BE IN THE FUTURE"
+                                    ));
+                                }
+                            } catch (Exception e) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.START_DATE,
+                                        "ERROR PROCESSING START DATE/TIME"
                                 ));
                             }
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
                         }
 
-                        if (starTime != null) {
-                            ppeHead.setStartTime(starTime);
+                        // Validate that start date/time is not after end date/time
+                        if (startDate != null && starTime != null && endDate != null && endTime != null) {
+
+                            ZoneOffset utcZone = ZoneOffset.UTC;
+
+                            // Convert start date/time to UTC
+                            LocalDate startLocalDate = startDate.toInstant().atZone(utcZone).toLocalDate();
+                            LocalTime startLocalTime = starTime.atOffset(ZoneOffset.UTC).toLocalTime();
+                            LocalDateTime startDateTime = LocalDateTime.of(startLocalDate, startLocalTime);
+
+                            // Convert end date/time to UTC
+                            LocalDate endLocalDate = endDate.toInstant().atZone(utcZone).toLocalDate();
+                            LocalTime endLocalTime = endTime.atOffset(ZoneOffset.UTC).toLocalTime();
+                            LocalDateTime endDateTime = LocalDateTime.of(endLocalDate, endLocalTime);
+
+                            // Compare
+                            if (startDateTime.isAfter(endDateTime)) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        ServiceConstants.END_DATE,
+                                        "START DATE & TIME CANNOT BE AFTER END DATE & TIME"
+                                ));
+                            }
                         }
 
                         if (endDate != null) {
@@ -2747,12 +2874,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
 
                         if (endTime != null) {
-                            ppeHead.setEndTime(endTime);
+                            ppeHead.setEndTime(Time.valueOf(endTime)); // endTime is also LocalTime
                         }
 
-                        PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "CREATED");
-                        ppeHead.setPpeStatus(status);
 
+                        PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
+                        ppeHead.setPpeStatus(status);
 
                         ppeHead.setOrganizationId(loginUser.getOrgId());
                         ppeHead.setSubOrganizationId(loginUser.getSubOrgId());
@@ -2762,9 +2889,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         ppeHead.setModifiedBy(loginUser.getUserId());
                         ppeHead.setModifiedOn(new Date());
 
-                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdAndBomHeadBomId(false, loginUser.getSubOrgId(), itemId, bomId);
+                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
                         if (bomLine != null) {
                             ppeLine.setBomLine(bomLine);
+                            ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_ID, " BOM ItemId and PPE ItemId is not matched "));
                         }
@@ -2789,7 +2917,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         Optional<PPEHead> headOptional = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPlanOrderId(false, loginUser.getSubOrgId(), planId);
 
-                        Optional<PPEHead> existingHeads = ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndProductionShop(false, ppeHead.getStartDate(), startTimeDate, ppeHead.getProductionShop());
+                        Optional<PPEHead> existingHeads = ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndAssemblyLineId(false, ppeHead.getStartDate(), startTimeDate, ppeHead.getAssemblyLine().getId());
 
                         Optional<PPEHead> duplicateInListByPlanId = ppePlans.stream().filter(existingPpeHead ->
                                 existingPpeHead.getPlanOrderId().equals(planId)
@@ -2800,7 +2928,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         for (PPEHead existingPpeHead : ppePlans) {
                             if (!existingPpeHead.getPlanOrderId().equals(ppeHead.getPlanOrderId()) && Objects.equals(existingPpeHead.getStartDate(), ppeHead.getStartDate()) &&
                                     existingPpeHead.getStartTime().equals(ppeHead.getStartTime()) &&
-                                    existingPpeHead.getProductionShop().equals(ppeHead.getProductionShop())) {
+                                    existingPpeHead.getAssemblyLine().equals(ppeHead.getAssemblyLine())) {
                                 duplicateInList = true;
                             }
                         }
@@ -2815,9 +2943,11 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (ppeLines.size() > 0) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BOM_ID, " This Item Is Already Exist In This Plan "));
                         } else {
-                            Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemId);
+                            Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemId);
                             if (itemOption.isPresent()) {
                                 ppeLine.setItem(itemOption.get());
+                                List<Location> locationList =  locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemOption.get().getId());
+                                ppeLine.setStore(locationList.get(0).getZone().getArea().getStore().getStoreName());
 //                                ppeLine.setEta(itemOption.get().getLeadTime());
 
                             } else {
@@ -2827,14 +2957,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
                         ppeLine.setOrganizationId(loginUser.getOrgId());
                         ppeLine.setSubOrganizationId(loginUser.getSubOrgId());
-                        ppeLine.setRequiredQuantity(requiredQuantity);
                         ppeLine.setRequiredBy(new Date());
                         ppeLine.setIsDeleted(false);
                         ppeLine.setCreatedBy(loginUser.getUserId());
                         ppeLine.setCreatedOn(new Date());
                         ppeLine.setModifiedBy(loginUser.getUserId());
                         ppeLine.setModifiedOn(new Date());
-                        ppeLine.setStore(store);
                         if (duplicateInListByPlanId.isEmpty()) {
                             ppeLine.setPPEHead(ppeHead);
                             ppePlans.add(ppeHead);
@@ -2858,9 +2986,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             for (PPEHead ppeHead : ppePlans) {
                 List<String> ppeItemIdList = ppeLineList.stream()
                         .filter(e -> e.getPPEHead().getPlanOrderId().equals(ppeHead.getPlanOrderId()))
-                        .map(e -> e.getItem().getItemId())
+                        .map(e -> e.getItem().getItemCode())
                         .collect(Collectors.toList());
-                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdNotInAndBomHeadBomId(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomId());
+                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomERPCode());
                 if (extraBomLine.size() != 0) {
                     List<String> itemids = extraBomLine.stream().map(e -> e.getItem().getItemId()).collect(Collectors.toList());
                     resultResponses.add(new ValidationResultResponse(type, null, ServiceConstants.ITEM_ID, "THIS BOM ITEM IDS :" + itemids.toString() + "IS NOT PRESENT IN PLAN/ORDER: " + ppeHead.getPlanOrderId()));
@@ -2868,8 +2996,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             }
             if (resultResponses.size() == 0) {
                 this.ppeHeadRepository.saveAll(ppePlans);
-
-
                 this.ppeLineRepository.saveAll(ppeLineList);
 
                 log.error("LogId:{} - UploadExcelServiceImpl - uploadPpeDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + ServiceConstants.UPLOAD_PPE_DETAIL_METHOD_EXECUTED + (endTime - startTime));
@@ -3128,7 +3254,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     }
 
     @Override
-    public ResponseEntity<BaseResponse> uploadUserListDetails(MultipartFile file, String type)  {
+    public ResponseEntity<BaseResponse> uploadUserListDetails(MultipartFile file, String type) {
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - UploadExcelServiceImpl - uploadUserListDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ServiceConstants.SPACE + "UPLOAD_USER_LIST_METHOD_STARTED");
 
@@ -3185,6 +3311,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     userList.setFirstName(firstName);
                     userList.setLastName(lastName);
                     userList.setEmailId(email);
+                    userList.setUserId(email);
                     userList.setMobileNo(mobile);
                     userList.setDateOfBirth(dateOfBirth);
                     userList.setDesignation(designation);
@@ -3197,7 +3324,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     userList.setEndDate(endDate);
                     userList.setIsDeleted(false);
                     userList.setOrganization(organizationRepository.findByIsDeletedAndId(false, loginUser.getOrgId()));
-                    userList.setSubOrganization(organizationRepository.findByIsDeletedAndId(false,loginUser.getSubOrgId()));
+                    userList.setSubOrganization(organizationRepository.findByIsDeletedAndId(false, loginUser.getSubOrgId()));
                     userList.setCreatedBy(loginUser.getUserId());
                     userList.setCreatedOn(new Date());
                     userList.setModifiedOn(new Date());
@@ -3234,5 +3361,545 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, ServiceConstants.USER_LIST_DATA_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
         }
     }
+
+//    @Override
+//    public ResponseEntity<BaseResponse> uploadPackingList(MultipartFile file, String type, Integer requestId, String requestType,Boolean isFinalUpload) {
+//        long startTime = System.currentTimeMillis();
+//        log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
+//                loginUser.getLogId(), loginUser.getUserId(), "UPLOAD_PACKING_LIST_METHOD_STARTED");
+//
+//        String logId = loginUser.getLogId();
+//        try {
+//            Workbook workbook = WorkbookFactory.create(file.getInputStream());
+//            Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
+//
+//            List<AcceptedRejectedContainerBarcode> containerBarcodeList = new ArrayList<>();
+//            List<SerialBatchNumber> serialBatchNumberList = new ArrayList<>();
+//            List<ValidationResultResponse> resultResponses = new ArrayList<>();
+//
+//            List<String> headerNames = new ArrayList<>();
+//            Integer count = 0;
+//            boolean hasDataRows = false;
+//
+//            Row headerRow = sheet.getRow(ServiceConstants.PACKING_LIST_HEADER_ROW_INDEX);
+//            if (headerRow == null) {
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Excel file missing header row", null, ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
+//                Cell headerCell = headerRow.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+//                if (headerCell != null) {
+//                    headerNames.add(headerCell.getStringCellValue());
+//                }
+//            }
+//
+//            // ---- Read rows ----
+//            List<Map<String, String>> packingRows = new ArrayList<>();
+//            for (Row row : sheet) {
+//                if (row.getRowNum() <= ServiceConstants.PACKING_LIST_COLUMN_HEADER_ROW_INDEX) continue;
+//
+//                int emptyCellCount = 0;
+//                for (int i = 0; i < row.getLastCellNum() - 1; i++) {
+//                    if (row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null)
+//                        emptyCellCount++;
+//                }
+//
+//                if (emptyCellCount == row.getLastCellNum()) continue; // skip empty rows
+//                hasDataRows = true;
+//
+//                String itemCode = getCellStringValue(row, 1, resultResponses, type, headerNames);
+//                String itemName = getCellStringValue(row, 2, resultResponses, type, headerNames);
+//                String uom = getCellStringValue(row, 3, resultResponses, type, headerNames);
+//                String serialBatchNumber = getCellStringValue(row, 4, resultResponses, type, headerNames);
+//                String containerCode = getCellStringValue(row, 5, resultResponses, type, headerNames);
+//                String containerType = getCellStringValue(row, 6, resultResponses, type, headerNames);
+//
+//                Map<String, String> dataMap = new HashMap<>();
+//                dataMap.put("itemCode", itemCode);
+//                dataMap.put("itemName", itemName);
+//                dataMap.put("uom", uom);
+//                dataMap.put("serialBatchNumber", serialBatchNumber);
+//                dataMap.put("containerCode", containerCode);
+//                dataMap.put("containerType", containerType);
+//                packingRows.add(dataMap);
+//                count++;
+//            }
+//
+//            if (!hasDataRows) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Excel file contains header only, no data rows found", null,
+//                        ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            // ---- Validate duplicate serial numbers in uploaded file ----
+//            List<String> serialNumbers = packingRows.stream()
+//                    .map(m -> m.get("serialBatchNumber"))
+//                    .filter(Objects::nonNull)
+//                    .map(String::trim)
+//                    .filter(s -> !s.isEmpty())
+//                    .collect(Collectors.toList());
+//
+//            Set<String> duplicateSerials = serialNumbers.stream()
+//                    .filter(s -> Collections.frequency(serialNumbers, s) > 1)
+//                    .collect(Collectors.toSet());
+//
+//            if (!duplicateSerials.isEmpty()) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
+//                        null, ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            // ---- Validate duplicate serial numbers already in DB ----
+//            ASNLine asnLine = null;
+//            if (requestType != null && requestType.equalsIgnoreCase("ASN")) {
+//                asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+//            }
+//
+//            if (asnLine == null) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "ASN Line not found for provided requestId/requestType", null,
+//                        ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            List<String> existingSerials = serialBatchNumberRepository
+//                    .findByIsDeletedFalseAndAsnLineId(asnLine.getId())
+//                    .stream()
+//                    .map(SerialBatchNumber::getSerialBatchNumber)
+//                    .collect(Collectors.toList());
+//
+//            List<String> overlap = serialNumbers.stream()
+//                    .filter(existingSerials::contains)
+//                    .collect(Collectors.toList());
+//
+//            if (!overlap.isEmpty()) {
+//                workbook.close();
+//                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                        "Serial Numbers already exist in system: " + String.join(", ", overlap),
+//                        null, ServiceConstants.ERROR_CODE, logId));
+//            }
+//
+//            // ---- Group by container code ----
+//            Map<String, List<Map<String, String>>> groupedByContainer =
+//                    packingRows.stream()
+//                            .filter(m -> m.get("containerCode") != null && !m.get("containerCode").trim().isEmpty())
+//                            .collect(Collectors.groupingBy(m -> m.get("containerCode")));
+//
+//            Date now = new Date();
+//            Integer orgId = loginUser.getOrgId();
+//            Integer subOrgId = loginUser.getSubOrgId();
+//            Integer userId = loginUser.getUserId();
+//
+//            // ---- Iterate each container group ----
+//            for (Map.Entry<String, List<Map<String, String>>> entry : groupedByContainer.entrySet()) {
+//                String containerCode = entry.getKey();
+//                List<Map<String, String>> serialList = entry.getValue();
+//
+//                AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
+//                barcode.setOrganizationId(orgId);
+//                barcode.setSubOrganizationId(subOrgId);
+//                barcode.setContainerCode(containerCode);
+//                barcode.setContainerType(serialList.get(0).get("containerType"));
+//                barcode.setIsDeleted(false);
+//                barcode.setCreatedBy(userId);
+//                barcode.setCreatedOn(now);
+//                containerBarcodeList.add(barcode);
+//                this.acceptedRejectedContainerBarcodeRepository.save(barcode);
+//
+//                for (Map<String, String> serial : serialList) {
+//                    SerialBatchNumber batch = new SerialBatchNumber();
+//                    batch.setOrganizationId(orgId);
+//                    batch.setSubOrganizationId(subOrgId);
+//                    batch.setSerialBatchNumber(serial.get("serialBatchNumber"));
+//                    batch.setAcceptedRejectedContainerBarcode(barcode);
+//                    batch.setAsnLine(asnLine);
+//                    batch.setIsDeleted(false);
+//                    batch.setCreatedBy(userId);
+//                    batch.setCreatedOn(now);
+//                    serialBatchNumberList.add(batch);
+//                }
+//            }
+//
+//            this.serialBatchNumberRepository.saveAllAndFlush(serialBatchNumberList);
+//
+//            long endTime = System.currentTimeMillis();
+//            log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {} Rows:{} Time:{}ms",
+//                    logId, loginUser.getUserId(), "UPLOAD_PACKING_LIST_EXECUTED", count, (endTime - startTime));
+//
+//            workbook.close();
+//            return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(),
+//                    "Packing List Uploaded Successfully", null, ServiceConstants.SUCCESS_CODE, logId));
+//
+//        } catch (Exception e) {
+//            long endTime = System.currentTimeMillis();
+//            log.error("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
+//                    loginUser.getLogId(), loginUser.getUserId(), "PACKING_LIST_UPLOAD_FAILED", e);
+//            ExceptionLogger.logException(e, logId);
+//            return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+//                    ServiceConstants.FILE_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
+//        }
+//    }
+
+
+    @Override
+    public ResponseEntity<BaseResponse> uploadPackingList(
+            MultipartFile file, String type, Integer requestId,
+            String requestType, Boolean isFinalUpload) {
+
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
+                loginUser.getLogId(), loginUser.getUserId(), "UPLOAD_PACKING_LIST_METHOD_STARTED");
+
+        String logId = loginUser.getLogId();
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
+
+            List<ValidationResultResponse> resultResponses = new ArrayList<>();
+            List<Map<String, String>> packingRows = new ArrayList<>();
+            boolean hasDataRows = false;
+
+            Row headerRow = sheet.getRow(ServiceConstants.PACKING_LIST_HEADER_ROW_INDEX);
+            if (headerRow == null) {
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                        "Excel file missing header row", null, ServiceConstants.ERROR_CODE, logId));
+            }
+
+            List<String> headerNames = new ArrayList<>();
+            for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
+                Cell headerCell = headerRow.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                if (headerCell != null) {
+                    headerNames.add(headerCell.getStringCellValue());
+                }
+            }
+
+            // ==== Read Data Rows ====
+            for (Row row : sheet) {
+                if (row.getRowNum() <= ServiceConstants.PACKING_LIST_HEADER_ROW_INDEX) continue;
+
+                int emptyCellCount = 0;
+                for (int i = 0; i < row.getLastCellNum() - 1; i++) {
+                    if (row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null)
+                        emptyCellCount++;
+                }
+                if (emptyCellCount == row.getLastCellNum()) continue;
+
+                hasDataRows = true;
+                Map<String, String> dataMap = new HashMap<>();
+                dataMap.put("itemCode", getCellStringValue(row, 1, resultResponses, type, headerNames));
+                dataMap.put("itemName", getCellStringValue(row, 2, resultResponses, type, headerNames));
+                dataMap.put("uom", getCellStringValue(row, 3, resultResponses, type, headerNames));
+                dataMap.put("serialBatchNumber", getCellStringValue(row, 4, resultResponses, type, headerNames));
+                dataMap.put("containerCode", getCellStringValue(row, 5, resultResponses, type, headerNames));
+                dataMap.put("containerType", getCellStringValue(row, 6, resultResponses, type, headerNames));
+
+                // 🔹 Skip blank rows early
+                if (isBlank(dataMap.get("itemCode")) ||
+                        isBlank(dataMap.get("containerCode")) ||
+                        isBlank(dataMap.get("serialBatchNumber"))) {
+                    log.warn("Skipping blank row at index {}", row.getRowNum());
+                    continue;
+                }
+
+                packingRows.add(dataMap);
+            }
+
+            if (!hasDataRows || packingRows.isEmpty()) {
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                        "Excel file contains header only, no valid data rows found",
+                        null, ServiceConstants.ERROR_CODE, logId));
+            }
+
+            // ==== Group by Item Code and Container ====
+            Map<String, Map<String, List<String>>> itemToContainerSerials = new HashMap<>();
+            for (Map<String, String> row : packingRows) {
+                String itemCode = row.get("itemCode");
+                String container = row.get("containerCode");
+                String serial = row.get("serialBatchNumber");
+
+                if (isBlank(itemCode) || isBlank(container) || isBlank(serial)) continue; // extra safety
+
+                itemToContainerSerials
+                        .computeIfAbsent(itemCode, k -> new HashMap<>())
+                        .computeIfAbsent(container, k -> new ArrayList<>())
+                        .add(serial);
+            }
+
+            // 🔹 Remove invalid keys if somehow still present
+            itemToContainerSerials.entrySet().removeIf(e -> isBlank(e.getKey()));
+
+            // ==== Validate ASN ====
+            ASNLine asnLine = null;
+            if ("ASN".equalsIgnoreCase(requestType)) {
+                asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+            }
+            if (asnLine == null) {
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                        "ASN Line not found for provided requestId/requestType", null,
+                        ServiceConstants.ERROR_CODE, logId));
+            }
+
+            // ==== Validate duplicate serial numbers ====
+            List<String> serialNumbers = packingRows.stream()
+                    .map(m -> m.get("serialBatchNumber"))
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+
+            Set<String> duplicateSerials = serialNumbers.stream()
+                    .filter(s -> Collections.frequency(serialNumbers, s) > 1)
+                    .collect(Collectors.toSet());
+            if (!duplicateSerials.isEmpty()) {
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                        "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
+                        null, ServiceConstants.ERROR_CODE, logId));
+            }
+
+            List<String> existingSerials = serialBatchNumberRepository
+                    .findByIsDeletedFalseAndAsnLineId(asnLine.getId())
+                    .stream()
+                    .map(SerialBatchNumber::getSerialBatchNumber)
+                    .collect(Collectors.toList());
+
+            List<String> overlap = serialNumbers.stream()
+                    .filter(existingSerials::contains)
+                    .collect(Collectors.toList());
+            if (!overlap.isEmpty()) {
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                        "Serial Numbers already exist in system: " + String.join(", ", overlap),
+                        null, ServiceConstants.ERROR_CODE, logId));
+            }
+
+            // ==== If NOT final upload → build summary only ====
+            if (!Boolean.TRUE.equals(isFinalUpload)) {
+                List<PackingSummaryResponse> summaryList = new ArrayList<>();
+
+                if (!itemToContainerSerials.isEmpty()) {
+                    for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
+
+                        String itemCode = itemEntry.getKey();
+                        if (isBlank(itemCode)) continue; // skip blanks
+                        Map<String, List<String>> containerMap = itemEntry.getValue();
+                        if (containerMap == null || containerMap.isEmpty()) continue;
+
+                        // ---- Safely get item name ----
+                        String itemName = packingRows.stream()
+                                .filter(r -> itemCode.equals(r.get("itemCode")))
+                                .map(r -> r.getOrDefault("itemName", ""))
+                                .findFirst()
+                                .orElse("");
+
+                        // ---- Safely build container summaries ----
+                        List<PackingSummaryResponse.ContainerSummary> containerSummaries = containerMap.entrySet().stream()
+                                .filter(e -> !isBlank(e.getKey()))
+                                .map(e -> {
+                                    String containerCode = e.getKey();
+                                    List<String> serials = e.getValue() == null
+                                            ? Collections.emptyList()
+                                            : e.getValue().stream().filter(Objects::nonNull).collect(Collectors.toList());
+                                    return new PackingSummaryResponse.ContainerSummary(containerCode, serials);
+                                })
+                                .collect(Collectors.toList());
+
+                        int totalContainers = containerSummaries.size();
+                        int totalQty = containerSummaries.stream()
+                                .mapToInt(c -> c.getSerialNumbers() != null ? c.getSerialNumbers().size() : 0)
+                                .sum();
+
+                        summaryList.add(new PackingSummaryResponse(
+                                itemName,
+                                itemCode,
+                                totalContainers,
+                                totalQty,
+                                containerSummaries
+                        ));
+                    }
+                }
+
+                return ResponseEntity.ok(new BaseResponse<>(
+                        HttpStatus.OK.value(),
+                        "Packing summary generated successfully (preview mode)",
+                        summaryList,
+                        ServiceConstants.SUCCESS_CODE,
+                        logId
+                ));
+            }
+
+            // ==== FINAL upload: Save Data ====
+            Date now = new Date();
+            Integer orgId = loginUser.getOrgId();
+            Integer subOrgId = loginUser.getSubOrgId();
+            Integer userId = loginUser.getUserId();
+
+            int totalContainers = itemToContainerSerials.values().stream()
+                    .mapToInt(m -> m != null ? m.size() : 0)
+                    .sum();
+
+            int sequenceCounter = 1; // start from 1
+            List<SerialBatchNumber> seq = this.serialBatchNumberRepository
+                    .findByIsDeletedFalseAndAsnLineIdOrderByAcceptedRejectedContainerBarcodePackingSlipNumberDesc(requestId);
+
+            String packingSlipNumber;
+            if (seq != null && !seq.isEmpty()
+                    && seq.get(0).getAcceptedRejectedContainerBarcode() != null
+                    && seq.get(0).getAcceptedRejectedContainerBarcode().getPackingSlipNumber() != null) {
+                packingSlipNumber = seq.get(0).getAcceptedRejectedContainerBarcode().getPackingSlipNumber();
+            } else {
+                packingSlipNumber = null; // Let generator handle initial creation
+            }
+            CommonMaster packingCompletedStatus = this.commonMasterRepository.findByTypeAndIsDeletedFalse("PCKSLP");
+
+            for (Map.Entry<String, Map<String, List<String>>> itemEntry : itemToContainerSerials.entrySet()) {
+                Map<String, List<String>> containerMap = itemEntry.getValue();
+                if (containerMap == null || containerMap.isEmpty()) continue;
+
+                for (Map.Entry<String, List<String>> entry : containerMap.entrySet()) {
+                    String containerCode = entry.getKey();
+                    List<String> serials = entry.getValue();
+
+                    if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
+
+                    // ✅ Generate unique packing slip number
+                     String nextPackingSlipNumber = generateNextPackingSlipNumber(packingSlipNumber);
+
+                    // ✅ Get container type from first matching Excel row
+                    String containerType = packingRows.stream()
+                            .filter(r -> containerCode.equals(r.get("containerCode")))
+                            .map(r -> r.getOrDefault("containerType", ""))
+                            .findFirst()
+                            .orElse("");
+
+                    // ✅ Create and save barcode entity
+                    AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
+                    barcode.setOrganizationId(orgId);
+                    barcode.setSubOrganizationId(subOrgId);
+                    barcode.setContainerCode(containerCode);
+                    barcode.setContainerType(containerType);
+                    barcode.setPackingSlipNumber(nextPackingSlipNumber); // new field
+                    barcode.setStatus(packingCompletedStatus);
+                    barcode.setPackingSequence(sequenceCounter + " of " + totalContainers); // new field
+                    barcode.setIsDeleted(false);
+                    barcode.setCreatedBy(userId);
+                    barcode.setCreatedOn(now);
+                    acceptedRejectedContainerBarcodeRepository.save(barcode);
+
+                    ASNLine finalAsnLine = asnLine;
+                    List<SerialBatchNumber> batchList = serials.stream()
+                            .filter(Objects::nonNull)
+                            .map(serial -> {
+                                SerialBatchNumber s = new SerialBatchNumber();
+                                s.setOrganizationId(orgId);
+                                s.setSubOrganizationId(subOrgId);
+                                s.setSerialBatchNumber(serial);
+                                s.setAcceptedRejectedContainerBarcode(barcode);
+                                s.setAsnLine(finalAsnLine);
+                                s.setIsDeleted(false);
+                                s.setCreatedBy(userId);
+                                s.setCreatedOn(now);
+                                return s;
+                            })
+                            .collect(Collectors.toList());
+                    serialBatchNumberRepository.saveAll(batchList);
+
+
+// Collect StockMovement objects for batch save
+                    List<StockMovement> stockMovementList = batchList.stream()
+                            .map(serialBatchNumber -> {
+                                StockMovement sm = new StockMovement();
+                                sm.setOrganizationId(orgId);
+                                sm.setSubOrganizationId(subOrgId);
+                                sm.setSerialBatchNumbers(serialBatchNumber);
+                                sm.setItem(finalAsnLine.getItem());
+                                sm.setIsDeleted(false);
+                                sm.setCreatedBy(userId);
+                                sm.setCreatedOn(now);
+                                return sm;
+                            })
+                            .collect(Collectors.toList());
+
+                    // Save all StockMovement objects in one batch
+                    this.stockMovementRepository.saveAll(stockMovementList);
+                    sequenceCounter++;
+                }
+            }
+//          Updating Total Container in ASN Line
+            ASNLine line = this.asnLineRepository.findByIsDeletedFalseAndId(requestId);
+            if (line != null) {
+                line.setNumberOfContainer(totalContainers);
+                this.asnLineRepository.save(line);
+            }
+
+            long endTime = System.currentTimeMillis();
+            log.info("LogId:{} - uploadPackingList - saved in {}ms", logId, (endTime - startTime));
+
+            return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(),
+                    "Packing List Uploaded Successfully", null, ServiceConstants.SUCCESS_CODE, logId));
+
+        } catch (Exception e) {
+            log.error("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
+                    loginUser.getLogId(), loginUser.getUserId(), "PACKING_LIST_UPLOAD_FAILED", e);
+            ExceptionLogger.logException(e, logId);
+            return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                    ServiceConstants.FILE_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
+        }
+    }
+
+    // 🔹 Utility method
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    private String generateNextPackingSlipNumber(String lastPackingSlipNumber) {
+        // Define month-to-letter map (A=Jan, B=Feb, ..., L=Dec)
+        String[] monthLetters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
+
+        // Current date parts
+        LocalDate today = LocalDate.now();
+        String year = String.valueOf(today.getYear());
+        String monthLetter = monthLetters[today.getMonthValue() - 1];
+        String day = String.format("%02d", today.getDayOfMonth());
+
+        // Default to sequence 1 for first time creation
+        int nextSequence = 1;
+
+        // ✅ Extract numeric part if last slip is valid (non-null & pattern matches)
+        if (lastPackingSlipNumber != null && lastPackingSlipNumber.startsWith("PKG-")) {
+            try {
+                String[] parts = lastPackingSlipNumber.split("-");
+                if (parts.length == 3) {
+                    nextSequence = Integer.parseInt(parts[2]) + 1;
+                }
+            } catch (NumberFormatException e) {
+                log.warn("Invalid sequence format in last slip number: {}", lastPackingSlipNumber);
+                nextSequence = 1; // fallback to default
+            }
+        }
+
+        // ✅ Loop to ensure uniqueness (handles concurrent inserts)
+        String nextSlip;
+        int retryCount = 0;
+        do {
+            nextSlip = String.format("PKG-%s%s%s-%03d", year, monthLetter, day, nextSequence);
+            boolean exists = acceptedRejectedContainerBarcodeRepository.existsByPackingSlipNumber(nextSlip);
+            if (!exists) break; // unique found, stop retrying
+
+            nextSequence++; // increment and retry
+            retryCount++;
+
+            if (retryCount > 100) { // safeguard
+                throw new IllegalStateException("Failed to generate unique Packing Slip Number after 100 attempts");
+            }
+        } while (true);
+
+        log.info("Generated next unique packing slip number: {}", nextSlip);
+        return nextSlip;
+    }
+
+
+
 
 }

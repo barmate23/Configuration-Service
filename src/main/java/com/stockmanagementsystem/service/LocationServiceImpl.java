@@ -452,7 +452,7 @@ public class LocationServiceImpl extends Validations implements LocationService{
             log.info("LogId:{} - LocationServiceImpl - getAllLocation - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL LOCATION START");
             BaseResponse<Location> baseResponse = new BaseResponse<>();
             try {
-                List<Location> locations = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneId(false, loginUser.getSubOrgId(), zoneId);
+                List<Location> locations = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(false, loginUser.getSubOrgId(), zoneId);
                 ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10043S);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
@@ -570,8 +570,9 @@ public class LocationServiceImpl extends Validations implements LocationService{
                 return null;
             }
         }
+
         @Override
-        public ResponseEntity<byte[]> downloadExcelLocationFile (Integer zoneId){
+        public ResponseEntity<byte[]> downloadExcelLocationFile(Integer zoneId) {
             HttpHeaders headers = new HttpHeaders();
             byte[] excelBytes = null;
             try {
@@ -579,12 +580,30 @@ public class LocationServiceImpl extends Validations implements LocationService{
                 FileInputStream fis = new FileInputStream(templateFilePath);
                 Workbook workbook = new XSSFWorkbook(fis);
                 Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
-                List<Location> locations = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneId(false, loginUser.getSubOrgId(), zoneId);
+
+                // ✅ Create font (Calibri) and style (Left aligned)
+                Font arialFont = workbook.createFont();
+                arialFont.setFontName("Arial");
+                arialFont.setFontHeightInPoints((short) 11);
+
+                CellStyle leftAlignStyle = workbook.createCellStyle();
+                leftAlignStyle.setFont(arialFont);
+                leftAlignStyle.setBorderTop(BorderStyle.THIN);
+                leftAlignStyle.setBorderBottom(BorderStyle.THIN);
+                leftAlignStyle.setBorderLeft(BorderStyle.THIN);
+                leftAlignStyle.setBorderRight(BorderStyle.THIN);
+                leftAlignStyle.setAlignment(HorizontalAlignment.LEFT);
+                leftAlignStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+                List<Location> locations = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(
+                        false, loginUser.getSubOrgId(), zoneId);
+
                 for (int i = 0; i < locations.size(); i++) {
                     Row row = sheet.getRow(i + 2);
                     if (row == null) {
                         row = sheet.createRow(i + 2);
                     }
+
                     Cell storeId = row.getCell(0, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                     Cell storeName = row.getCell(1, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                     Cell erpAreaId = row.getCell(2, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
@@ -608,75 +627,45 @@ public class LocationServiceImpl extends Validations implements LocationService{
                     Cell area = row.getCell(20, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                     Cell volume = row.getCell(21, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                     Cell carryingCapacityKg = row.getCell(22, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-                    storeId.setCellValue(locations.get(i).getZone().getArea().getStore().getStoreId());
-                    storeName.setCellValue(locations.get(i).getZone().getArea().getStore().getStoreName());
-                    if (locations.get(i).getZone().getArea().getErpAreaId() != null) {
-                        erpAreaId.setCellValue(locations.get(i).getZone().getArea().getErpAreaId());
-                    }
-                    if (locations.get(i).getZone().getArea().getAreaName() != null) {
-                        areaName.setCellValue(locations.get(i).getZone().getArea().getAreaName());
-                    }
-                    areaId.setCellValue(locations.get(i).getZone().getArea().getAreaId());
-                    if (locations.get(i).getZone().getErpZoneId() != null) {
-                        erpZoneId.setCellValue(locations.get(i).getZone().getErpZoneId());
-                    }
-                    if (locations.get(i).getZone().getZoneName() != null) {
-                        zoneName.setCellValue(locations.get(i).getZone().getZoneName());
-                    }
-                    if (locations.get(i).getZone().getZoneId() != null) {
-                        zoneIds.setCellValue(locations.get(i).getZone().getZoneId());
-                    }
-                    locationIds.setCellValue(locations.get(i).getLocationId());
 
-                    if (locations.get(i).getErpLocationId() != null) {
-                        erpLocationId.setCellValue(locations.get(i).getErpLocationId());
-                    }
+                    // ✅ Populate with values + apply style
+                    setCellValueAndStyle(storeId, locations.get(i).getZone().getArea().getStore().getStoreId(), leftAlignStyle);
+                    setCellValueAndStyle(storeName, locations.get(i).getZone().getArea().getStore().getStoreName(), leftAlignStyle);
+                    setCellValueAndStyle(erpAreaId, locations.get(i).getZone().getArea().getErpAreaId(), leftAlignStyle);
+                    setCellValueAndStyle(areaName, locations.get(i).getZone().getArea().getAreaName(), leftAlignStyle);
+                    setCellValueAndStyle(areaId, locations.get(i).getZone().getArea().getAreaId(), leftAlignStyle);
+                    setCellValueAndStyle(erpZoneId, locations.get(i).getZone().getErpZoneId(), leftAlignStyle);
+                    setCellValueAndStyle(zoneName, locations.get(i).getZone().getZoneName(), leftAlignStyle);
+                    setCellValueAndStyle(zoneIds, locations.get(i).getZone().getZoneId(), leftAlignStyle);
+                    setCellValueAndStyle(locationIds, locations.get(i).getLocationId(), leftAlignStyle);
+                    setCellValueAndStyle(erpLocationId, locations.get(i).getErpLocationId(), leftAlignStyle);
 
                     if (locations.get(i).getItem() != null) {
-                        itemId.setCellValue(locations.get(i).getItem().getItemId());
-                        itemName.setCellValue(locations.get(i).getItem().getName());
-                    }
-                    if (locations.get(i).getLocationType() != null) {
-                        locationType.setCellValue(locations.get(i).getLocationType());
-                    }
-                    if (locations.get(i).getRow() != null) {
-                        rows.setCellValue(locations.get(i).getRow());
-                    }
-                    if (locations.get(i).getRackFloor() != null) {
-                        rackFloor.setCellValue(locations.get(i).getRackFloor());
-                    }
-                    if (locations.get(i).getRackNo() != null) {
-                        rackNo.setCellValue(locations.get(i).getRackNo());
-                    }
-                    if (locations.get(i).getShelfNo() != null) {
-                        shelfNo.setCellValue(locations.get(i).getShelfNo());
-                    }
-                    if (locations.get(i).getLength() != null) {
-                        length.setCellValue(locations.get(i).getLength());
-                    }
-                    if (locations.get(i).getWidth() != null) {
-                        width.setCellValue(locations.get(i).getWidth());
-                    }
-                    if (locations.get(i).getHeight() != null) {
-                        height.setCellValue(locations.get(i).getHeight());
-                    }
-                    if (locations.get(i).getAreaSqCm() != null) {
-                        area.setCellValue(locations.get(i).getAreaSqCm());
-                    }
-                    if (locations.get(i).getVolumeCuCm() != null) {
-                        volume.setCellValue(locations.get(i).getVolumeCuCm());
-                    }
-                    if (locations.get(i).getCarryingCapacity() != null) {
-                        carryingCapacityKg.setCellValue(locations.get(i).getCarryingCapacity());
+                        setCellValueAndStyle(itemId, locations.get(i).getItem().getItemCode(), leftAlignStyle);
+                        setCellValueAndStyle(itemName, locations.get(i).getItem().getName(), leftAlignStyle);
                     }
 
+                    setCellValueAndStyle(locationType, locations.get(i).getLocationType(), leftAlignStyle);
+                    setCellValueAndStyle(rows, locations.get(i).getRow(), leftAlignStyle);
+                    setCellValueAndStyle(rackFloor, locations.get(i).getRackFloor(), leftAlignStyle);
+                    setCellValueAndStyle(rackNo, locations.get(i).getRackNo(), leftAlignStyle);
+                    setCellValueAndStyle(shelfNo, locations.get(i).getShelfNo(), leftAlignStyle);
+                    setCellValueAndStyle(length, locations.get(i).getLength(), leftAlignStyle);
+                    setCellValueAndStyle(width, locations.get(i).getWidth(), leftAlignStyle);
+                    setCellValueAndStyle(height, locations.get(i).getHeight(), leftAlignStyle);
+                    setCellValueAndStyle(area, locations.get(i).getAreaSqCm(), leftAlignStyle);
+                    setCellValueAndStyle(volume, locations.get(i).getVolumeCuCm(), leftAlignStyle);
+                    setCellValueAndStyle(carryingCapacityKg, locations.get(i).getCarryingCapacity(), leftAlignStyle);
                 }
+
                 // Write the workbook to a ByteArrayOutputStream
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 workbook.write(outputStream);
                 workbook.close();
+
                 // Convert ByteArrayOutputStream to byte array
                 excelBytes = outputStream.toByteArray();
+
                 // Set response headers for downloading the file
                 headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
                 headers.setContentDispositionFormData("attachment", "location.xlsx");
@@ -687,9 +676,28 @@ public class LocationServiceImpl extends Validations implements LocationService{
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(excelBytes);
-
         }
-        @Override
+
+    /**
+     * Helper to set cell value with style
+     */
+    private void setCellValueAndStyle(Cell cell, Object value, CellStyle style) {
+        if (value != null) {
+            if (value instanceof String) {
+                cell.setCellValue((String) value);
+            } else if (value instanceof Integer) {
+                cell.setCellValue((Integer) value);
+            } else if (value instanceof Double) {
+                cell.setCellValue((Double) value);
+            } else if (value instanceof Long) {
+                cell.setCellValue((Long) value);
+            } else {
+                cell.setCellValue(value.toString());
+            }
+        }
+        cell.setCellStyle(style);
+    }
+    @Override
         public ResponseEntity<BaseResponse> uploadLocationDetail (MultipartFile file, Integer zoneId) throws IOException
         {
             try {
@@ -866,7 +874,7 @@ public class LocationServiceImpl extends Validations implements LocationService{
                 // Close the workbook
                 workbook.close();
                 if (resultResponses.size() == 0) {
-                    List<Location> locationList = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneId(false, loginUser.getSubOrgId(), zoneId);
+                    List<Location> locationList = locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(false, loginUser.getSubOrgId(), zoneId);
 
                     locationList = locations;
                     this.locationRepository.saveAllAndFlush(locationList);

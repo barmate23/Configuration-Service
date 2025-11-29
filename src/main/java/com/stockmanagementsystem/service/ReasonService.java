@@ -20,7 +20,7 @@ public interface ReasonService {
     BaseResponse updateReason(Integer id, String rejectedReason,Integer reasonCategoryId);
     BaseResponse<List<ItemNameResponse>> getItemIdWithName();
     BaseResponse<List<ReasonResponse>> searchReasons(
-            Integer pageNumber, Integer pageSize, List<String> reasonId, List<String> reasonCategory, List<String> itemName, Boolean createdYear
+            Integer pageNumber, Integer pageSize, List<String> reasonId, String reasonCategory, List<String> itemName, Boolean createdYear
     );
     BaseResponse<List<ReasonResponse>> getAllReasons(int page, int pageSize);
 

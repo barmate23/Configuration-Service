@@ -4,6 +4,7 @@ import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.request.HolidayRequest;
 import com.stockmanagementsystem.request.ShiftRequest;
 import com.stockmanagementsystem.request.UserShiftRequest;
+import com.stockmanagementsystem.request.WeeklyOffRequest;
 import com.stockmanagementsystem.response.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,14 +16,13 @@ public interface CalenderService {
 
     BaseResponse saveHoliday(HolidayRequest holidayRequest);
 
-    ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize);
 
     BaseResponse deleteByHolidayId(Integer holidayId);
     BaseResponse<Holiday> updateByHolidayId(HolidayRequest holidayRequest,Integer holidayId);
 
     BaseResponse<List<DayResponse>> getDay();
 
-    ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize, Integer month, Integer year);
+    ResponseEntity<BaseResponse> getAllHoliday();
 
     BaseResponse saveShift(ShiftRequest ShiftRequest);
 
@@ -53,4 +53,8 @@ public interface CalenderService {
     BaseResponse getAllShiftWithYearAndDays(int page, int pageSize);
 
     BaseResponse<UserResponse> getUserNotAddedInShift(Integer shiftId);
+
+    BaseResponse<WeeklyOffDays> getWeeklyOff();
+
+    BaseResponse<WeeklyOffDays> saveWeeklyOff(WeeklyOffRequest weeklyOffRequest);
 }

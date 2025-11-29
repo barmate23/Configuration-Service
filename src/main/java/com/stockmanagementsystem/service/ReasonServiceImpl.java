@@ -234,7 +234,7 @@ public class ReasonServiceImpl implements ReasonService {
     }
 
     @Override
-    public BaseResponse<List<ReasonResponse>> searchReasons(Integer pageNumber, Integer pageSize, List<String> reasonId, List<String> reasonCategory, List<String> itemName, Boolean userCreatedReason) {
+    public BaseResponse<List<ReasonResponse>> searchReasons(Integer pageNumber, Integer pageSize, List<String> reasonId, String reasonCategory, List<String> itemName, Boolean userCreatedReason) {
 
 
         long startTime = System.currentTimeMillis();
@@ -460,7 +460,7 @@ public class ReasonServiceImpl implements ReasonService {
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(reasonCategoryMasters);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - ReasonServiceImpl - getAllReasonsWithoutPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - ReasonServiceImpl - getAllCategory - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
             return baseResponse;
         }catch (Exception ex){
             ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10069F);
@@ -469,11 +469,11 @@ public class ReasonServiceImpl implements ReasonService {
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - ReasonServiceImpl - getAllReasonsWithoutPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
+            log.error("LogId:{} - ReasonServiceImpl - getAllCategory - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
 
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - ReasonServiceImpl - getAllReasonsWithoutPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED REASON TIME" + (endTime - startTime));
+        log.info("LogId:{} - ReasonServiceImpl - getAllCategory - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED REASON TIME" + (endTime - startTime));
 
         return baseResponse;
     }
@@ -492,7 +492,7 @@ public class ReasonServiceImpl implements ReasonService {
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(reasons);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - ReasonServiceImpl - getAllReasonsWithoutPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - ReasonServiceImpl - getAllReasonByCategory - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
             return baseResponse;
         }catch (Exception ex){
             ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10069F);
@@ -501,11 +501,11 @@ public class ReasonServiceImpl implements ReasonService {
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - ReasonServiceImpl - getAllReasonsWithoutPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
+            log.error("LogId:{} - ReasonServiceImpl - getAllReasonByCategory - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
 
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - ReasonServiceImpl - getAllReasonsWithoutPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED REASON TIME" + (endTime - startTime));
+        log.info("LogId:{} - ReasonServiceImpl - getAllReasonByCategory - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED REASON TIME" + (endTime - startTime));
 
         return baseResponse;
     }

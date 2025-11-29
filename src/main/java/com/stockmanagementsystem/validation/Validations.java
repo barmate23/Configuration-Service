@@ -15,6 +15,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -139,15 +143,56 @@ public class Validations extends ServiceConstants {
     public Float getCellFloatValue(Row row, int cellIndex, List<ValidationResultResponse> resultResponses, String type, List<String> headerNames) {
         Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
         if (cell == null) {
-//            resultResponses.add(new ValidationResultResponse(type, (row.getRowNum() + 1), headerNames.get(cellIndex), "Data value found null"));
             return null;
-        }else {
-            if (cell.getCellType() == CellType.NUMERIC) {
-                // Return numeric value as float
-                double numericValue = cell.getNumericCellValue();
-                return (float) numericValue;
+        } else {
+            CellType cellType = cell.getCellType();
+
+            if (cellType == CellType.NUMERIC) {
+                return (float) cell.getNumericCellValue();
+
+            } else if (cellType == CellType.FORMULA) {
+                // Create evaluator directly from the workbook
+                FormulaEvaluator evaluator = row.getSheet().getWorkbook()
+                        .getCreationHelper()
+                        .createFormulaEvaluator();
+                CellValue evaluatedValue = evaluator.evaluate(cell);
+
+                if (evaluatedValue != null && evaluatedValue.getCellType() == CellType.NUMERIC) {
+                    return (float) evaluatedValue.getNumberValue();
+                } else if (evaluatedValue != null && evaluatedValue.getCellType() == CellType.STRING) {
+                    try {
+                        return Float.parseFloat(evaluatedValue.getStringValue().trim());
+                    } catch (NumberFormatException e) {
+                        resultResponses.add(new ValidationResultResponse(
+                                type,
+                                (row.getRowNum() + 1),
+                                headerNames.get(cellIndex),
+                                "Formula does not evaluate to a numeric value"
+                        ));
+                    }
+                }
+                return null;
+
+            } else if (cellType == CellType.STRING) {
+                try {
+                    return Float.parseFloat(cell.getStringCellValue().trim());
+                } catch (NumberFormatException e) {
+                    resultResponses.add(new ValidationResultResponse(
+                            type,
+                            (row.getRowNum() + 1),
+                            headerNames.get(cellIndex),
+                            "Data must be numeric value"
+                    ));
+                    return null;
+                }
+
             } else {
-                resultResponses.add(new ValidationResultResponse(type, (row.getRowNum() + 1), headerNames.get(cellIndex), "Data must be numeric value"));
+                resultResponses.add(new ValidationResultResponse(
+                        type,
+                        (row.getRowNum() + 1),
+                        headerNames.get(cellIndex),
+                        "Data must be numeric value"
+                ));
                 return null;
             }
         }
@@ -318,7 +363,7 @@ public class Validations extends ServiceConstants {
 
     }
     public String locationIdGeneration(Integer zoneId){
-        List<Location>locations=locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneId(false,loginUser.getSubOrgId(),zoneId);
+        List<Location>locations=locationRepository.findByIsDeletedAndSubOrganizationIdAndZoneIdOrderByIdAsc(false,loginUser.getSubOrgId(),zoneId);
        if(locations!=null && locations.size()!=0){
            return locations.get(locations.size()-1).getZone().getZoneId()+"LOC0"+locations.get(locations.size()-1).getId();
        }else {
@@ -426,6 +471,62 @@ public class Validations extends ServiceConstants {
         return null;
     }
 
+
+    public LocalTime getCellTimeValueForPPE(Row data, int cellIndex,
+                                            List<ValidationResultResponse> resultResponses,
+                                            String type, List<String> headerNames) {
+        Cell cell = data.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) {
+            resultResponses.add(new ValidationResultResponse(
+                    type,
+                    (data.getRowNum() + 1),
+                    headerNames.get(cellIndex),
+                    "Time value found null"
+            ));
+            return null;
+        }
+
+        // Always get user-visible text (e.g., "15:00" or "15:00:00")
+        DataFormatter formatter = new DataFormatter();
+        String cellValue = formatter.formatCellValue(cell).trim();
+
+        if (cellValue.isEmpty()) {
+            return null; // nothing entered
+        }
+
+        try {
+            // 🧩 Normalize “15:00:00” → “15:00”
+            if (cellValue.matches("^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$")) {
+                cellValue = cellValue.substring(0, 5); // keep only HH:mm
+            }
+
+            // ✅ Strictly allow only “HH:mm” now
+            if (!cellValue.matches("^([01]\\d|2[0-3]):[0-5]\\d$")) {
+                resultResponses.add(new ValidationResultResponse(
+                        type,
+                        (data.getRowNum() + 1),
+                        headerNames.get(cellIndex),
+                        "INVALID TIME FORMAT - Expected HH:mm (e.g., 15:00)"
+                ));
+                return null;
+            }
+
+            // ✅ Parse the valid time
+            LocalTime parsedTime = LocalTime.parse(cellValue, DateTimeFormatter.ofPattern("HH:mm"));
+
+            // ✅ Return immediately if correct
+            return parsedTime;
+
+        } catch (Exception e) {
+            resultResponses.add(new ValidationResultResponse(
+                    type,
+                    (data.getRowNum() + 1),
+                    headerNames.get(cellIndex),
+                    "ERROR PARSING TIME VALUE - Expected HH:mm (e.g., 15:00)"
+            ));
+            return null;
+        }
+    }
 
     public Integer getNumberOfItem(){
         // Define storage location dimensions and weight capacity

@@ -1,28 +1,34 @@
-name: Local Docker Build & Run
+name: Publish Docker image to GHCR
 
 on:
-  workflow_dispatch:  # trigger manually
+  push:
+    branches: [ "main" ]
 
 jobs:
-  build_and_run:
-    runs-on: self-hosted
-
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Remove old Docker image (if exists)
-        run: docker rmi -f configuration:latest || true
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build -t configuration:latest .
-
-      - name: Remove old container (if exists)
-        run: docker rm -f configurationservice || true
-
-      - name: Run Docker container
+      - name: Set lowercase repo name
+        id: prep
         run: |
-          docker run -d \
-            --name configurationservice \
-            --network updated_orgadmin_rmscadminnetwork \
-            -p 8082:80 \
-            configuration:latest
+          echo "repo_lower=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ env.repo_lower }}:latest

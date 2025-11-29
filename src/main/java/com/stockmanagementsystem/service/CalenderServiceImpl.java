@@ -6,6 +6,7 @@ import com.stockmanagementsystem.repository.*;
 import com.stockmanagementsystem.request.HolidayRequest;
 import com.stockmanagementsystem.request.ShiftRequest;
 import com.stockmanagementsystem.request.UserShiftRequest;
+import com.stockmanagementsystem.request.WeeklyOffRequest;
 import com.stockmanagementsystem.response.*;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import com.stockmanagementsystem.utils.ServiceConstants;
@@ -20,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.stockmanagementsystem.utils.GlobalMessages.getResponseMessages;
 
@@ -41,12 +43,27 @@ public class CalenderServiceImpl implements CalenderService {
     ShiftRepository shiftRepository;
 
     @Autowired
+    WeeklyOffDaysRepository weeklyOffDaysRepository;
+
+    @Autowired
     ShiftMapperRepository shiftMapperRepository;
 
     @Autowired
     UserShiftRepository userShiftRepository;
     @Autowired
     UserRepository userRepository;
+
+    private static final Map<String, String> DAY_CODE_MAP = new HashMap<>();
+
+    static {
+        DAY_CODE_MAP.put("MONDAY", "MON");
+        DAY_CODE_MAP.put("TUESDAY", "TUE");
+        DAY_CODE_MAP.put("WEDNESDAY", "WED");
+        DAY_CODE_MAP.put("THURSDAY", "THU");
+        DAY_CODE_MAP.put("FRIDAY", "FRI");
+        DAY_CODE_MAP.put("SATURDAY", "SAT");
+        DAY_CODE_MAP.put("SUNDAY", "SUN");
+    }
 
     @Override
     public BaseResponse<HolidayTypeResponse> getHolidayType() {
@@ -92,28 +109,8 @@ public class CalenderServiceImpl implements CalenderService {
         log.info("LogId:{} - CalenderServiceImpl - saveHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " SAVE HOLIDAY START");
         BaseResponse baseResponse = new BaseResponse();
         try {
-            Holiday existingHoliday = holidayRepository.findBySubOrganizationIdAndIsDeletedAndDateOrSubOrganizationIdAndIsDeletedAndHolidayName(loginUser.getSubOrgId(), false, holidayRequest.getDate(), loginUser.getSubOrgId(), false, holidayRequest.getHolidayName());
             // Holiday existingHoliday = holidayRepository.findBySubOrganizationIdAndIsDeletedAndDateOrHolidayName( loginUser.getSubOrgId(),false,holidayRequest.getDate(), holidayRequest.getHolidayName());
-            if (existingHoliday != null) {
-                LocalDate existingHolidayDate = existingHoliday.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                LocalDate holidayRequestDate = holidayRequest.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                if (existingHolidayDate.equals(holidayRequestDate)) {
-                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10033E);
-                    baseResponse.setCode(responseMessage.getCode());
-                    baseResponse.setStatus(responseMessage.getStatus());
-                    baseResponse.setMessage(responseMessage.getMessage());
-                    baseResponse.setLogId(loginUser.getLogId());
-                    baseResponse.setData(new ArrayList<>());
-                } else if (existingHoliday.getHolidayName().equals(holidayRequest.getHolidayName())) {
-                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10032E);
-                    baseResponse.setCode(responseMessage.getCode());
-                    baseResponse.setStatus(responseMessage.getStatus());
-                    baseResponse.setMessage(responseMessage.getMessage());
-                    baseResponse.setLogId(loginUser.getLogId());
-                    baseResponse.setData(new ArrayList<>());
-                }
-                return baseResponse;
-            }
+
             Holiday holiday = new Holiday();
             holiday.setHolidayName(holidayRequest.getHolidayName());
             holiday.setDate(holidayRequest.getDate());
@@ -154,35 +151,6 @@ public class CalenderServiceImpl implements CalenderService {
         return baseResponse;
     }
 
-    @Override
-    public ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize) {
-        long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET HOLIDAY LIST START");
-        BaseResponse baseResponse = new BaseResponse();
-        ResponseEntity responseEntity = null;
-        try {
-            PageRequest pageable = PageRequest.of((page - 1) * 10, pageSize, Sort.by(Sort.Direction.DESC, "holidayId"));
-            Page<Holiday> holidayList = holidayRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeleted(loginUser.getOrgId(), loginUser.getSubOrgId(), false, pageable);
-            baseResponse.setData(holidayList.getContent());
-
-            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10047S);
-            baseResponse.setCode(responseMessage.getCode());
-            baseResponse.setStatus(responseMessage.getStatus());
-            baseResponse.setMessage(responseMessage.getMessage());
-            baseResponse.setLogId(loginUser.getLogId());
-            baseResponse.setTotalRecordCount(holidayList.getTotalElements());
-            baseResponse.setTotalPageCount(holidayList.getTotalPages());
-            responseEntity = ResponseEntity.ok().body(baseResponse);
-            log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
-        } catch (Exception e) {
-            long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " FAILED TO FETCH HOLIDAY LIST :" + (endTime - startTime), e);
-            responseEntity = ResponseEntity.badRequest().body("FAILED TO FETCH HOLIDAY LIST FROM DB");
-        }
-        long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " FETCHED HOLIDAY LIST TIME :" + (endTime - startTime));
-        return responseEntity;
-    }
 
     @Override
     public BaseResponse deleteByHolidayId(Integer holidayId) {
@@ -340,58 +308,20 @@ public class CalenderServiceImpl implements CalenderService {
     }
 
     @Override
-    public ResponseEntity<BaseResponse> getAllHoliday(int page, int pageSize, Integer month, Integer year) {
+    public ResponseEntity<BaseResponse> getAllHoliday() {
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET HOLIDAYS START");
         BaseResponse baseResponse = new BaseResponse();
         ResponseEntity responseEntity = null;
 
         try {
-            PageRequest pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.ASC, "date"));
-            Page<Holiday> holidayList;
+            List<Holiday> holidayList;
 
-            if (month != null || year != null) {
-                Calendar calendarStart = Calendar.getInstance();
-                Calendar calendarEnd = Calendar.getInstance();
-
-                if (year == null) {
-                    year = calendarStart.get(Calendar.YEAR);
-                }
-
-                calendarStart.set(Calendar.YEAR, year);
-                calendarEnd.set(Calendar.YEAR, year);
-
-                if (month != null) {
-                    calendarStart.set(Calendar.MONTH, month - 1);
-                    calendarEnd.set(Calendar.MONTH, month - 1);
-                } else {
-                    calendarStart.set(Calendar.MONTH, Calendar.JANUARY);
-                    calendarEnd.set(Calendar.MONTH, Calendar.DECEMBER);
-                }
-
-                calendarStart.set(Calendar.DAY_OF_MONTH, 1);
-                calendarStart.set(Calendar.HOUR_OF_DAY, 0);
-                calendarStart.set(Calendar.MINUTE, 0);
-                calendarStart.set(Calendar.SECOND, 0);
-                Date startDate = calendarStart.getTime();
-
-                calendarEnd.set(Calendar.DAY_OF_MONTH, calendarEnd.getActualMaximum(Calendar.DAY_OF_MONTH));
-                calendarEnd.set(Calendar.HOUR_OF_DAY, 23);
-                calendarEnd.set(Calendar.MINUTE, 59);
-                calendarEnd.set(Calendar.SECOND, 59);
-                Date endDate = calendarEnd.getTime();
-
-
-                holidayList = holidayRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndDateBetween(
-                        loginUser.getOrgId(), loginUser.getSubOrgId(), false, startDate, endDate, pageable);
-
-            } else {
                 holidayList = holidayRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeleted(
-                        loginUser.getOrgId(), loginUser.getSubOrgId(), false, pageable);
-            }
+                        loginUser.getOrgId(), loginUser.getSubOrgId(), false);
 
             List<HolidayResponse> holidayResponses = new ArrayList<>();
-            for (Holiday savedHoliday : holidayList.getContent()) {
+            for (Holiday savedHoliday : holidayList) {
                 HolidayResponse holidayResponse = new HolidayResponse();
                 holidayResponse.setHolidayId(savedHoliday.getId());
                 holidayResponse.setDate(savedHoliday.getDate());
@@ -407,8 +337,6 @@ public class CalenderServiceImpl implements CalenderService {
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(holidayResponses);
             baseResponse.setLogId(loginUser.getLogId());
-            baseResponse.setTotalRecordCount(holidayList.getTotalElements());
-            baseResponse.setTotalPageCount(holidayList.getTotalPages());
             responseEntity = ResponseEntity.ok().body(baseResponse);
             log.info("LogId:{} - CalenderServiceImpl - getAllHoliday - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
@@ -430,6 +358,7 @@ public class CalenderServiceImpl implements CalenderService {
         try {
             long shiftCount =
                     shiftRepository.countByOrganizationIdAndSubOrganizationIdAndIsDeleted(loginUser.getOrgId(), loginUser.getSubOrgId(), false);
+            List<WeeklyOffDays> weeklyOffDays = weeklyOffDaysRepository.findByIsChecked(true);
             if (shiftCount >= 4) {
                 ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10037E);
                 response.setCode(responseMessage.getCode());
@@ -461,16 +390,25 @@ public class CalenderServiceImpl implements CalenderService {
             shift.setCreatedBy(loginUser.getUserId());
             shift.setCreatedOn(new Date());
 
-            Shift savedShift = shiftRepository.save(shift);
 
             Date year = shiftRequest.getYear();
+
+            List<ShiftMapper> shiftMapperList = new ArrayList<>();
 
             for (Integer dayId : shiftRequest.getDay()) {
                 Day day = dayRepository.findById(dayId)
                         .orElseThrow(() -> new IllegalArgumentException("DAY NOT FOUND"));
 
+                if(weeklyOffDays.contains(DAY_CODE_MAP.get(day.getDay()))){
+                    response.setCode(500);
+                    response.setStatus(0);
+                    response.setMessage("You can not add shift on weekly off day: "+ day.getDay());
+                    response.setData(Collections.emptyList());
+                    response.setLogId(loginUser.getLogId());
+                    return response;
+                }
                 ShiftMapper shiftMapper = new ShiftMapper();
-                shiftMapper.setShift(savedShift);
+                shiftMapper.setShift(shift);
                 shiftMapper.setYear(year);
                 shiftMapper.setDay(day);
                 shiftMapper.setOrganizationId(loginUser.getOrgId());
@@ -478,10 +416,13 @@ public class CalenderServiceImpl implements CalenderService {
                 shiftMapper.setIsDeleted(false);
                 shiftMapper.setCreatedBy(loginUser.getUserId());
                 shiftMapper.setCreatedOn(new Date());
-                shiftMapperRepository.save(shiftMapper);
+                shiftMapperList.add(shiftMapper);
             }
             List<Object> responseData = new ArrayList<>();
-            responseData.add(new ShiftsResponse(savedShift.getId(), savedShift.getShiftName(), savedShift.getShiftStart(), savedShift.getShiftEnd()));
+            shiftRepository.save(shift);
+            shiftMapperRepository.saveAll(shiftMapperList);
+
+            responseData.add(new ShiftsResponse(shift.getId(), shift.getShiftName(), shift.getShiftStart(), shift.getShiftEnd()));
 
             ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10052S);
             response.setCode(responseMessage.getCode());
@@ -511,6 +452,8 @@ public class CalenderServiceImpl implements CalenderService {
         BaseResponse response = new BaseResponse();
         try {
             Optional<Shift> optionalShift = shiftRepository.findByIdAndSubOrganizationIdAndIsDeleted(shiftId, loginUser.getSubOrgId(), false);
+            List<WeeklyOffDays> weeklyOffDays = weeklyOffDaysRepository.findByIsChecked(true);
+
             if (optionalShift.isPresent()) {
                 Shift existingShift = optionalShift.get();
 
@@ -555,6 +498,14 @@ public class CalenderServiceImpl implements CalenderService {
                     Day newDay = dayRepository.findById(newDayId)
                             .orElseThrow(() -> new IllegalArgumentException("DAY NOT FOUND"));
 
+                    if(weeklyOffDays.contains(DAY_CODE_MAP.get(newDay.getDay()))){
+                        response.setCode(500);
+                        response.setStatus(0);
+                        response.setMessage("You can not add shift on weekly off day :" + newDay.getDay());
+                        response.setData(Collections.emptyList());
+                        response.setLogId(loginUser.getLogId());
+                        return response;
+                    }
                     ShiftMapper newMapper = new ShiftMapper();
                     newMapper.setShift(savedShift);
                     newMapper.setYear(year);
@@ -1201,7 +1152,16 @@ public class CalenderServiceImpl implements CalenderService {
                     shiftResponseList.setYearResponse(shiftMapper.getYear());
                 }
 
-                shiftResponseList.setShiftMapperResponses(new ArrayList<>(shiftMapperResponses));
+                // Convert Set to List
+                List<ShiftMapperResponse> sortedList = new ArrayList<>(shiftMapperResponses);
+
+                // Sort by ID
+                sortedList.sort(Comparator.comparing(shiftMapperResponse -> {
+                    return shiftMapperResponse.getDay().getDayId();
+                }));
+
+                // Set the sorted list into response
+                shiftResponseList.setShiftMapperResponses(sortedList);
                 shiftResponses.add(shiftResponseList);
             }
             ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10063S);
@@ -1263,6 +1223,90 @@ public class CalenderServiceImpl implements CalenderService {
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(userResponseList);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+        } catch (Exception e) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10061F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " FETCHED USERS LIST TIME :" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<WeeklyOffDays> getWeeklyOff() {
+
+        long startTime = System.currentTimeMillis();
+        String logId = loginUser.getLogId();
+        Integer userId = loginUser.getUserId();
+
+        log.info("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - START", logId, userId);
+
+        BaseResponse<WeeklyOffDays> baseResponse = new BaseResponse<>();
+
+        try {
+
+            List<WeeklyOffDays> weeklyOffDaysList = weeklyOffDaysRepository.findByIsChecked(true);
+
+            // 🔹 HARD–CODED SUCCESS MESSAGE
+            baseResponse.setCode(200);
+            baseResponse.setStatus(1);
+            baseResponse.setMessage("Weekly off days fetched successfully.");
+            baseResponse.setData(weeklyOffDaysList);
+            baseResponse.setLogId(logId);
+
+            log.info("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - SUCCESS - Weekly off days fetched successfully.",
+                    logId, userId);
+
+        } catch (Exception e) {
+
+            // 🔹 HARD–CODED FAILURE MESSAGE
+            baseResponse.setCode(500);
+            baseResponse.setStatus(0);
+            baseResponse.setMessage("Failed to fetch weekly off days.");
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(logId);
+
+            log.error("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - ERROR - Failed to fetch weekly off days.",
+                    logId, userId, e);
+        }
+
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - CalendarServiceImpl - getWeeklyOff - UserId:{} - END - ExecutionTime:{}ms",
+                logId, userId, (endTime - startTime));
+
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<WeeklyOffDays> saveWeeklyOff(WeeklyOffRequest weeklyOffRequest) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET USERS START");
+        BaseResponse<WeeklyOffDays> baseResponse = new BaseResponse<>();
+        try {
+            List<WeeklyOffDays> weeklyOffDaysList = weeklyOffDaysRepository.findAll();
+            Map<String, String> weeklyValueMap = weeklyOffRequest.getDays().stream().collect(Collectors.toMap(k -> k, v -> v));
+            weeklyOffDaysList.forEach(weeklyOffDays -> {
+                if (weeklyValueMap.containsValue(weeklyOffDays.getDay())) {
+                    weeklyOffDays.setIsChecked(true);
+                } else {
+                    weeklyOffDays.setIsChecked(false);
+                }
+            });
+
+            weeklyOffDaysRepository.saveAll(weeklyOffDaysList);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10064S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(weeklyOffDaysList);
             baseResponse.setLogId(loginUser.getLogId());
             log.info("LogId:{} - CalenderServiceImpl - getUserNotAddedInShift - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {

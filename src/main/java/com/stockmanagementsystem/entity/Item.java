@@ -70,6 +70,9 @@ public class Item {
     @Column(name = "ItemUnitWeight")
     private Float itemUnitWeight;
 
+    @Column(name = "PhysicalForm")
+    private String physicalForm;
+
     @Column(name = "ItemUnitRate")
     private Float itemUnitRate;
 

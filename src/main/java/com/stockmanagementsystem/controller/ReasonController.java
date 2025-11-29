@@ -57,7 +57,7 @@ public class ReasonController {
             @RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
             @RequestParam(required = false) List<String> reasonId,
-            @RequestParam(required = false) List<String> reasonCategory,
+            @RequestParam(required = false) String reasonCategory,
             @RequestParam(required = false) List<String> itemName,
             @RequestParam(required = false) Boolean userCreatedReason
     ) {
@@ -99,7 +99,6 @@ public class ReasonController {
     public BaseResponse<Reason> getAllSuppliers(){
         return reasonService.getAllReasonsWithoutPagination();
     }
-
 
     @GetMapping(APIConstants.GET_REASON_BY_CATEGORY)
     public BaseResponse<ReasonCategoryMaster> getAllCategory() {

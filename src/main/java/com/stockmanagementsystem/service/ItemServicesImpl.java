@@ -89,19 +89,7 @@ public class ItemServicesImpl implements ItemService {
         try{
             Item item = new Item();
             item.setItemId(generateItemId(1));
-            Item erpItemId=itemRepository.findBySubOrganizationIdAndErpItemId(loginUser.getSubOrgId(),itemRequest.getErpItemId());
-            if(erpItemId==null){
-                item.setErpItemId(itemRequest.getErpItemId());
-            }else {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10013E);
-                baseResponse.setCode(responseMessage.getCode());
-                baseResponse.setStatus(responseMessage.getStatus());
-                baseResponse.setMessage(responseMessage.getMessage());
-                baseResponse.setData(new ArrayList<>());
-                baseResponse.setLogId(loginUser.getLogId());
-                log.info("LogId:{} - ItemServicesImpl - saveItem - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
-                return baseResponse;
-            }
+
             item.setName(itemRequest.getItemName());
             item.setDescription(itemRequest.getDescription());
             item.setItemGroup(itemRequest.getItemGroup());
@@ -115,6 +103,7 @@ public class ItemServicesImpl implements ItemService {
             item.setSource(itemRequest.getSource());
             item.setUom(itemRequest.getUom());
             item.setItemUnitWeight(itemRequest.getItemUnitWeight());
+            item.setPhysicalForm(itemRequest.getPhysicalForm());
             item.setItemUnitRate(itemRequest.getItemUnitRate());
             item.setCurrency(itemRequest.getCurrency());
             item.setOptimumLevel(itemRequest.getOptimumLevel());
@@ -131,6 +120,7 @@ public class ItemServicesImpl implements ItemService {
             item.setModifiedOn(new Date()); // Assuming no modification initially
             item.setItemCode(itemRequest.getItemCode());
             item.setQcRequired(itemRequest.isQcRequired());
+            item.setInspection(itemRequest.getInspection());
 
             // Set Dock
             Optional<Dock> optionalDock = dockRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),itemRequest.getDockId());
@@ -211,7 +201,8 @@ public class ItemServicesImpl implements ItemService {
             container.setLength(containerRequest.getLength());
             container.setCircumference(containerRequest.getCircumference());
             container.setWeight(containerRequest.getWeight());
-            container.setItemQty(containerRequest.getItemQty());
+            container.setContainerCapacity(containerRequest.getContainerCapacity());
+            container.setContainerCapacityUom(containerRequest.getContainerCapacityUom());
             container.setMinimumOrderQty(containerRequest.getMinimumOrderQty());
             container.setIsActive(true);
             container.setIsDeleted(false);
@@ -356,23 +347,6 @@ public class ItemServicesImpl implements ItemService {
         try{
             Optional<Item> item = itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),itemId);
 
-         if(item.get().getErpItemId().equals(itemRequest.getErpItemId())) {
-             item.get().setErpItemId(itemRequest.getErpItemId());
-         }else {
-             Item erpItemId = itemRepository.findBySubOrganizationIdAndErpItemId(loginUser.getSubOrgId(), itemRequest.getErpItemId());
-             if (erpItemId == null) {
-                 item.get().setErpItemId(itemRequest.getErpItemId());
-             } else {
-                 ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10017E);
-                 baseResponse.setCode(responseMessage.getCode());
-                 baseResponse.setStatus(responseMessage.getStatus());
-                 baseResponse.setMessage(responseMessage.getMessage());
-                 baseResponse.setData(new ArrayList<>());
-                 baseResponse.setLogId(loginUser.getLogId());
-                 log.info("LogId:{} - ItemServicesImpl - updateItem - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
-                 return baseResponse;
-             }
-         }
             item.get().setName(itemRequest.getItemName());
             item.get().setDescription(itemRequest.getDescription());
             item.get().setItemGroup(itemRequest.getItemGroup());
@@ -386,6 +360,7 @@ public class ItemServicesImpl implements ItemService {
             item.get().setSource(itemRequest.getSource());
             item.get().setUom(itemRequest.getUom());
             item.get().setItemUnitWeight(itemRequest.getItemUnitWeight());
+            item.get().setPhysicalForm(itemRequest.getPhysicalForm());
             item.get().setItemUnitRate(itemRequest.getItemUnitRate());
             item.get().setCurrency(itemRequest.getCurrency());
             item.get().setOptimumLevel(itemRequest.getOptimumLevel());
@@ -402,6 +377,7 @@ public class ItemServicesImpl implements ItemService {
 //            item.get().setAlternativeItem(itemRequest.getAlternativeI);
             item.get().setItemCode(itemRequest.getItemCode());
             item.get().setQcRequired(itemRequest.isQcRequired());
+            item.get().setInspection(itemRequest.getInspection());
             // Set Dock
             Optional<Dock> optionalDock = dockRepository.findById(itemRequest.getDockId());
             if (optionalDock.isPresent()) {
@@ -477,7 +453,8 @@ public class ItemServicesImpl implements ItemService {
             container.setLength(containerRequest.getLength());
             container.setCircumference(containerRequest.getCircumference());
             container.setWeight(containerRequest.getWeight());
-            container.setItemQty(containerRequest.getItemQty());
+            container.setContainerCapacity(containerRequest.getContainerCapacity());
+            container.setContainerCapacityUom(containerRequest.getContainerCapacityUom());
             container.setMinimumOrderQty(containerRequest.getMinimumOrderQty());
             container.setIsActive(true);
             container.setOrganizationId(loginUser.getOrgId());

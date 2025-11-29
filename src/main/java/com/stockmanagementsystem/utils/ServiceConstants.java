@@ -1,8 +1,5 @@
 package com.stockmanagementsystem.utils;
 
-import com.stockmanagementsystem.response.ValidationResultResponse;
-import org.apache.catalina.authenticator.SavedRequest;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServiceConstants {
@@ -257,7 +254,7 @@ public class ServiceConstants {
     public static final String TYPE_SERIAL= "Type (Serial / Batch / None)";
 
 
-    public static final String QC_REQUIRED = "QC Required(Yes/No)";
+    public static final String QC_REQUIRED = "QC Required(Yes/No/Certificate)";
     public static final String INSPECTION = "Inspection";
     public static final String ERP_ITEM_ID="ERP Item ID";
     public static final String ITEM_CLASS = "ItemClass";
@@ -269,6 +266,10 @@ public class ServiceConstants {
     public static final String ITEM_CATEGORY ="Item Category";
     public static final String ITEM_SUB_CATEGORY ="Item Subcategory";
     public static final String ITEM_UNIT_WEIGHT = " Item Unit Weight";
+
+    public static final String PHYSICAL_FORM = "Physical Form";
+    public static final String CONTAINER_CAPACITY_UOM = "Container Capacity UOM";
+    public static final String CONTAINER_CAPACITY = "Container Capacity";
 
     public static final String UOM = "UOM";
     public static final String SUPPLIER_ID = "Supplier ID";
@@ -283,6 +284,7 @@ public class ServiceConstants {
     public static final String ZONEC = "ZONEC";
     public static final String USRLST = "USRLST";
     public static final String USERLIST = "userList";
+    public static final String PACKINGLIST = "PackingList";
 
     protected static final String ERP_SUPPLIER_ID = "ERP Supplier Code";
     public static final String SUPPLIER_NAME = "Supplier Name";
@@ -633,6 +635,7 @@ public class ServiceConstants {
     public static final Integer CELL_INDEX_50 = 50;
     public static final Integer CELL_INDEX_51 = 51;
 
+
     public static final Integer INTERNAL_SERVER_ERROR=500;
 
 
@@ -754,8 +757,8 @@ public class ServiceConstants {
     //Added Constants For PPE Plan Upload Excel
     public static final String PPE_PLAN_ID="Plan/Order ID";
     public static final String PPE_ID="PpeId";
-    public static final String SAP_ID="SAP ID";
-    public static final String BOM_ID="BOM ID";
+    public static final String ERP_ID ="ERP ID";
+    public static final String BOM_ID="BOM Code";
     public static final String PRODUCT_NAME="Product Name";
     public static final String BRAND="Brand";
 //    public static final String MODEL="Model";
@@ -764,14 +767,14 @@ public class ServiceConstants {
     public static final String UOM1="UoM";
     public static final String PLAN_QUANTITY="Plan Quantity";
     public static final String PRODUCTION_SHOP="Production Shop";
-    public static final String SHOP_ID="Shop ID";
+    public static final String SHOP_ID="Shop Code";
     public static final String LINE="Line";
-    public static final String LINE_ID="Line ID";
+    public static final String LINE_ID="Line Code";
     public static final String START_DATE="Start Date";
     public static final String START_TIME="Start Time";
     public static final String END_DATE="End Date";
     public static final String END_TIME="End Time";
-    public static final String ITEM_CODE_PPE="Item ID";
+    public static final String ITEM_CODE_PPE="Item Code";
     public static final String ITEM_NAME_PPE="Item Name";
     public static final String ITEM_TYPE="Item Type";
     public static final String ITEM_CLASS_PPE="Item Class";
@@ -794,8 +797,8 @@ public class ServiceConstants {
 //    public static final String ID_REGEX = "^[a-zA-Z0-9]+$"; //allows only characters (letters) and integers (digits) but disallows any special characters
     public static final String INTEGER_REGEX =  "^[0-9]+(\\.[0-9]+)?$"; //allows only integers (digits) OR allow floats
     public static final String NAME_REGEX = "^[A-Za-z.\\s]{1,50}$";// Example: Alphabets and spaces with fullstops up to 50 characters
-    public static final String NAME_FIRST_LETTER_CAPITAL_REGEX = "^(?:[A-Z][a-z]*\\s?)*$";// Example: Alphabets and spaces and first char of each String must capital
-   // public static final String STRING_REGEX = "^[a-zA-Z\\s.]*$";//strings that consist only of letters (both uppercase and lowercase) and whitespace and fullstops characters.
+    public static final String NAME_FIRST_LETTER_CAPITAL_REGEX = "^(?! )[A-Za-z]+(?:[ .'-][A-Za-z]+)*(?<! )$";// Example: Alphabets and spaces and first char of each String must capital
+   // public static final String STRING_REGEX = "^[a -zA-Z\\s.]*$";//strings that consist only of letters (both uppercase and lowercase) and whitespace and fullstops characters.
     public static final String NOT_ALLOW_SPECIAL_CHAR_REGEX = "^[a-zA-Z\\d ]+$";// not allow special characters
     public static final String POST_CODE_REGEX = "^\\d{6}$";
 
@@ -810,7 +813,7 @@ public class ServiceConstants {
     public static final String PHONE_REGEX = "^\\(?\\d{3}\\)?[-.\\s]?\\d{3}[-.\\s]?\\d{4}$";// Example: phone no number format
 
     public static final String SUPPLIER_TAN_REGEX = "^[A-Z]{4}[0-9]{5}[A-Z]{1}$"; // Example: TAN number format
-    public static final String IFSC_CODE_REGEX = "^[A-Z]{4}0[0-9]{6}$"; // Example: IFSC code format
+    public static final String IFSC_CODE_REGEX = "^[A-Za-z]{4}0[A-Za-z0-9]{6}$"; // Example: IFSC code format
     public static final String MICR_CODE_REGEX = "^\\d{9}$"; // ALLOW EXACT 9 DIGITS
     public static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
@@ -1051,4 +1054,6 @@ public class ServiceConstants {
     protected static final String QC_REQUIRE_MANDATORY = "Qc Required is Mandatory ";
     protected static final String INSPECTION_REQUIRE_MANDATORY = "Inspection Required is Mandatory ";
     protected static final String USER_LIST_DATA_UPLOAD_FAILED = "Failed to upload user list data";
+    protected static final String FILE_UPLOAD_FAILED = "File upload failed";
+    protected static final int PACKING_LIST_HEADER_ROW_INDEX = 8;
 }
