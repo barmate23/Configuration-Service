@@ -51,8 +51,11 @@ public class Container {
     @Column(name = "Weight")
     private Float weight;
 
-    @Column(name = "ItemQty")
-    private Integer itemQty;
+    @Column(name = "ContainerCapacityUOM")
+    private String containerCapacityUom;
+
+    @Column(name = "ContainerCapacity")
+    private Float containerCapacity;
 
     @Column(name = "minimumOrderQty")
     private Integer minimumOrderQty;

@@ -372,7 +372,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.QC_REQUIRED, ServiceConstants.QC_REQUIRE_MANDATORY));
                         }
 
-
                         if (uom == null || uom.isEmpty()) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
                                     ServiceConstants.UOM, ServiceConstants.UOM_MANDATORY));
