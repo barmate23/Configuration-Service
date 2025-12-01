@@ -3766,7 +3766,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
 
                     // ✅ Generate unique packing slip number
-                     String nextPackingSlipNumber = generateNextPackingSlipNumber(packingSlipNumber);
+                     String nextPackingSlipNumber = generateNextPackingSlipNumber();
 
                     // ✅ Get container type from first matching Excel row
                     String containerType = packingRows.stream()
@@ -3855,51 +3855,26 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         return s == null || s.trim().isEmpty();
     }
 
-    private String generateNextPackingSlipNumber(String lastPackingSlipNumber) {
-        // Define month-to-letter map (A=Jan, B=Feb, ..., L=Dec)
-        String[] monthLetters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
+    private String generateNextPackingSlipNumber() {
 
-        // Current date parts
+        String[] monthLetters = {"A","B","C","D","E","F","G","H","I","J","K","L"};
+
         LocalDate today = LocalDate.now();
         String year = String.valueOf(today.getYear());
         String monthLetter = monthLetters[today.getMonthValue() - 1];
         String day = String.format("%02d", today.getDayOfMonth());
 
-        // Default to sequence 1 for first time creation
-        int nextSequence = 1;
+        // PKG-2025A01-
+        String prefix = String.format("PKG-%s%s%s-", year, monthLetter, day);
 
-        // ✅ Extract numeric part if last slip is valid (non-null & pattern matches)
-        if (lastPackingSlipNumber != null && lastPackingSlipNumber.startsWith("PKG-")) {
-            try {
-                String[] parts = lastPackingSlipNumber.split("-");
-                if (parts.length == 3) {
-                    nextSequence = Integer.parseInt(parts[2]) + 1;
-                }
-            } catch (NumberFormatException e) {
-                log.warn("Invalid sequence format in last slip number: {}", lastPackingSlipNumber);
-                nextSequence = 1; // fallback to default
-            }
-        }
+        // Fetch max sequence from DB for today
+        Integer maxSeq = acceptedRejectedContainerBarcodeRepository.findMaxSequenceForPrefix(prefix);
+        int nextSequence = (maxSeq == null ? 1 : maxSeq + 1);
 
-        // ✅ Loop to ensure uniqueness (handles concurrent inserts)
-        String nextSlip;
-        int retryCount = 0;
-        do {
-            nextSlip = String.format("PKG-%s%s%s-%03d", year, monthLetter, day, nextSequence);
-            boolean exists = acceptedRejectedContainerBarcodeRepository.existsByPackingSlipNumber(nextSlip);
-            if (!exists) break; // unique found, stop retrying
-
-            nextSequence++; // increment and retry
-            retryCount++;
-
-            if (retryCount > 100) { // safeguard
-                throw new IllegalStateException("Failed to generate unique Packing Slip Number after 100 attempts");
-            }
-        } while (true);
-
-        log.info("Generated next unique packing slip number: {}", nextSlip);
-        return nextSlip;
+        // Final slip number -> PKG-2025A01-001
+        return String.format("%s%d", prefix, nextSequence);
     }
+
 
 
 
