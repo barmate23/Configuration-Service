@@ -4,7 +4,6 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
-import java.util.Date;
 
 @Entity
 @Data
@@ -15,20 +14,19 @@ public class BOMLine {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
+
+    @ManyToOne
+    @JoinColumn(name = "BomHeadId")
+    private BoMHead bomHeadId;
+
     @Column(name = "OrganizationId")
     private Integer organizationId;
 
     @Column(name = "SubOrganizationId")
     private Integer subOrganizationId;
-    @ManyToOne
-    @JoinColumn(name = "BomHeadId")
-    private BoMHead bomHead;
 
     @Column(name = "Level")
     private Integer level;
-
-    @Column(name = "stage")
-    private String stage;
 
     @Column(name = "LineNumber")
     private Integer lineNumber;
@@ -38,7 +36,7 @@ public class BOMLine {
     private Item item;
 
     @Column(name = "Quantity")
-    private Integer quantity;
+    private Float quantity;
 
     @Column(name = "UnitOfMeasure", length = 20)
     private String unitOfMeasure;
@@ -58,6 +56,9 @@ public class BOMLine {
     @Column(name = "BomNotes", length = 255)
     private String bomNotes;
 
+    @Column(name = "Stage", length = 50)
+    private String stage;
+
     @Column(name = "IsActive")
     private Boolean isActive;
 
@@ -68,11 +69,11 @@ public class BOMLine {
     private Integer createdBy;
 
     @Column(name = "CreatedOn")
-    private Date createdOn;
+    private Timestamp createdOn;
 
     @Column(name = "ModifiedBy")
     private Integer modifiedBy;
 
     @Column(name = "ModifiedOn")
-    private Date modifiedOn;
+    private Timestamp modifiedOn;
 }

@@ -91,6 +91,8 @@ public class Validations extends ServiceConstants {
         return cellValue;
     }
 
+
+
     public Integer getCellIntegerValue(Row row, int cellIndex, List<ValidationResultResponse> resultResponses, String type, List<String> headerNames) {
 
         Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);

@@ -1,11 +1,10 @@
 package com.stockmanagementsystem.entity;
 
+
 import lombok.Data;
-import org.hibernate.criterion.Order;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
-import java.util.Date;
 
 @Entity
 @Data
@@ -28,7 +27,7 @@ public class StockBalance {
     private Item itemId;
 
     @Column(name = "BalanceQuantity")
-    private Integer balanceQuantity;
+    private Float balanceQuantity;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted;
@@ -37,12 +36,12 @@ public class StockBalance {
     private Integer createdBy;
 
     @Column(name = "CreatedOn")
-    private Date createdOn;
+    private Timestamp createdOn;
 
     @Column(name = "ModifiedBy")
     private Integer modifiedBy;
 
     @Column(name = "ModifiedOn")
-    private Date modifiedOn;
+    private Timestamp modifiedOn;
 
 }

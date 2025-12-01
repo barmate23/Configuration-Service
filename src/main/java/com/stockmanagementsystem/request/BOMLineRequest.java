@@ -8,7 +8,7 @@ public class BOMLineRequest {
     private String stage;
     private Integer lineNumber;
     private Integer itemId;
-    private Integer quantity;
+    private Float quantity;
     private String dependency;
     private String referenceDesignators;
     private String bomNotes;

@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -140,11 +142,11 @@ public class ItemServicesImpl implements ItemService {
             log.info("LogId:{} - ItemServicesImpl - saveItem - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," ADD ITEM SUCCESSFULLY ");
             StockBalance stockBalance=new StockBalance();
             stockBalance.setItemId(item);
-            stockBalance.setBalanceQuantity(0);
+            stockBalance.setBalanceQuantity(0.0F);
             stockBalance.setCreatedBy(loginUser.getUserId());
-            stockBalance.setCreatedOn(new Date());
+            stockBalance.setCreatedOn(Timestamp.valueOf(LocalDateTime.now()));
             stockBalance.setModifiedBy(loginUser.getUserId());
-            stockBalance.setModifiedOn(new Date());
+            stockBalance.setModifiedOn(Timestamp.valueOf(LocalDateTime.now()));
             stockBalance.setOrganizationId(loginUser.getOrgId());
             stockBalance.setSubOrganizationId(loginUser.getSubOrgId());
             stockBalanceRepository.save(stockBalance);

@@ -22,7 +22,7 @@ public class PPELine {
     private Integer subOrganizationId;
 
     @ManyToOne
-    @JoinColumn(name = "PPEHeadId")
+    @JoinColumn(name = "ppehead_id")
     private PPEHead PPEHead;
 
     @ManyToOne
@@ -34,14 +34,14 @@ public class PPELine {
     private BOMLine bomLine;
 
     @Column(name = "requiredQuantity")
-    private Integer requiredQuantity;
+    private Float requiredQuantity;
 
     //Changed type to Date
     @Column(name = "requiredBy")
     private Date requiredBy;
 
     @Column(name = "shortage")
-    private Integer shortage;
+    private Float shortage;
 
     @Column(name = "inPipeline")
     private Integer inPipeline;
@@ -50,7 +50,7 @@ public class PPELine {
     private String store;
 
     @Column(name = "eta")
-    private Integer eta;
+    private Date eta;
 
     @Column(name = "status")
     private Integer status;
@@ -69,4 +69,8 @@ public class PPELine {
 
     @Column(name = "modifiedOn")
     private Date modifiedOn;
+
+    @Column(name="allocatedQty")
+    private Float allocatedQty;
+
 }

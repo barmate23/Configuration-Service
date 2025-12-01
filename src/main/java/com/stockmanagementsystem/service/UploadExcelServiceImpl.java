@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.sql.Time;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.*;
 import java.util.*;
@@ -429,35 +430,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
                         item.setPhysicalForm(physicalForm);
 
-                        // Container Capacity UOM: e.g. LTR, KG, NOS
-                        if (containerCapacityUom == null || containerCapacityUom.isEmpty()) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Container Capacity UOM",
-                                    "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."
-                            ));
-                        } else if (!validateRegex(containerCapacityUom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Container Capacity UOM",
-                                    "Invalid Container Capacity UOM format."
-                            ));
-                        }
-                        item.setContainerCapacityUom(containerCapacityUom);
-
-                        // Container Capacity: > 0
-                        if (containerCapacity == null || containerCapacity <= 0) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Container Capacity",
-                                    "Container Capacity is mandatory and must be greater than 0."
-                            ));
-                        }
-                        item.setContainerCapacity(containerCapacity);
-
 
                         List<String> classList = new ArrayList<>(Arrays.asList("A", "B", "C"));
                         if (!classList.stream().anyMatch(li -> li.equalsIgnoreCase(classABC))) {
@@ -528,12 +500,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             items.add(item);
                             StockBalance stockBalance = new StockBalance();
                             stockBalance.setItemId(item);
-                            stockBalance.setBalanceQuantity(0);
+                            stockBalance.setBalanceQuantity(0.0F);
                             stockBalance.setIsDeleted(false);
                             stockBalance.setCreatedBy(loginUser.getUserId());
-                            stockBalance.setCreatedOn(new Date());
+                            stockBalance.setCreatedOn(Timestamp.valueOf(LocalDateTime.now()));
                             stockBalance.setModifiedBy(loginUser.getUserId());
-                            stockBalance.setModifiedOn(new Date());
+                            stockBalance.setModifiedOn(Timestamp.valueOf(LocalDateTime.now()));
                             stockBalance.setOrganizationId(loginUser.getOrgId());
                             stockBalance.setSubOrganizationId(loginUser.getSubOrgId());
                             stockBalances.add(stockBalance);
@@ -541,6 +513,35 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (itemOptional.isEmpty() && resultResponses.size() == 0) {
                             Container container = new Container();
                             container.setItem(item);
+
+                            // Container Capacity UOM: e.g. LTR, KG, NOS
+                            if (containerCapacityUom == null || containerCapacityUom.isEmpty()) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        "Container Capacity UOM",
+                                        "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."
+                                ));
+                            } else if (!validateRegex(containerCapacityUom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        "Container Capacity UOM",
+                                        "Invalid Container Capacity UOM format."
+                                ));
+                            }
+
+                            container.setContainerCapacityUom(containerCapacityUom);
+                            // Container Capacity: > 0
+                            if (containerCapacity == null || containerCapacity <= 0) {
+                                resultResponses.add(new ValidationResultResponse(
+                                        type,
+                                        (data.getRowNum() + 1),
+                                        "Container Capacity",
+                                        "Container Capacity is mandatory and must be greater than 0."
+                                ));
+                            }
+                            container.setContainerCapacity(containerCapacity);
 
                             if (code == null || code.isEmpty()) {
                                 resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.CODE, ServiceConstants.CODE_MANDATORY));
@@ -2368,7 +2369,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         Integer level = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_0, resultResponses, type, headerNames);
                         String itemCode = getCellStringValue(data, ServiceConstants.CELL_INDEX_1, resultResponses, type, headerNames);
                         String itemName = getCellStringValue(data, ServiceConstants.CELL_INDEX_2, resultResponses, type, headerNames);
-                        Integer quantity = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_3, resultResponses, type, headerNames);
+                        Float quantity = getCellFloatValue(data, ServiceConstants.CELL_INDEX_3, resultResponses, type, headerNames);
                         String uom = getCellStringValue(data, ServiceConstants.CELL_INDEX_4, resultResponses, type, headerNames);
                         String classABC = getCellStringValue(data, ServiceConstants.CELL_INDEX_5, resultResponses, type, headerNames);
                         String stage = getCellStringValue(data, ServiceConstants.CELL_INDEX_6, resultResponses, type, headerNames);
@@ -2393,7 +2394,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), headerNames.get(ServiceConstants.CELL_INDEX_3), "This Item not Present in Database"));
                         }
-                        bomLine.setBomHead(boMHead);
+                        bomLine.setBomHeadId(boMHead);
                         bomLine.setQuantity(quantity);
                         bomLine.setUnitOfMeasure(uom);
                         bomLine.setClassType(classABC);
@@ -2406,8 +2407,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         bomLine.setSubOrganizationId(loginUser.getSubOrgId());
                         bomLine.setIsActive(true);
                         bomLine.setIsDeleted(false);
-                        bomLine.setCreatedOn(new Date());
-                        bomLine.setModifiedOn(new Date());
+                        bomLine.setCreatedOn(Timestamp.valueOf(LocalDateTime.now()));
+                        bomLine.setModifiedOn(Timestamp.valueOf(LocalDateTime.now()));
                         bomLines.add(bomLine);
                         count++;
                     }
@@ -2440,6 +2441,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
     public ResponseEntity<BaseResponse> uploadEquipmentDetail(MultipartFile file, String type, String logId) throws IOException {
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - UploadExcelServiceImpl - uploadEquipmentDetail - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ServiceConstants.SPACE + ServiceConstants.UPLOAD_EQUIPMENT_DETAIL_METHOD_STARTED);
+
 
         try {
             // Read the Excel file and perform validation
@@ -2889,7 +2891,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         ppeHead.setModifiedBy(loginUser.getUserId());
                         ppeHead.setModifiedOn(new Date());
 
-                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
+                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadIdBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
                         if (bomLine != null) {
                             ppeLine.setBomLine(bomLine);
                             ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
@@ -2988,7 +2990,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         .filter(e -> e.getPPEHead().getPlanOrderId().equals(ppeHead.getPlanOrderId()))
                         .map(e -> e.getItem().getItemCode())
                         .collect(Collectors.toList());
-                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadBomERPCode(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomERPCode());
+                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadIdBomERPCode(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomERPCode());
                 if (extraBomLine.size() != 0) {
                     List<String> itemids = extraBomLine.stream().map(e -> e.getItem().getItemId()).collect(Collectors.toList());
                     resultResponses.add(new ValidationResultResponse(type, null, ServiceConstants.ITEM_ID, "THIS BOM ITEM IDS :" + itemids.toString() + "IS NOT PRESENT IN PLAN/ORDER: " + ppeHead.getPlanOrderId()));
@@ -3764,7 +3766,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
 
                     // ✅ Generate unique packing slip number
-                     String nextPackingSlipNumber = generateNextPackingSlipNumber(packingSlipNumber);
+                     String nextPackingSlipNumber = generateNextPackingSlipNumber();
 
                     // ✅ Get container type from first matching Excel row
                     String containerType = packingRows.stream()
@@ -3853,51 +3855,26 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         return s == null || s.trim().isEmpty();
     }
 
-    private String generateNextPackingSlipNumber(String lastPackingSlipNumber) {
-        // Define month-to-letter map (A=Jan, B=Feb, ..., L=Dec)
-        String[] monthLetters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
+    private String generateNextPackingSlipNumber() {
 
-        // Current date parts
+        String[] monthLetters = {"A","B","C","D","E","F","G","H","I","J","K","L"};
+
         LocalDate today = LocalDate.now();
         String year = String.valueOf(today.getYear());
         String monthLetter = monthLetters[today.getMonthValue() - 1];
         String day = String.format("%02d", today.getDayOfMonth());
 
-        // Default to sequence 1 for first time creation
-        int nextSequence = 1;
+        // PKG-2025A01-
+        String prefix = String.format("PKG-%s%s%s-", year, monthLetter, day);
 
-        // ✅ Extract numeric part if last slip is valid (non-null & pattern matches)
-        if (lastPackingSlipNumber != null && lastPackingSlipNumber.startsWith("PKG-")) {
-            try {
-                String[] parts = lastPackingSlipNumber.split("-");
-                if (parts.length == 3) {
-                    nextSequence = Integer.parseInt(parts[2]) + 1;
-                }
-            } catch (NumberFormatException e) {
-                log.warn("Invalid sequence format in last slip number: {}", lastPackingSlipNumber);
-                nextSequence = 1; // fallback to default
-            }
-        }
+        // Fetch max sequence from DB for today
+        Integer maxSeq = acceptedRejectedContainerBarcodeRepository.findMaxSequenceForPrefix(prefix);
+        int nextSequence = (maxSeq == null ? 1 : maxSeq + 1);
 
-        // ✅ Loop to ensure uniqueness (handles concurrent inserts)
-        String nextSlip;
-        int retryCount = 0;
-        do {
-            nextSlip = String.format("PKG-%s%s%s-%03d", year, monthLetter, day, nextSequence);
-            boolean exists = acceptedRejectedContainerBarcodeRepository.existsByPackingSlipNumber(nextSlip);
-            if (!exists) break; // unique found, stop retrying
-
-            nextSequence++; // increment and retry
-            retryCount++;
-
-            if (retryCount > 100) { // safeguard
-                throw new IllegalStateException("Failed to generate unique Packing Slip Number after 100 attempts");
-            }
-        } while (true);
-
-        log.info("Generated next unique packing slip number: {}", nextSlip);
-        return nextSlip;
+        // Final slip number -> PKG-2025A01-001
+        return String.format("%s%d", prefix, nextSequence);
     }
+
 
 
 
