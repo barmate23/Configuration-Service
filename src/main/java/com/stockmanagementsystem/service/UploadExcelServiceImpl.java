@@ -3588,10 +3588,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 Map<String, String> dataMap = new HashMap<>();
                 dataMap.put("itemCode", getCellStringValue(row, 1, resultResponses, type, headerNames));
                 dataMap.put("itemName", getCellStringValue(row, 2, resultResponses, type, headerNames));
-                dataMap.put("uom", getCellStringValue(row, 3, resultResponses, type, headerNames));
-                dataMap.put("serialBatchNumber", getCellStringValue(row, 4, resultResponses, type, headerNames));
-                dataMap.put("containerCode", getCellStringValue(row, 5, resultResponses, type, headerNames));
-                dataMap.put("containerType", getCellStringValue(row, 6, resultResponses, type, headerNames));
+                dataMap.put("serialBatchNumber", getCellStringValue(row, 3, resultResponses, type, headerNames));
+                dataMap.put("containerCode", getCellStringValue(row, 4, resultResponses, type, headerNames));
+                dataMap.put("containerType", getCellStringValue(row, 5, resultResponses, type, headerNames));
 
                 // 🔹 Skip blank rows early
                 if (isBlank(dataMap.get("itemCode")) ||
