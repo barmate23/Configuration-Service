@@ -38,6 +38,10 @@ public class Users {
     @JoinColumn(name = "ModuleUserLicenceKeyId", referencedColumnName = "Id")
     private ModuleUserLicenceKey moduleUserLicenceKey;
 
+    @ManyToOne
+    @JoinColumn(name = "shiftId")
+    private Shift shift;
+
     @Column(name = "IsDefaultUser")
     private Boolean isDefaultUser;
 
@@ -50,20 +54,24 @@ public class Users {
 
     @Column(name = "defaultUserCode")
     private String defaultUserCode;
+
     @Column(name = "Department")
     private String department;
+
     @Column(name = "Designation")
     private String designation;
-    @Column(name = "UserType")
 
+    @Column(name = "UserType")
     private String userType;
     @Column(name = "StartDate")
     private Date startDate;
 
     @Column(name = "EndDate")
     private Date endDate;
+
     @Column(name = "DateOfBirth")
     private Date dateOfBirth;
+
     @Column(name = "Username")
     private String username;
 

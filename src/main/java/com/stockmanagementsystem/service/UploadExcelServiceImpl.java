@@ -3622,7 +3622,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 String container = row.get("containerCode");
                 String serial = row.get("serialBatchNumber");
 
-                if (isBlank(itemCode) || isBlank(container) || isBlank(serial)) continue; // extra safety
+                if (isBlank(itemCode) || isBlank(container) || isBlank(serial)) continue;
 
                 itemToContainerSerials
                         .computeIfAbsent(itemCode, k -> new HashMap<>())
@@ -3661,15 +3661,33 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         null, ServiceConstants.ERROR_CODE, logId));
             }
 
-            List<String> existingSerials = serialBatchNumberRepository
-                    .findByIsDeletedFalseAndAsnLineId(asnLine.getId())
-                    .stream()
-                    .map(SerialBatchNumber::getSerialBatchNumber)
-                    .collect(Collectors.toList());
+//            List<String> existingSerials = serialBatchNumberRepository
+//                    .findByIsDeletedFalseAndAsnLineId(asnLine.getId())
+//                    .stream()
+//                    .map(SerialBatchNumber::getSerialBatchNumber)
+//                    .collect(Collectors.toList());
 
-            List<String> overlap = serialNumbers.stream()
-                    .filter(existingSerials::contains)
-                    .collect(Collectors.toList());
+//
+//            List<String> overlap = serialNumbers.stream()
+//                    .filter(existingSerials::contains)
+//                    .collect(Collectors.toList());
+
+
+            Integer itemId = asnLine.getItem().getId();
+
+            Integer supplierId = null;
+
+            if (asnLine != null
+                    && asnLine.getAsnHeadId() != null
+                    && asnLine.getAsnHeadId().getSupplier() != null
+                    && asnLine.getAsnHeadId().getSupplier().getId() != null) {
+
+                supplierId = asnLine.getAsnHeadId().getSupplier().getId();
+            }
+
+            List<String> overlap = serialBatchNumberRepository
+                    .findExistingSerialsForItemSupplierAndSerials(itemId, supplierId, serialNumbers);
+
             if (!overlap.isEmpty()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
                         "Serial Numbers already exist in system: " + String.join(", ", overlap),
