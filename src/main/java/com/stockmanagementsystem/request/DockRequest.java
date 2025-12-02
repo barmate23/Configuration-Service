@@ -27,6 +27,6 @@ public class DockRequest {
     private List<Integer> store;
 
     @NotNull(message = "Dock Supervisor ID cannot be null")
-    private Integer dockSupervisor;
+    private List<Integer> dockSupervisor;
 
 }
