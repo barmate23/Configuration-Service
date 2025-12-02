@@ -3630,8 +3630,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             // ==== Validate ASN ====
             ASNLine asnLine = null;
+            Boolean isBatchMode = null;
             if ("ASN".equalsIgnoreCase(requestType)) {
                 asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+                isBatchMode = asnLine.getItem().getTypeSerialBatchNone().equalsIgnoreCase("Batch");
             }
             if (asnLine == null) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
@@ -3647,26 +3649,18 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toList());
 
-            Set<String> duplicateSerials = serialNumbers.stream()
-                    .filter(s -> Collections.frequency(serialNumbers, s) > 1)
-                    .collect(Collectors.toSet());
-            if (!duplicateSerials.isEmpty()) {
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
-                        null, ServiceConstants.ERROR_CODE, logId));
+            // In SERIAL mode, duplicates in Excel are NOT allowed
+            if (!isBatchMode) {
+                Set<String> duplicateSerials = serialNumbers.stream()
+                        .filter(s -> Collections.frequency(serialNumbers, s) > 1)
+                        .collect(Collectors.toSet());
+
+                if (!duplicateSerials.isEmpty()) {
+                    return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                            "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
+                            null, ServiceConstants.ERROR_CODE, logId));
+                }
             }
-
-//            List<String> existingSerials = serialBatchNumberRepository
-//                    .findByIsDeletedFalseAndAsnLineId(asnLine.getId())
-//                    .stream()
-//                    .map(SerialBatchNumber::getSerialBatchNumber)
-//                    .collect(Collectors.toList());
-
-//
-//            List<String> overlap = serialNumbers.stream()
-//                    .filter(existingSerials::contains)
-//                    .collect(Collectors.toList());
-
 
             Integer itemId = asnLine.getItem().getId();
 
@@ -3680,8 +3674,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 supplierId = asnLine.getAsnHeadId().getSupplier().getId();
             }
 
+            List<String> serialsForDbCheck = isBatchMode
+                    ? serialNumbers.stream().distinct().collect(Collectors.toList())
+                    : serialNumbers;
+
             List<String> overlap = serialBatchNumberRepository
-                    .findExistingSerialsForItemSupplierAndSerials(itemId, supplierId, serialNumbers);
+                    .findExistingSerialsForItemSupplierAndSerials(itemId, supplierId, serialsForDbCheck);
 
             if (!overlap.isEmpty()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
@@ -3779,7 +3777,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
 
                     // ✅ Generate unique packing slip number
-                     String nextPackingSlipNumber = generateNextPackingSlipNumber();
+                    String nextPackingSlipNumber = generateNextPackingSlipNumber();
 
                     // ✅ Get container type from first matching Excel row
                     String containerType = packingRows.stream()
