@@ -4,16 +4,14 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.util.Date;
-import java.util.List;
 
 @Entity
-@Table(name = "tbl_docks")
+@Table(name = "tbl_UserDockMapper")
 @Data
-public class Dock {
+public class UserDockMapper {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Id")
     private Integer id;
 
     @Column(name = "OrganizationId")
@@ -22,23 +20,13 @@ public class Dock {
     @Column(name = "SubOrganizationId")
     private Integer subOrganizationId;
 
-    @Column(name = "DockId")
-    private String dockId;
+    @ManyToOne
+    @JoinColumn(name = "DockId")
+    private Dock dock;
 
-    @Column(name = "DockName")
-    private String dockName;
-
-    @Column(name = "Attribute")
-    private String attribute;
-
-    @Transient
-    private List<Store> store;
-
-    @Transient
-    private List<Users> dockSupervisorList;
-
-    @Column(name = "IsOccupied")
-    private Boolean isOccupied;
+    @ManyToOne
+    @JoinColumn(name = "UserId")
+    private Users user;
 
     @Column(name = "IsDeleted")
     private Boolean isDeleted;
@@ -49,11 +37,13 @@ public class Dock {
     @Column(name = "CreatedBy")
     private Integer createdBy;
 
+
     @Column(name = "ModifiedOn")
     private Date modifiedOn;
 
     @Column(name = "ModifiedBy")
     private Integer modifiedBy;
+
 
 }
 
