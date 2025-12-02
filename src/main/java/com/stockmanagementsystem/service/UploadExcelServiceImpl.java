@@ -1686,12 +1686,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.STORE_ERP_CODE, ServiceConstants.DOCK_SUPERVISOR_NOT_FOUND));
                         }
-                        Users userId = userRepository.findBySubOrganizationIdAndIsDeletedAndUsernameAndModuleUserLicenceKeyLicenceLineSubModuleSubModuleCode(loginUser.getSubOrgId(), false, dockSupervisor, "DOSU");
-                        if (userId == null) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_SUPERVISOR_ID, ServiceConstants.DOCK_SUPERVISOR_NOT_FOUND));
-                        } else {
-                            dock.setDockSupervisor(userId);
-                        }
+
                         docks.add(dock);
                         count++;
                     }
