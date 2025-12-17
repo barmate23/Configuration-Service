@@ -24,5 +24,9 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, In
     List<StockMovement> findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerAsnLineId(boolean b, Boolean isAccepted, Integer subOrgId, Integer asnLineId);
 
     List<StockMovement> findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerPurchaseOrderLineId(boolean b, Boolean isAccepted, Integer subOrgId, Integer poLineId);
+
+    List<StockMovement> findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerBarcodeAcceptedRejectedContainerAsnLineId(boolean b, Boolean isAccepted, Integer subOrgId, Integer asnLineId);
+
+    List<StockMovement> findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAndAcceptedRejectedContainerBarcodeAcceptedRejectedContainerPurchaseOrderLineId(boolean b, Boolean isAccepted, Integer subOrgId, Integer poLineId);
 }
 

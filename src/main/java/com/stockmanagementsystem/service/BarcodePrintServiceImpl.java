@@ -141,9 +141,9 @@ public class BarcodePrintServiceImpl implements BarcodePrintService{
                     case "GRR":
                         List<StockMovement> stockMovements=new ArrayList<>();
                         if(asnLineId!=null) {
-                            stockMovements = stockMovementRepository.findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerAsnLineId(false,isAccepted ,loginUser.getSubOrgId(), asnLineId);
+                            stockMovements = stockMovementRepository.findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerBarcodeAcceptedRejectedContainerAsnLineId(false,isAccepted ,loginUser.getSubOrgId(), asnLineId);
                         }else{
-                            stockMovements = stockMovementRepository.findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAcceptedRejectedContainerPurchaseOrderLineId(false,isAccepted, loginUser.getSubOrgId(), poLineId);
+                            stockMovements = stockMovementRepository.findByIsDeletedAndIsAcceptedAndSubOrganizationIdAndAndAcceptedRejectedContainerBarcodeAcceptedRejectedContainerPurchaseOrderLineId(false,isAccepted, loginUser.getSubOrgId(), poLineId);
                         }
                         SubModule grrSubModule = subModuleRepository.findByIsDeletedAndSubModuleCode(false, "SOPR");
                         for (StockMovement stockMovement : stockMovements) {
