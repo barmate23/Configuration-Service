@@ -2083,7 +2083,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     purchaseOrderHeadRepository.save(purchaseOrderHead);
                 }
                 supplierService.mapItemBySupplier(itemSupplierMapperRequests);
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_200, ServiceConstants.PURCHASE_ORDER_DATA_UPLOAD_SUCCESSFULLY, resultResponses, ServiceConstants.ERROR_CODE, logId));
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_200, ServiceConstants.PURCHASE_ORDER_DATA_UPLOAD_SUCCESSFULLY, resultResponses, ServiceConstants.SUCCESS_CODE, logId));
             } else {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, ServiceConstants.PURCHASE_ORDER_DATA_UPLOAD_FAILED, resultResponses, ServiceConstants.ERROR_CODE, logId));
             }
