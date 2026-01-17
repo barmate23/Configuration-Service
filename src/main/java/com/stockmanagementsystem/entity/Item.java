@@ -67,6 +67,9 @@ public class Item {
     @Column(name = "UOM")
     private String uom;
 
+    @Column(name = "PurchaseUOM")
+    private String purchaseUom;
+
     @Column(name = "ItemUnitWeight")
     private Float itemUnitWeight;
 

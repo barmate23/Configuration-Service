@@ -59,6 +59,10 @@ public class BOMLine {
     @Column(name = "Stage", length = 50)
     private String stage;
 
+    @ManyToOne
+    @JoinColumn(name = "stageId", referencedColumnName = "id")
+    private Stage stageId;
+
     @Column(name = "IsActive")
     private Boolean isActive;
 

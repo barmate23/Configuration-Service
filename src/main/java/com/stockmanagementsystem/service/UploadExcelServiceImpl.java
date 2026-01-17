@@ -1927,12 +1927,13 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     purchaseOrderHead.setModifiedBy(loginUser.getUserId());
                     purchaseOrderHead.setModifiedOn(new Date());
                     Optional<PurchaseOrderHead> orderHeadOptional = purchaseOrderHeadRepository.findByIsDeletedAndSubOrganizationIdAndPurchaseOrderNumber(false, loginUser.getSubOrgId(), purchaseOrderNumber);
+                    PurchaseOrderHead head=null;
                     if (orderHeadOptional.isEmpty() && resultResponses.size() == 0) {
-                        purchaseOrderHeadRepository.save(purchaseOrderHead);
+                        head= purchaseOrderHeadRepository.save(purchaseOrderHead);
                     }
                     PurchaseOrderLine purchaseOrderLine = new PurchaseOrderLine();
 
-                    if (purchaseOrderHead.getId() != null) {
+                    if (head.getId() != null) {
                         purchaseOrderLine.setPurchaseOrderHead(purchaseOrderHead);
                     } else if (orderHeadOptional.isPresent() && resultResponses.size() == 0) {
                         purchaseOrderLine.setPurchaseOrderHead(orderHeadOptional.get());
@@ -2643,20 +2644,20 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 if (isRowEmpty(row)) continue;
 
                 /* ================= READ CELLS ================= */
-                String planId = getCellStringValue(row, 0, errors, type, null);
-                String sapId = getCellStringValue(row, 1, errors, type, null);
-                String bomCode = getCellStringValue(row, 2, errors, type, null);
-                String productName = getCellStringValue(row, 3, errors, type, null);
-                String uom = getCellStringValue(row, 4, errors, type, null);
-                Integer planQuantity = getCellIntegerValue(row, 5, errors, type, null);
-                String productionShop = getCellStringValue(row, 6, errors, type, null);
-                String shopId = getCellStringValue(row, 7, errors, type, null);
-                String line = getCellStringValue(row, 8, errors, type, null);
-                String lineId = getCellStringValue(row, 9, errors, type, null);
-                Date startDate = getCellDateValue(row, 10, errors, type, null);
-                LocalTime startTime = getCellTimeValueForPPE(row, 11, errors, type, null);
-                Date endDate = getCellDateValueForPPE(row, 12, errors, type, null);
-                LocalTime endTime = getCellTimeValueForPPE(row, 13, errors, type, null);
+                String planId = getCellStringValue(row, 0, errors, type, expectedColumns);
+                String sapId = getCellStringValue(row, 1, errors, type, expectedColumns);
+                String bomCode = getCellStringValue(row, 2, errors, type, expectedColumns);
+                String productName = getCellStringValue(row, 3, errors, type, expectedColumns);
+                String uom = getCellStringValue(row, 4, errors, type, expectedColumns);
+                Integer planQuantity = getCellIntegerValue(row, 5, errors, type, expectedColumns);
+                String productionShop = getCellStringValue(row, 6, errors, type, expectedColumns);
+                String shopId = getCellStringValue(row, 7, errors, type, expectedColumns);
+                String line = getCellStringValue(row, 8, errors, type, expectedColumns);
+                String lineId = getCellStringValue(row, 9, errors, type, expectedColumns);
+                Date startDate = getCellDateValue(row, 10, errors, type, expectedColumns);
+                LocalTime startTime = getCellTimeValueForPPE(row, 11, errors, type, expectedColumns);
+                Date endDate = getCellDateValueForPPE(row, 12, errors, type, expectedColumns);
+                LocalTime endTime = getCellTimeValueForPPE(row, 13, errors, type, expectedColumns);
 
                 /* ================= BASIC VALIDATIONS ================= */
                 if (StringUtils.isEmpty(planId)) {
