@@ -72,49 +72,49 @@ public class DocksServiceImpl implements DocksService {
             // -------------------------------
             Set<Integer> shiftIds = new HashSet<>();
 
-            for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
-                Users supervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
-                        false, true, loginUser.getSubOrgId(), dockSupervisorId
-                );
-
-                if (supervisor == null) {
-                    throw new RuntimeException("Dock supervisor not found for ID " + dockSupervisorId);
-                }
-
-                Integer shiftId = supervisor.getShift().getId(); // <-- assuming entity has getShiftId()
-
-                if (shiftId != null) {
-                    if (shiftIds.contains(shiftId)) {
-                        // ❗ Duplicate shift found → throw error
-                        baseResponse.setStatus(400);
-                        baseResponse.setCode(0);
-                        baseResponse.setMessage("Cannot assign dock supervisor with same shift");
-                        baseResponse.setData(new ArrayList<>());
-                        return baseResponse;
-                    }
-                    shiftIds.add(shiftId);
-                }
-            }
+//            for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
+//                Users supervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
+//                        false, true, loginUser.getSubOrgId(), dockSupervisorId
+//                );
+//
+//                if (supervisor == null) {
+//                    throw new RuntimeException("Dock supervisor not found for ID " + dockSupervisorId);
+//                }
+//
+//                Integer shiftId = supervisor.getShift().getId(); // <-- assuming entity has getShiftId()
+//
+//                if (shiftId != null) {
+//                    if (shiftIds.contains(shiftId)) {
+//                        // ❗ Duplicate shift found → throw error
+//                        baseResponse.setStatus(400);
+//                        baseResponse.setCode(0);
+//                        baseResponse.setMessage("Cannot assign dock supervisor with same shift");
+//                        baseResponse.setData(new ArrayList<>());
+//                        return baseResponse;
+//                    }
+//                    shiftIds.add(shiftId);
+//                }
+//            }
 
             // Step 2: Map user-dock (only if no error)
-            List<UserDockMapper> userDockMapperList = new ArrayList<>();
-            for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
-                Users dockSupervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
-                        false, true, loginUser.getSubOrgId(), dockSupervisorId
-                );
+//            List<UserDockMapper> userDockMapperList = new ArrayList<>();
+//            for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
+//                Users dockSupervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
+//                        false, true, loginUser.getSubOrgId(), dockSupervisorId
+//                );
+//
+//                UserDockMapper userDockMapper = new UserDockMapper();
+//                userDockMapper.setUser(dockSupervisor);
+//                userDockMapper.setDock(docks);
+//                userDockMapper.setOrganizationId(loginUser.getOrgId());
+//                userDockMapper.setSubOrganizationId(loginUser.getSubOrgId());
+//                userDockMapper.setCreatedBy(loginUser.getUserId());
+//                userDockMapper.setCreatedOn(new Date());
+//                userDockMapper.setIsDeleted(false);
+//                userDockMapperList.add(userDockMapper);
+//            }
 
-                UserDockMapper userDockMapper = new UserDockMapper();
-                userDockMapper.setUser(dockSupervisor);
-                userDockMapper.setDock(docks);
-                userDockMapper.setOrganizationId(loginUser.getOrgId());
-                userDockMapper.setSubOrganizationId(loginUser.getSubOrgId());
-                userDockMapper.setCreatedBy(loginUser.getUserId());
-                userDockMapper.setCreatedOn(new Date());
-                userDockMapper.setIsDeleted(false);
-                userDockMapperList.add(userDockMapper);
-            }
-
-            userDockRepository.saveAll(userDockMapperList);
+//            userDockRepository.saveAll(userDockMapperList);
 
             // Step 3: Store Dock Mapping
             storeDockMapperRepository.save(createStoreDockMapper(docks, dockRequest));
@@ -164,7 +164,7 @@ public class DocksServiceImpl implements DocksService {
         docks.setCreatedOn(new Date());
         docks.setOrganizationId(loginUser.getOrgId());
         docks.setSubOrganizationId(loginUser.getSubOrgId());
-
+        docks.setDockSupervisor(userRepository.findByIsDeletedAndIsActiveAndId(false, true, dockRequest.getDockSupervisor()));
 
         return docks;
     }
@@ -279,7 +279,7 @@ public class DocksServiceImpl implements DocksService {
                 Dock docks = optionalDocks.get();
                 docks.setDockName(dockRequest.getDockName());
                 docks.setAttribute(dockRequest.getAttribute());
-
+                docks.setDockSupervisor(userRepository.findByIsDeletedAndIsActiveAndId(false, true, dockRequest.getDockSupervisor()));
                 docksRepository.save(docks);
 
                 // -------------------------------
@@ -287,53 +287,53 @@ public class DocksServiceImpl implements DocksService {
                 // -------------------------------
                 Set<Integer> shiftIds = new HashSet<>();
 
-                for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
-                    Users supervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
-                            false, true, loginUser.getSubOrgId(), dockSupervisorId
-                    );
-
-                    if (supervisor == null) {
-                        throw new RuntimeException("Dock supervisor not found for ID " + dockSupervisorId);
-                    }
-
-                    Integer shiftId = supervisor.getShift().getId(); // <-- assuming entity has getShiftId()
-
-                    if (shiftId != null) {
-                        if (shiftIds.contains(shiftId)) {
-                            // ❗ Duplicate shift found → throw error
-                            baseResponse.setStatus(400);
-                            baseResponse.setCode(0);
-                            baseResponse.setMessage("Cannot assign dock supervisor with same shift");
-                            baseResponse.setData(new ArrayList<>());
-                            return baseResponse;
-                        }
-                        shiftIds.add(shiftId);
-                    }
-                }
+//                for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
+//                    Users supervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
+//                            false, true, loginUser.getSubOrgId(), dockSupervisorId
+//                    );
+//
+//                    if (supervisor == null) {
+//                        throw new RuntimeException("Dock supervisor not found for ID " + dockSupervisorId);
+//                    }
+//
+//                    Integer shiftId = supervisor.getShift().getId(); // <-- assuming entity has getShiftId()
+//
+//                    if (shiftId != null) {
+//                        if (shiftIds.contains(shiftId)) {
+//                            // ❗ Duplicate shift found → throw error
+//                            baseResponse.setStatus(400);
+//                            baseResponse.setCode(0);
+//                            baseResponse.setMessage("Cannot assign dock supervisor with same shift");
+//                            baseResponse.setData(new ArrayList<>());
+//                            return baseResponse;
+//                        }
+//                        shiftIds.add(shiftId);
+//                    }
+//                }
 
                 // Step 2: Map user-dock (only if no error)
-                List<UserDockMapper> userDockMapperList = new ArrayList<>();
-                for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
-                    Users dockSupervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
-                            false, true, loginUser.getSubOrgId(), dockSupervisorId
-                    );
+//                List<UserDockMapper> userDockMapperList = new ArrayList<>();
+//                for (Integer dockSupervisorId : dockRequest.getDockSupervisor()) {
+//                    Users dockSupervisor = userRepository.findByIsDeletedAndIsActiveAndSubOrganizationIdAndId(
+//                            false, true, loginUser.getSubOrgId(), dockSupervisorId
+//                    );
+//
+//                    UserDockMapper  userDockMapper = userDockRepository.findBySubOrganizationIdAndIsDeletedAndDockIdAndUserId(loginUser.getSubOrgId(), false, id, dockSupervisorId);
+//                   if( userDockMapper == null){
+//                       userDockMapper = new UserDockMapper();
+//                   }
+//
+//                    userDockMapper.setUser(dockSupervisor);
+//                    userDockMapper.setDock(docks);
+//                    userDockMapper.setOrganizationId(loginUser.getOrgId());
+//                    userDockMapper.setSubOrganizationId(loginUser.getSubOrgId());
+//                    userDockMapper.setCreatedBy(loginUser.getUserId());
+//                    userDockMapper.setCreatedOn(new Date());
+//                    userDockMapper.setIsDeleted(false);
+//                    userDockMapperList.add(userDockMapper);
+//                }
 
-                    UserDockMapper  userDockMapper = userDockRepository.findBySubOrganizationIdAndIsDeletedAndDockIdAndUserId(loginUser.getSubOrgId(), false, id, dockSupervisorId);
-                   if( userDockMapper == null){
-                       userDockMapper = new UserDockMapper();
-                   }
-
-                    userDockMapper.setUser(dockSupervisor);
-                    userDockMapper.setDock(docks);
-                    userDockMapper.setOrganizationId(loginUser.getOrgId());
-                    userDockMapper.setSubOrganizationId(loginUser.getSubOrgId());
-                    userDockMapper.setCreatedBy(loginUser.getUserId());
-                    userDockMapper.setCreatedOn(new Date());
-                    userDockMapper.setIsDeleted(false);
-                    userDockMapperList.add(userDockMapper);
-                }
-
-                userDockRepository.saveAll(userDockMapperList);
+//                userDockRepository.saveAll(userDockMapperList);
 
                 List<Dock> dockList = new ArrayList<>();
                 dockList.add(docks);
@@ -438,7 +438,6 @@ public class DocksServiceImpl implements DocksService {
             Page<Dock> docksPage = docksRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeleted(loginUser.getOrgId(), loginUser.getSubOrgId(), false, pageable);
             List<Dock> docks = new ArrayList<>();
             for (Dock dock : docksPage.getContent()) {
-                dock.setDockSupervisorList(userDockRepository.findBySubOrganizationIdAndIsDeletedAndDockId(loginUser.getSubOrgId(), false, dock.getId()).stream().map(dockUser -> dockUser.getUser()).collect(Collectors.toList()));
                 dock.setStore(storeDockMapperRepository.findByIsDeletedAndSubOrganizationIdAndDockId(false, loginUser.getSubOrgId(), dock.getId()).stream().map(storeDockMapper -> storeDockMapper.getStore()).collect(Collectors.toList()));
                 docks.add(dock);
             }
@@ -475,7 +474,6 @@ public class DocksServiceImpl implements DocksService {
             Optional<Dock> dock = docksRepository.findByIsDeletedAndSubOrganizationIdAndId(false, loginUser.getSubOrgId(), dockId);
             List<Dock> docks = new ArrayList<>();
             dock.get().setStore(storeDockMapperRepository.findByIsDeletedAndSubOrganizationIdAndDockId(false, loginUser.getSubOrgId(), dockId).stream().map(storeDockMapper -> storeDockMapper.getStore()).collect(Collectors.toList()));
-            dock.get().setDockSupervisorList(userDockRepository.findBySubOrganizationIdAndIsDeletedAndDockId( loginUser.getSubOrgId(), false,dockId).stream().map(storeDockMapper -> storeDockMapper.getUser()).collect(Collectors.toList()));
             docks.add(dock.get());
             response.setCode(1);
             response.setStatus(200);
