@@ -164,7 +164,7 @@ public class DocksServiceImpl implements DocksService {
         docks.setCreatedOn(new Date());
         docks.setOrganizationId(loginUser.getOrgId());
         docks.setSubOrganizationId(loginUser.getSubOrgId());
-        docks.setDockSupervisorId(userRepository.findByIsDeletedAndIsActiveAndId(false, true, dockRequest.getDockSupervisor()));
+        docks.setDockSupervisor(userRepository.findByIsDeletedAndIsActiveAndId(false, true, dockRequest.getDockSupervisor()));
 
         return docks;
     }
@@ -279,7 +279,7 @@ public class DocksServiceImpl implements DocksService {
                 Dock docks = optionalDocks.get();
                 docks.setDockName(dockRequest.getDockName());
                 docks.setAttribute(dockRequest.getAttribute());
-                docks.setDockSupervisorId(userRepository.findByIsDeletedAndIsActiveAndId(false, true, dockRequest.getDockSupervisor()));
+                docks.setDockSupervisor(userRepository.findByIsDeletedAndIsActiveAndId(false, true, dockRequest.getDockSupervisor()));
                 docksRepository.save(docks);
 
                 // -------------------------------

@@ -29,8 +29,8 @@ public class Dock {
     private String dockName;
 
     @ManyToOne
-    @JoinColumn(name = "dock_supervisor_id", referencedColumnName = "id")
-    private Users dockSupervisorId;
+    @JoinColumn(name = "DockSupervisorId")
+    private Users dockSupervisor;
 
     @Column(name = "Attribute")
     private String attribute;
