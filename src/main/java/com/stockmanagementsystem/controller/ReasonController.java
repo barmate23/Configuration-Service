@@ -27,8 +27,8 @@ public class ReasonController {
     ReasonService reasonService;
 
     @PostMapping(APIConstants.SAVE_REASON)
-    public BaseResponse saveReason(@RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId){
-        return reasonService.saveReason(rejectedReason,reasonCategoryId);
+    public BaseResponse saveReason(@RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId,@RequestParam(required = false) Boolean isConfigurationRequest){
+        return reasonService.saveReason(rejectedReason,reasonCategoryId,isConfigurationRequest);
     }
 
     @DeleteMapping(APIConstants.DELETE_REASON)

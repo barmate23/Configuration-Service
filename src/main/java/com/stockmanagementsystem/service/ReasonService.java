@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface ReasonService {
 
-    BaseResponse saveReason(String rejectedReason,Integer reasonCategoryId);
+    BaseResponse saveReason(String rejectedReason,Integer reasonCategoryId,Boolean isConfigurationRequest);
 
     String generateReasonId(Integer count);
 
