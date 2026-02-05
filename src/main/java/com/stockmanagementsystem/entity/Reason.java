@@ -45,7 +45,7 @@ public class Reason {
     @JsonIgnore
     @Column(name = "CreatedBy")
     private Integer createdBy;
-    @JsonIgnore
+
     @Column(name = "CreatedOn")
     private Date createdOn;
     @JsonIgnore
