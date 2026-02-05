@@ -30,6 +30,7 @@ public interface ReasonRepository extends JpaRepository<Reason,Integer> {
 
     List<Reason> findBySubOrganizationId(Integer subOrgId);
 
+    List<Reason> findByIsDeletedAndSubOrganizationIdAndReasonCategoryMasterReasonCategoryCodeAndIsApproved(boolean b, Integer subOrgId, String categoryCode, boolean b1);
 
-    List<Reason> findByIsDeletedAndSubOrganizationIdAndReasonCategoryMasterReasonCategoryCode(boolean b, Integer subOrgId, String categoryCode);
+    List<Reason> findByIsDeletedAndSubOrganizationIdAndIsApproved(boolean b, Integer subOrgId, boolean b1);
 }

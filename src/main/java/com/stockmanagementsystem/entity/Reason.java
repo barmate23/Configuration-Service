@@ -30,6 +30,9 @@ public class Reason {
     @Column(name = "rejectedReason")
     private String rejectedReason;
 
+    @Column(name = "isApproved")
+    private Boolean isApproved;
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "reasonCategoryMasterId")

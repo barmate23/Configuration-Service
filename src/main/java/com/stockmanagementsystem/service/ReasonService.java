@@ -17,8 +17,10 @@ public interface ReasonService {
 
     BaseResponse deleteReasonById(Integer id);
 
-    BaseResponse updateReason(Integer id, String rejectedReason,Integer reasonCategoryId);
+    BaseResponse updateReason(Integer id, String rejectedReason,Integer reasonCategoryId,Boolean isApproved);
+
     BaseResponse<List<ItemNameResponse>> getItemIdWithName();
+
     BaseResponse<List<ReasonResponse>> searchReasons(
             Integer pageNumber, Integer pageSize, List<String> reasonId, String reasonCategory, List<String> itemName, Boolean createdYear
     );
@@ -33,4 +35,6 @@ public interface ReasonService {
     BaseResponse<ReasonCategoryMaster> getAllCategory();
 
     BaseResponse<Reason> getAllReasonByCategory(String categoryCode);
+
+    BaseResponse<Reason> getApprovalPendingReasons(String categoryCode);
 }
