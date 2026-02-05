@@ -48,7 +48,7 @@ public class ReasonServiceImpl implements ReasonService {
 
 
     @Override
-    public BaseResponse saveReason(String rejectedReason,Integer reasonCategoryId) {
+    public BaseResponse saveReason(String rejectedReason,Integer reasonCategoryId,Boolean isConfigurationRequest) {
 
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - ReasonServiceImpl - saveReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SAVED REASON START");
@@ -67,7 +67,11 @@ public class ReasonServiceImpl implements ReasonService {
             reason.setOrganizationId(loginUser.getOrgId());
             reason.setCreatedBy(loginUser.getUserId());
             reason.setCreatedOn(new Date());
-            reason.setIsApproved(false);
+            if(isConfigurationRequest) {
+                reason.setIsApproved(true);
+            }else{
+                reason.setIsApproved(false);
+            }
             reasonRepository.save(reason);
             ReasonResponse reasonResponse=new ReasonResponse();
             List<Object> responseData = new ArrayList<>();
