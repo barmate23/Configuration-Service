@@ -24,6 +24,7 @@ public class ReasonSpecifications {
 
             if (activeOnly) {
                 predicates.add(criteriaBuilder.isFalse(root.get("isDeleted")));
+                predicates.add(criteriaBuilder.isTrue(root.get("isApproved")));
             }
 
             predicates.add((root.get("subOrganizationId").in(subOrgId)));
