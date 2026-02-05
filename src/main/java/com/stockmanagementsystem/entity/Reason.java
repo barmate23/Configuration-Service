@@ -34,7 +34,6 @@ public class Reason {
     private Boolean isApproved;
 
     @ManyToOne
-    @JsonIgnore
     @JoinColumn(name = "reasonCategoryMasterId")
     private ReasonCategoryMaster reasonCategoryMaster;
     @JsonIgnore
