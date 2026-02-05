@@ -37,8 +37,8 @@ public class ReasonController {
     }
 
     @PutMapping(APIConstants.UPDATE_REASON)
-    public ResponseEntity<BaseResponse> updateReason(@RequestParam Integer id, @RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId) {
-        BaseResponse baseResponse = reasonService.updateReason(id, rejectedReason,reasonCategoryId);
+    public ResponseEntity<BaseResponse> updateReason(@RequestParam Integer id, @RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId,@RequestParam(required = false) Boolean isApproved) {
+        BaseResponse baseResponse = reasonService.updateReason(id, rejectedReason,reasonCategoryId,isApproved);
         return new ResponseEntity<>(baseResponse, HttpStatus.valueOf(baseResponse.getStatus()));
     }
 
@@ -110,6 +110,15 @@ public class ReasonController {
     public BaseResponse<Reason> getAllReasonByCategory(@PathVariable String categoryCode){
         return reasonService.getAllReasonByCategory(categoryCode);
     }
+
+
+    @GetMapping("/getApprovalPendingReasons")
+    public BaseResponse<Reason> getApprovalPendingReasons(
+            @RequestParam(required = false) String categoryCode) {
+
+        return reasonService.getApprovalPendingReasons(categoryCode);
+    }
+
 
 }
 
