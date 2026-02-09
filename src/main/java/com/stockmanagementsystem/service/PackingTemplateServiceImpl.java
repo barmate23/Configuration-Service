@@ -206,10 +206,6 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                     cell.setCellStyle(dataStyle);
 
                     cell = row.createCell(col++);
-                    cell.setCellValue(item.getErpItemId());
-                    cell.setCellStyle(dataStyle);
-
-                    cell = row.createCell(col++);
                     cell.setCellValue(sim.getSupplier().getSupplierId());
                     cell.setCellStyle(dataStyle);
 
