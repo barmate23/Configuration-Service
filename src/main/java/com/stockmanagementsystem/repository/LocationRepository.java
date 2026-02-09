@@ -100,4 +100,6 @@ public interface LocationRepository extends JpaRepository<Location,Integer>, Jpa
     List<Location> findByIsDeletedAndSubOrganizationIdAndZoneAreaStoreId(boolean b, Integer subOrgId, Integer id);
 
     List<Location> findByIsDeletedAndSubOrganizationIdAndItemId(boolean b, Integer subOrgId, Integer id);
+
+    List<Location> findByZoneIdAndIsDeleted(Integer zoneId, boolean b);
 }
