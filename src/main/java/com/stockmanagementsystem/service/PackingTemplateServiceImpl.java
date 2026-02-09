@@ -7,9 +7,8 @@ import com.stockmanagementsystem.entity.SupplierItemMapper;
 import com.stockmanagementsystem.repository.LocationRepository;
 import com.stockmanagementsystem.repository.SupplierItemMapperRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,13 +54,56 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
             Sheet sheet = workbook.createSheet("Packing_Config");
             log.debug("{} | PackingTemplateDownload | Sheet created", logId);
 
+            SXSSFSheet sxssfSheet = (SXSSFSheet) sheet;
+            sxssfSheet.trackAllColumnsForAutoSizing();
+
+            // =========================
+// Styles
+// =========================
+
+// ---- Header Style (Dark Border) ----
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+
+            headerStyle.setBorderTop(BorderStyle.MEDIUM);
+            headerStyle.setBorderBottom(BorderStyle.MEDIUM);
+            headerStyle.setBorderLeft(BorderStyle.MEDIUM);
+            headerStyle.setBorderRight(BorderStyle.MEDIUM);
+
+            headerStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
+            headerStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
+            headerStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+            headerStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
+
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+// ---- Data Style (Normal Border) ----
+            CellStyle dataStyle = workbook.createCellStyle();
+
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+
+            dataStyle.setTopBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+            dataStyle.setBottomBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+            dataStyle.setLeftBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+            dataStyle.setRightBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
+
+            dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+
             // =========================
             // Header Row
             // =========================
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < PACKING_TEMPLATE_HEADERS.size(); i++) {
-                headerRow.createCell(i)
-                        .setCellValue(PACKING_TEMPLATE_HEADERS.get(i));
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(PACKING_TEMPLATE_HEADERS.get(i));
+                cell.setCellStyle(headerStyle);
             }
 
             log.info("{} | PackingTemplateDownload | Header initialized | columnCount={}",
@@ -153,18 +195,43 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                     Row row = sheet.createRow(rowIndex++);
                     int col = 0;
 
-                    // -------- Read-only columns --------
-                    row.createCell(col++).setCellValue(item.getItemCode());
-                    row.createCell(col++).setCellValue(item.getName());
-                    row.createCell(col++).setCellValue(sim.getSupplier().getSupplierId());
-                    row.createCell(col++).setCellValue(sim.getSupplier().getSupplierName());
-                    row.createCell(col++).setCellValue(location.getZone().getArea().getAreaName());
-                    row.createCell(col++).setCellValue(location.getZone().getZoneName());
+                    Cell cell;
 
-                    // -------- Editable packing columns --------
+                    cell = row.createCell(col++);
+                    cell.setCellValue(item.getItemCode());
+                    cell.setCellStyle(dataStyle);
+
+                    cell = row.createCell(col++);
+                    cell.setCellValue(item.getName());
+                    cell.setCellStyle(dataStyle);
+
+                    cell = row.createCell(col++);
+                    cell.setCellValue(item.getErpItemId());
+                    cell.setCellStyle(dataStyle);
+
+                    cell = row.createCell(col++);
+                    cell.setCellValue(sim.getSupplier().getSupplierId());
+                    cell.setCellStyle(dataStyle);
+
+                    cell = row.createCell(col++);
+                    cell.setCellValue(sim.getSupplier().getSupplierName());
+                    cell.setCellStyle(dataStyle);
+
+                    cell = row.createCell(col++);
+                    cell.setCellValue(location.getZone().getArea().getAreaName());
+                    cell.setCellStyle(dataStyle);
+
+                    cell = row.createCell(col++);
+                    cell.setCellValue(location.getZone().getZoneName());
+                    cell.setCellStyle(dataStyle);
+
+                    // Blank editable columns
                     while (col < PACKING_TEMPLATE_HEADERS.size()) {
-                        row.createCell(col++).setCellValue("");
+                        cell = row.createCell(col++);
+                        cell.setCellValue("");
+                        cell.setCellStyle(dataStyle);
                     }
+
 
                     totalRowsGenerated++;
                 }

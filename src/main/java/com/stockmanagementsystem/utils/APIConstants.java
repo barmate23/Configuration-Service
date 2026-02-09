@@ -123,6 +123,7 @@ public class APIConstants {
     public static final String GET_STAGING_AREA_BY_DOCK = "/getAllStagingArea";
     public static final String GET_WEEKLY_OFF = "/getWeeklyOff";
     public static final String SAVE_WEEKLY_OFF = "/saveWeeklyOff";
+    public static final String PACKING_TEMPLATE_DOWNLOAD = "/packingTemplateDownload";
 }
 
 
