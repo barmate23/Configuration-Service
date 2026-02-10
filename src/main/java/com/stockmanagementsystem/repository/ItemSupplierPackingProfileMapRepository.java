@@ -39,5 +39,22 @@ public interface ItemSupplierPackingProfileMapRepository extends JpaRepository<I
             Pageable pageable
     );
 
+    @Query(
+            "SELECT m " +
+                    "FROM ItemSupplierPackingProfileMap m " +
+                    "JOIN FETCH m.packingProfile p " +
+                    "JOIN FETCH m.item i " +
+                    "JOIN FETCH m.supplier s " +
+                    "WHERE m.id = :configId " +
+                    "AND p.organizationId = :orgId " +
+                    "AND p.subOrganizationId = :subOrgId " +
+                    "AND p.isDeleted = false"
+    )
+    Optional<ItemSupplierPackingProfileMap> findPackingProfileById(
+            @Param("configId") Long configId,
+            @Param("orgId") Integer orgId,
+            @Param("subOrgId") Integer subOrgId
+    );
+
 }
 

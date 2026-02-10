@@ -3,10 +3,7 @@ package com.stockmanagementsystem.service;
 import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.exception.UploadRowException;
 import com.stockmanagementsystem.repository.*;
-import com.stockmanagementsystem.response.BaseResponse;
-import com.stockmanagementsystem.response.PackingProfileListDTO;
-import com.stockmanagementsystem.response.PackingProfileListProjection;
-import com.stockmanagementsystem.response.UploadErrorDetail;
+import com.stockmanagementsystem.response.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
@@ -790,5 +787,91 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
         return response;
     }
+
+
+
+    @Override
+    public BaseResponse<PackingProfileDetailDTO> getPackingProfileById(Long configId) {
+
+        String logId = loginUser.getLogId();
+        long startTime = System.currentTimeMillis();
+
+        log.info("{} | GetPackingProfileById | START | configId={}",
+                logId, configId);
+
+        BaseResponse<PackingProfileDetailDTO> response = new BaseResponse<>();
+
+        try {
+            ItemSupplierPackingProfileMap mapping =
+                    itemSupplierPackingProfileMapRepository
+                            .findPackingProfileById(
+                                    configId,
+                                    loginUser.getOrgId(),
+                                    loginUser.getSubOrgId()
+                            )
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException("Packing configuration not found"));
+
+            PackingProfileConfigMaster p = mapping.getPackingProfile();
+            Item item = mapping.getItem();
+            Supplier supplier = mapping.getSupplier();
+
+            PackingProfileDetailDTO dto = new PackingProfileDetailDTO(
+                    p.getId(),
+                    "CONF-" + p.getId(),
+                    item.getItemCode(),
+                    item.getName(),
+                    supplier.getSupplierId(),
+                    supplier.getSupplierName(),
+                    p.getPackingLevel(),
+                    p.getPrimaryUom(),
+                    p.getPrimaryUnits(),
+                    p.getSecondaryUom(),
+                    p.getSecondaryUnits(),
+                    p.getTertiaryUom(),
+                    p.getTertiaryUnits(),
+                    p.getIsActive()
+            );
+
+            response.setData(Collections.singletonList(dto));
+            response.setTotalPageCount(1);
+            response.setTotalRecordCount(1L);
+            response.setStatus(1);
+            response.setCode(200);
+            response.setMessage("Packing configuration fetched successfully");
+            response.setLogId(logId);
+
+            log.info("{} | GetPackingProfileById | SUCCESS | durationMs={}",
+                    logId, System.currentTimeMillis() - startTime);
+
+        } catch (IllegalArgumentException ex) {
+
+            log.warn("{} | GetPackingProfileById | NOT FOUND | configId={}",
+                    logId, configId);
+
+            response.setStatus(0);
+            response.setCode(404);
+            response.setMessage(ex.getMessage());
+            response.setLogId(logId);
+            response.setData(Collections.emptyList());
+            response.setTotalPageCount(0);
+            response.setTotalRecordCount(0L);
+
+        } catch (Exception ex) {
+
+            log.error("{} | GetPackingProfileById | FAILED", logId, ex);
+
+            response.setStatus(0);
+            response.setCode(500);
+            response.setMessage("Failed to fetch packing configuration");
+            response.setLogId(logId);
+            response.setData(Collections.emptyList());
+            response.setTotalPageCount(0);
+            response.setTotalRecordCount(0L);
+        }
+
+        return response;
+    }
+
 
 }

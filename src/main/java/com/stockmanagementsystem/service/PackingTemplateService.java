@@ -1,6 +1,7 @@
 package com.stockmanagementsystem.service;
 
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.PackingProfileDetailDTO;
 import com.stockmanagementsystem.response.PackingProfileListDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -16,4 +17,6 @@ public interface PackingTemplateService {
 
     BaseResponse<PackingProfileListDTO> getAllPackingProfiles(int page, int size, String sortBy,
                                                               String sortDir);
+
+    BaseResponse<PackingProfileDetailDTO> getPackingProfileById(Long id);
 }
