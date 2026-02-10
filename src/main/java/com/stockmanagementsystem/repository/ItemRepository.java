@@ -61,22 +61,10 @@ public interface ItemRepository extends JpaRepository<Item,Integer> {
 
     List<Item> findByIsDeletedAndSubOrganizationIdAndAlternativeItem(boolean b, Integer subOrgId, boolean b1);
 
-    Item findBySubOrganizationIdAndErpItemId(Integer subOrgId, String erpItemID);
-
-    Optional<Item> findByIsDeletedAndSubOrganizationIdAndItemId(boolean b, Integer subOrgId, String itemId);
-
-    Item findBySubOrganizationIdAndIsDeletedAndItemIdOrName(Integer subOrgId, boolean b, String itemCode, String itemName);
-
-    Item findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndItemId(Integer orgId, Integer subOrgId, boolean b, String itemCode);
 
     Optional<Item> findByIsDeletedAndSubOrganizationIdAndItemCode(boolean b, Integer subOrgId, String itemCode);
     List<Item> findBySubOrganizationId(Integer subOrgId);
 
-    Optional<Item> findByIsDeletedAndItemCode(boolean b, String itemCode);
-
-    boolean existsBySubOrganizationIdAndIsDeletedAndItemId(Integer subOrgId, boolean b, String generatedDockId);
-
-    Item findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndItemCode(Integer orgId, Integer subOrgId, boolean b, String itemCode);
 
   List<Item> findBySubOrganizationIdOrderByIdAsc(Integer subOrgId);
 
