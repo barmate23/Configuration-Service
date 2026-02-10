@@ -79,4 +79,6 @@ public interface ItemRepository extends JpaRepository<Item,Integer> {
     Item findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndItemCode(Integer orgId, Integer subOrgId, boolean b, String itemCode);
 
   List<Item> findBySubOrganizationIdOrderByIdAsc(Integer subOrgId);
+
+    Item findByItemCodeAndIsDeleted(String itemCode, boolean b);
 }
