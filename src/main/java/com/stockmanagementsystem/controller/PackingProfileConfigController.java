@@ -1,8 +1,11 @@
 package com.stockmanagementsystem.controller;
 
+import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.PackingProfileListDTO;
 import com.stockmanagementsystem.service.PackingTemplateService;
 import com.stockmanagementsystem.utils.APIConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +46,21 @@ public class PackingProfileConfigController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/getAllPackingConfigData")
+    public BaseResponse<PackingProfileListDTO> getAllPackingProfiles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "modifiedOn") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        BaseResponse<PackingProfileListDTO> response =
+                packingTemplateService
+                        .getAllPackingProfiles(page, size, sortBy, sortDir);
+
+        return response;
+    }
+
 
 
 

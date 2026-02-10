@@ -3,14 +3,19 @@ package com.stockmanagementsystem.service;
 import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.exception.UploadRowException;
 import com.stockmanagementsystem.repository.*;
+import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.PackingProfileListDTO;
+import com.stockmanagementsystem.response.PackingProfileListProjection;
 import com.stockmanagementsystem.response.UploadErrorDetail;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.configuration.AbstractFileConfiguration;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -374,7 +379,13 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            validateHeader(sheet.getRow(0));
+
+            Row headerRow = sheet.getRow(0);
+            validateHeader(headerRow);
+
+            // HEADER MAP IS BUILT
+            Map<String, Integer> headerIndexMap =
+                    buildHeaderIndexMap(headerRow);
 
             for (Row row : sheet) {
 
@@ -382,43 +393,67 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                 int excelRowNum = row.getRowNum() + 1;
 
                 try {
-                    String itemCode = getString(row, "Item Code");
-                    String supplierCode = getString(row, "Supplier Code");
-                    String profileDesc = getString(row, "Packing Profile Code");
+                    // ---------- BASIC FIELDS ----------
+                    String itemCode =
+                            getString(row, headerIndexMap, "Item Code", excelRowNum);
 
+                    String supplierCode =
+                            getString(row, headerIndexMap, "Supplier Code", excelRowNum);
+
+                    String profileDesc =
+                            getString(row, headerIndexMap, "Packing Profile Code", excelRowNum);
+
+                    // ---------- ITEM VALIDATION ----------
                     Item item = itemMap.get(itemCode);
-                    if (item == null)
-                        throw error(excelRowNum, "Item Code", "Item not in selected zone");
+                    if (item == null) {
+                        throw error(excelRowNum, "Item Code",
+                                "Item not in selected zone");
+                    }
 
+                    // ---------- SUPPLIER VALIDATION ----------
                     SupplierItemMapper sim =
                             supplierItemMap.get(itemCode + "|" + supplierCode);
 
-                    if (sim == null)
+                    if (sim == null) {
                         throw error(excelRowNum, "Supplier Code",
                                 "Supplier not mapped to this item");
+                    }
 
                     Supplier supplier = sim.getSupplier();
 
-                    // ---------------- PACKING VALIDATION (same as before)
-                    String primaryUom = getString(row, "Primary Pack UOM");
-                    Integer primaryUnits = getInteger(row, "Units per Primary Pack");
-                    String secondaryUom = getString(row, "Secondary Pack UOM");
-                    Integer secondaryUnits = getInteger(row, "Units per Secondary Pack");
-                    String tertiaryUom = getString(row, "Tertiary Pack UOM");
-                    Integer tertiaryUnits = getInteger(row, "Units per Tertiary Pack");
-                    String moqLevel = getString(row, "MOQ Level");
-                    Integer moqQty = getInteger(row, "MOQ Qty");
+                    // ---------- PACKING VALUES ----------
+                    String primaryUom =
+                            getString(row, headerIndexMap, "Primary Pack UOM", excelRowNum);
+                    Integer primaryUnits =
+                            getInteger(row, headerIndexMap, "Units per Primary Pack", excelRowNum);
 
-                    // (validations unchanged – omitted here for brevity)
+                    String secondaryUom =
+                            getString(row, headerIndexMap, "Secondary Pack UOM", excelRowNum);
+                    Integer secondaryUnits =
+                            getInteger(row, headerIndexMap, "Units per Secondary Pack", excelRowNum);
 
-                    // ---------------- UPSERT PROFILE
+                    String tertiaryUom =
+                            getString(row, headerIndexMap, "Tertiary Pack UOM", excelRowNum);
+                    Integer tertiaryUnits =
+                            getInteger(row, headerIndexMap, "Units per Tertiary Pack", excelRowNum);
+
+
+                    // ---------- VALIDATIONS ----------
+
+                    if (primaryUom == null || primaryUnits == null || primaryUnits <= 0) {
+                        throw error(excelRowNum, "Primary Pack",
+                                "Primary pack is mandatory");
+                    }
+
+
+                    // ---------- UPSERT PROFILE ----------
                     PackingProfileConfigMaster profile =
                             profileMap.computeIfAbsent(profileDesc, k -> {
                                 PackingProfileConfigMaster p =
                                         new PackingProfileConfigMaster();
                                 p.setOrganizationId(loginUser.getOrgId());
                                 p.setSubOrganizationId(loginUser.getSubOrgId());
-                                p.setDescription(k);
+                                p.setPackingLevel(k);
                                 p.setCreatedBy(loginUser.getUserId());
                                 p.setCreatedOn(new Date());
                                 return p;
@@ -426,8 +461,10 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
                     profile.setPrimaryUom(primaryUom);
                     profile.setPrimaryUnits(primaryUnits);
-                    profile.setMoqLevel(moqLevel);
-                    profile.setMoqQty(moqQty);
+                    profile.setSecondaryUom(secondaryUom);
+                    profile.setSecondaryUnits(secondaryUnits);
+                    profile.setTertiaryUom(tertiaryUom);
+                    profile.setTertiaryUnits(tertiaryUnits);
                     profile.setIsActive(true);
                     profile.setIsDeleted(false);
                     profile.setModifiedBy(loginUser.getUserId());
@@ -435,13 +472,15 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
                     packingProfileRepo.save(profile);
 
-                    // ---------------- MAP ITEM + SUPPLIER
+                    // ---------- MAP ITEM + SUPPLIER ----------
                     upsertItemSupplierPackingProfile(item, supplier, profile);
 
                     successCount++;
 
                 } catch (UploadRowException ure) {
                     errors.add(ure.getErrorDetail());
+                    log.warn("{} | PackingProfileUpload | Row {} failed | {}",
+                            logId, excelRowNum, ure.getErrorDetail());
                 }
             }
 
@@ -450,8 +489,9 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
             throw new RuntimeException("Failed to upload packing profile template", ex);
         }
 
-        log.info("{} | PackingProfileUpload | END | successRows={} | errorRows={}",
-                logId, successCount, errors.size());
+        log.info("{} | PackingProfileUpload | END | successRows={} | errorRows={} | durationMs={}",
+                logId, successCount, errors.size(),
+                System.currentTimeMillis() - startTime);
 
         Map<String, Object> response = new HashMap<>();
         response.put("successCount", successCount);
@@ -463,24 +503,94 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
 
 
+
     private UploadRowException error(int row, String column, String message) {
         return new UploadRowException(
                 new UploadErrorDetail(row, column, message)
         );
     }
 
-    private String getString(Row row, String columnName) {
-        int idx = PACKING_TEMPLATE_HEADERS.indexOf(columnName);
+    private String getString(
+            Row row,
+            Map<String, Integer> headerIndexMap,
+            String columnName,
+            int excelRowNum) {
+
+        Integer idx = headerIndexMap.get(columnName);
+
+        if (idx == null) {
+            throw error(
+                    excelRowNum,
+                    columnName,
+                    "Column not found in template"
+            );
+        }
+
         Cell cell = row.getCell(idx, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        return cell == null ? null : cell.getStringCellValue().trim();
+        if (cell == null) {
+            return null;
+        }
+
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+
+            case NUMERIC:
+                return String.valueOf((long) cell.getNumericCellValue());
+
+            case FORMULA:
+                return cell.getCellFormula();
+
+            default:
+                return null;
+        }
     }
 
-    private Integer getInteger(Row row, String columnName) {
-        int idx = PACKING_TEMPLATE_HEADERS.indexOf(columnName);
-        Cell cell = row.getCell(idx, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-        return cell == null ? null : (int) cell.getNumericCellValue();
-    }
 
+    private Integer getInteger(
+            Row row,
+            Map<String, Integer> headerIndexMap,
+            String columnName,
+            int excelRowNum) {
+
+        Integer idx = headerIndexMap.get(columnName);
+
+        if (idx == null) {
+            throw error(
+                    excelRowNum,
+                    columnName,
+                    "Column not found in template"
+            );
+        }
+
+        Cell cell = row.getCell(idx, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) {
+            return null;
+        }
+
+        try {
+            switch (cell.getCellType()) {
+                case NUMERIC:
+                    return (int) cell.getNumericCellValue();
+
+                case STRING:
+                    String val = cell.getStringCellValue().trim();
+                    return val.isEmpty() ? null : Integer.parseInt(val);
+
+                case FORMULA:
+                    return (int) cell.getNumericCellValue();
+
+                default:
+                    return null;
+            }
+        } catch (Exception ex) {
+            throw error(
+                    excelRowNum,
+                    columnName,
+                    "Invalid numeric value"
+            );
+        }
+    }
 
 
     private void validateHeader(Row headerRow) {
@@ -528,6 +638,19 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
             }
         }
     }
+
+    private Map<String, Integer> buildHeaderIndexMap(Row headerRow) {
+
+        Map<String, Integer> headerMap = new HashMap<>();
+
+        for (Cell cell : headerRow) {
+            String header = cell.getStringCellValue().trim();
+            headerMap.put(header, cell.getColumnIndex());
+        }
+
+        return headerMap;
+    }
+
 
 
 
@@ -595,5 +718,77 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
         itemSupplierPackingProfileMapRepository.save(mapping);
     }
 
+
+    public BaseResponse<PackingProfileListDTO> getAllPackingProfiles(
+            int page,
+            int size,
+            String sortBy,
+            String sortDir) {
+
+        String logId = loginUser.getLogId();
+        long startTime = System.currentTimeMillis();
+
+        log.info("{} | GetAllPackingProfiles | START | page={} | size={} | sortBy={} | sortDir={}",
+                logId, page, size, sortBy, sortDir);
+
+        BaseResponse<PackingProfileListDTO> response = new BaseResponse<>();
+
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("asc")
+                    ? Sort.by(sortBy).ascending()
+                    : Sort.by(sortBy).descending();
+
+            Pageable pageable = PageRequest.of(page, size, sort);
+
+            Page<PackingProfileListProjection> pageResult =
+                    itemSupplierPackingProfileMapRepository
+                            .findAllPackingProfiles(
+                                    loginUser.getOrgId(),
+                                    loginUser.getSubOrgId(),
+                                    pageable
+                            );
+
+            List<PackingProfileListDTO> dtoList =
+                    pageResult.getContent().stream()
+                            .map(p -> new PackingProfileListDTO(
+                                    p.getId(),
+                                    "CONF-" + p.getId(),
+                                    p.getItemName(),
+                                    p.getSupplierName(),
+                                    p.getPackingLevel(),
+                                    p.getIsActive()
+                            ))
+                            .collect(Collectors.toList());
+
+            response.setData(dtoList);
+            response.setTotalPageCount(pageResult.getTotalPages());
+            response.setTotalRecordCount(pageResult.getTotalElements());
+
+            response.setStatus(1);
+            response.setCode(200);
+            response.setMessage("Packing configuration data fetched successfully");
+            response.setLogId(logId);
+
+            log.info("{} | GetAllPackingProfiles | SUCCESS | records={} | totalPages={} | durationMs={}",
+                    logId,
+                    pageResult.getTotalElements(),
+                    pageResult.getTotalPages(),
+                    System.currentTimeMillis() - startTime);
+
+        } catch (Exception ex) {
+
+            log.error("{} | GetAllPackingProfiles | FAILED", logId, ex);
+
+            response.setStatus(0);
+            response.setCode(500);
+            response.setMessage("Failed to fetch packing configuration data");
+            response.setLogId(logId);
+            response.setData(Collections.emptyList());
+            response.setTotalPageCount(0);
+            response.setTotalRecordCount(0L);
+        }
+
+        return response;
+    }
 
 }

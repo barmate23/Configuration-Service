@@ -19,7 +19,7 @@ public class PackingProfileConfigMaster {
 
     private String description;
 
-    private Integer packingLevelCount; // 1,2,3
+    private String packingLevel; // 1,2,3
 
     // -------------------------
     // PRIMARY

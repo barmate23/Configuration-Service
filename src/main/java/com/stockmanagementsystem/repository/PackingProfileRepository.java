@@ -9,7 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface PackingProfileRepository extends JpaRepository<PackingProfileConfigMaster, Integer> {
-    Optional<PackingProfileConfigMaster> findByOrganizationIdAndSubOrganizationIdAndDescriptionAndIsDeleted(Integer orgId, Integer subOrgId, String profileDesc, boolean b);
 
     List<PackingProfileConfigMaster> findByOrganizationIdAndSubOrganizationIdAndIsDeleted(Integer orgId, Integer subOrgId, boolean b);
 }

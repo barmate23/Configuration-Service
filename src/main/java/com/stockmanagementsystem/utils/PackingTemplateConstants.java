@@ -65,7 +65,8 @@ public final class PackingTemplateConstants {
                     PRIMARY_PACK_QTY,
                     SECONDARY_PACK_UOM,
                     SECONDARY_PACK_QTY,
-                    TERTIARY_PACK_UOM
+                    TERTIARY_PACK_UOM,
+                    TERTIARY_PACK_QTY
             );
 
 
