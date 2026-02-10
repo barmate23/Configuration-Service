@@ -1,6 +1,7 @@
 package com.stockmanagementsystem.controller;
 
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.PackingProfileDetailDTO;
 import com.stockmanagementsystem.response.PackingProfileListDTO;
 import com.stockmanagementsystem.service.PackingTemplateService;
 import com.stockmanagementsystem.utils.APIConstants;
@@ -57,6 +58,17 @@ public class PackingProfileConfigController {
         BaseResponse<PackingProfileListDTO> response =
                 packingTemplateService
                         .getAllPackingProfiles(page, size, sortBy, sortDir);
+
+        return response;
+    }
+
+
+    @GetMapping("/getPackingConfigById/{id}")
+    public BaseResponse<PackingProfileDetailDTO> getPackingConfigById(
+            @PathVariable("id") Long id) {
+
+        BaseResponse<PackingProfileDetailDTO> response =
+                packingTemplateService.getPackingProfileById(id);
 
         return response;
     }
