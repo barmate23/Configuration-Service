@@ -65,4 +65,6 @@ public interface SupplierRepository extends JpaRepository<Supplier,Integer> {
     Optional<Supplier> findByIsDeletedAndSubOrganizationIdAndErpSupplierId(boolean b, Integer subOrgId, String supplierId);
 
     Optional<Supplier> findByIsDeletedAndSubOrganizationIdIsAndErpSupplierId(boolean b, Integer subOrgId, String erpSupplierId);
+
+    Supplier findBySupplierCodeAndIsDeleted(String supplierCode, boolean b);
 }
