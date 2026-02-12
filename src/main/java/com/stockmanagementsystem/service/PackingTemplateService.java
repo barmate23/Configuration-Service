@@ -1,5 +1,9 @@
 package com.stockmanagementsystem.service;
 
+import com.stockmanagementsystem.entity.ItemSupplierPackingProfileMap;
+import com.stockmanagementsystem.entity.PackingProfileConfigMaster;
+import com.stockmanagementsystem.request.ItemSupplierPackingProfileUpdateRequest;
+import com.stockmanagementsystem.request.PackingProfileUpdateRequest;
 import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.response.PackingProfileDetailDTO;
 import com.stockmanagementsystem.response.PackingProfileListDTO;
@@ -19,4 +23,6 @@ public interface PackingTemplateService {
                                                               String sortDir);
 
     BaseResponse<PackingProfileDetailDTO> getPackingProfileById(Long id);
+
+    BaseResponse<ItemSupplierPackingProfileMap> updateItemSupplierPackingProfile(Long mappingId, ItemSupplierPackingProfileUpdateRequest request);
 }

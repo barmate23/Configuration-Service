@@ -16,27 +16,29 @@ public class PackingProfileConfigMaster {
     private Integer organizationId;
     private Integer subOrganizationId;
 
-
     private String description;
 
-    private String packingLevel; // 1,2,3
+    @ManyToOne
+    @JoinColumn(name = "packingHierarchyLevelId")
+    private PackingHierarchyLevel packingHierarchyLevel;
 
-    // -------------------------
-    // PRIMARY
-    // -------------------------
-    private String primaryUom;
+    // ===== PACKAGING FK =====
+    @ManyToOne
+    @JoinColumn(name = "primary_packaging_id")
+    private PackagingMaster primaryPackaging;
+
+    @ManyToOne
+    @JoinColumn(name = "secondary_packaging_id")
+    private PackagingMaster secondaryPackaging;
+
+    @ManyToOne
+    @JoinColumn(name = "tertiary_packaging_id")
+    private PackagingMaster tertiaryPackaging;
+
     private Integer primaryUnits;
 
-    // -------------------------
-    // SECONDARY
-    // -------------------------
-    private String secondaryUom;
     private Integer secondaryUnits;
 
-    // -------------------------
-    // TERTIARY
-    // -------------------------
-    private String tertiaryUom;
     private Integer tertiaryUnits;
 
     private String moqLevel;   // PRIMARY / SECONDARY / TERTIARY

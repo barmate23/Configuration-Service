@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class PackingProfileDetailDTO {
 
@@ -20,15 +19,15 @@ public class PackingProfileDetailDTO {
 
     private String packingLevelCount;
 
-    private String primaryUom;
     private Integer primaryUnits;
 
-    private String secondaryUom;
     private Integer secondaryUnits;
 
-    private String tertiaryUom;
     private Integer tertiaryUnits;
 
 
     private Boolean isActive;
+
+    public PackingProfileDetailDTO(Long id, String s, String itemCode, String name, String supplierId, String supplierName, String s1, Integer primaryUnits, Integer secondaryUnits, Integer tertiaryUnits, Boolean isActive) {
+    }
 }

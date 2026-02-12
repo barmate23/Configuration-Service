@@ -3,9 +3,14 @@ package com.stockmanagementsystem.service;
 import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.exception.UploadRowException;
 import com.stockmanagementsystem.repository.*;
+import com.stockmanagementsystem.request.ItemSupplierPackingProfileUpdateRequest;
 import com.stockmanagementsystem.response.*;
+import com.stockmanagementsystem.utils.DimensionKeyUtil;
+import com.stockmanagementsystem.utils.PackagingMasterCache;
+import com.stockmanagementsystem.utils.UomConversionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.stockmanagementsystem.utils.PackingTemplateConstants.PACKING_TEMPLATE_HEADERS;
+import static com.stockmanagementsystem.utils.PackingTemplateConstants.*;
 
 @Service
 @Slf4j
@@ -52,69 +59,48 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
     @Autowired
     private ItemSupplierPackingProfileMapRepository itemSupplierPackingProfileMapRepository;
 
+    @Autowired
+    private PackingHierarchyLevelRepository packingHierarchyLevelRepository;
+
+    @Autowired
+    private PackagingMasterCache packagingMasterCache;
+
     @Override
     public ResponseEntity<byte[]> downloadTemplate(Integer areaId, Integer zoneId) {
 
-        long startTime = System.currentTimeMillis();
         String logId = loginUser.getLogId();
+        long startTime = System.currentTimeMillis();
 
         log.info("{} | PackingTemplateDownload | START | areaId={} | zoneId={}",
                 logId, areaId, zoneId);
 
-        // Use SXSSFWorkbook if zone can be very large (safe default)
-        try (Workbook workbook = new SXSSFWorkbook(100)) {
+        try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
 
-            // =========================
-            // Create Sheet
-            // =========================
-            Sheet sheet = workbook.createSheet("Packing_Config");
-            log.debug("{} | PackingTemplateDownload | Sheet created", logId);
+            SXSSFSheet sheet = workbook.createSheet("Packing_Config");
+            sheet.trackAllColumnsForAutoSizing();
 
-            SXSSFSheet sxssfSheet = (SXSSFSheet) sheet;
-            sxssfSheet.trackAllColumnsForAutoSizing();
-
-            // =========================
-// Styles
-// =========================
-
-// ---- Header Style (Dark Border) ----
+            // =====================================================
+            // STYLES
+            // =====================================================
             CellStyle headerStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
             headerStyle.setFont(headerFont);
-
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
             headerStyle.setBorderTop(BorderStyle.MEDIUM);
             headerStyle.setBorderBottom(BorderStyle.MEDIUM);
             headerStyle.setBorderLeft(BorderStyle.MEDIUM);
             headerStyle.setBorderRight(BorderStyle.MEDIUM);
 
-            headerStyle.setTopBorderColor(IndexedColors.BLACK.getIndex());
-            headerStyle.setBottomBorderColor(IndexedColors.BLACK.getIndex());
-            headerStyle.setLeftBorderColor(IndexedColors.BLACK.getIndex());
-            headerStyle.setRightBorderColor(IndexedColors.BLACK.getIndex());
-
-            headerStyle.setAlignment(HorizontalAlignment.CENTER);
-            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-
-// ---- Data Style (Normal Border) ----
             CellStyle dataStyle = workbook.createCellStyle();
-
             dataStyle.setBorderTop(BorderStyle.THIN);
             dataStyle.setBorderBottom(BorderStyle.THIN);
             dataStyle.setBorderLeft(BorderStyle.THIN);
             dataStyle.setBorderRight(BorderStyle.THIN);
 
-            dataStyle.setTopBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
-            dataStyle.setBottomBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
-            dataStyle.setLeftBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
-            dataStyle.setRightBorderColor(IndexedColors.GREY_50_PERCENT.getIndex());
-
-            dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-
-
-            // =========================
-            // Header Row
-            // =========================
+            // =====================================================
+            // HEADER ROW
+            // =====================================================
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < PACKING_TEMPLATE_HEADERS.size(); i++) {
                 Cell cell = headerRow.createCell(i);
@@ -122,172 +108,162 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                 cell.setCellStyle(headerStyle);
             }
 
-            log.info("{} | PackingTemplateDownload | Header initialized | columnCount={}",
-                    logId, PACKING_TEMPLATE_HEADERS.size());
-
-            // =========================
-            // Fetch Locations (Zone-based)
-            // =========================
+            // =====================================================
+            // FETCH & DEDUPE (ITEM + ZONE)
+            // =====================================================
             List<Location> locations =
                     locationRepository.findByZoneIdAndIsDeleted(zoneId, false);
 
-            log.info("{} | PackingTemplateDownload | Locations fetched | count={}",
-                    logId, locations.size());
+            Map<String, Location> uniqueMap = new LinkedHashMap<>();
 
-            if (locations.isEmpty()) {
-                log.warn("{} | PackingTemplateDownload | No locations found | zoneId={}",
-                        logId, zoneId);
+            for (Location loc : locations) {
+                if (loc.getItem() == null) continue;
+                String key = loc.getItem().getId() + "|" + loc.getZone().getId();
+                uniqueMap.putIfAbsent(key, loc);
             }
 
-            // =========================
-            // Collect Unique Items
-            // =========================
-            Map<Integer, Item> itemMap = new LinkedHashMap<>();
+            Set<Integer> itemIds = uniqueMap.values().stream()
+                    .map(l -> l.getItem().getId())
+                    .collect(Collectors.toSet());
 
-            for (Location location : locations) {
-                if (location.getItem() != null) {
-                    itemMap.putIfAbsent(location.getItem().getId(), location.getItem());
-                }
-            }
+            Map<Integer, List<SupplierItemMapper>> supplierMap =
+                    supplierItemMapperRepository
+                            .findByItemIdInAndIsDeleted(new ArrayList<>(itemIds), false)
+                            .stream()
+                            .collect(Collectors.groupingBy(sim -> sim.getItem().getId()));
 
-            log.info("{} | PackingTemplateDownload | Unique items collected | count={}",
-                    logId, itemMap.size());
-
-            if (itemMap.isEmpty()) {
-                log.warn("{} | PackingTemplateDownload | No items found for zoneId={}",
-                        logId, zoneId);
-            }
-
-            // =========================
-            // Fetch Suppliers in BULK
-            // =========================
-            List<Integer> itemIds = new ArrayList<>(itemMap.keySet());
-
-            Map<Integer, List<SupplierItemMapper>> suppliersByItemId = new HashMap<>();
-
-            if (!itemIds.isEmpty()) {
-
-                List<SupplierItemMapper> supplierMappings =
-                        supplierItemMapperRepository
-                                .findByItemIdInAndIsDeleted(itemIds, false);
-
-                log.info("{} | PackingTemplateDownload | Supplier mappings fetched | count={}",
-                        logId, supplierMappings.size());
-
-                suppliersByItemId =
-                        supplierMappings.stream()
-                                .filter(sim -> sim.getItem() != null)
-                                .collect(Collectors.groupingBy(
-                                        sim -> sim.getItem().getId()
-                                ));
-            }
-
-            // =========================
-            // Populate Data Rows (NO DB CALLS)
-            // =========================
+            // =====================================================
+            // DATA ROWS (BORDER FIX APPLIED)
+            // =====================================================
             int rowIndex = 1;
-            int totalRowsGenerated = 0;
 
-            for (Location location : locations) {
+            for (Location location : uniqueMap.values()) {
 
                 Item item = location.getItem();
-                if (item == null) {
-                    log.warn("{} | PackingTemplateDownload | LocationId={} has no item mapped",
-                            logId, location.getId());
-                    continue;
-                }
-
-                List<SupplierItemMapper> suppliers =
-                        suppliersByItemId.get(item.getId());
-
-                if (suppliers == null || suppliers.isEmpty()) {
-                    log.warn("{} | PackingTemplateDownload | No suppliers mapped | itemCode={}",
-                            logId, item.getItemCode());
-                    continue;
-                }
+                List<SupplierItemMapper> suppliers = supplierMap.get(item.getId());
+                if (suppliers == null) continue;
 
                 for (SupplierItemMapper sim : suppliers) {
 
                     Row row = sheet.createRow(rowIndex++);
-                    int col = 0;
 
-                    Cell cell;
-
-                    cell = row.createCell(col++);
-                    cell.setCellValue(item.getItemCode());
-                    cell.setCellStyle(dataStyle);
-
-                    cell = row.createCell(col++);
-                    cell.setCellValue(item.getName());
-                    cell.setCellStyle(dataStyle);
-
-                    cell = row.createCell(col++);
-                    cell.setCellValue(sim.getSupplier().getSupplierId());
-                    cell.setCellStyle(dataStyle);
-
-                    cell = row.createCell(col++);
-                    cell.setCellValue(sim.getSupplier().getSupplierName());
-                    cell.setCellStyle(dataStyle);
-
-                    cell = row.createCell(col++);
-                    cell.setCellValue(location.getZone().getArea().getAreaName());
-                    cell.setCellStyle(dataStyle);
-
-                    cell = row.createCell(col++);
-                    cell.setCellValue(location.getZone().getZoneName());
-                    cell.setCellStyle(dataStyle);
-
-                    // Blank editable columns
-                    while (col < PACKING_TEMPLATE_HEADERS.size()) {
-                        cell = row.createCell(col++);
+                    // 🔑 CREATE ALL CELLS FIRST
+                    for (int c = 0; c < PACKING_TEMPLATE_HEADERS.size(); c++) {
+                        Cell cell = row.createCell(c);
                         cell.setCellValue("");
                         cell.setCellStyle(dataStyle);
                     }
 
-
-                    totalRowsGenerated++;
+                    // SET VALUES
+                    row.getCell(0).setCellValue(item.getItemCode());
+                    row.getCell(1).setCellValue(item.getName());
+                    row.getCell(2).setCellValue(sim.getSupplier().getSupplierId());
+                    row.getCell(3).setCellValue(sim.getSupplier().getSupplierName());
+                    row.getCell(4).setCellValue(location.getZone().getArea().getAreaName());
+                    row.getCell(5).setCellValue(location.getZone().getZoneName());
                 }
             }
 
-            log.info("{} | PackingTemplateDownload | Data population completed | rowsGenerated={}",
-                    logId, totalRowsGenerated);
+            int lastDataRow = rowIndex - 1;
 
-            // =========================
-            // Auto-size Columns
-            // =========================
+            // =====================================================
+            // DROPDOWN: PACKING LEVEL
+            // =====================================================
+            List<String> packingLevels =
+                    packingHierarchyLevelRepository
+                            .findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndIsActive(
+                                    loginUser.getOrgId(),
+                                    loginUser.getSubOrgId(),
+                                    false,
+                                    true
+                            )
+                            .stream()
+                            .map(PackingHierarchyLevel::getLevelCode)
+                            .collect(Collectors.toList());
+
+            addDropdown(
+                    sheet,
+                    1,
+                    lastDataRow,
+                    PACKING_TEMPLATE_HEADERS.indexOf(PACKING_LEVEL),
+                    packingLevels
+            );
+
+            // =====================================================
+            // DROPDOWN: DIMENSION UOM (ALL LEVELS)
+            // =====================================================
+            List<String> uoms = Arrays.asList(DIMENSION_UOMS);
+
+            addDropdown(sheet, 1, lastDataRow,
+                    PACKING_TEMPLATE_HEADERS.indexOf(PRIMARY_DIMENSION_UOM), uoms);
+
+            addDropdown(sheet, 1, lastDataRow,
+                    PACKING_TEMPLATE_HEADERS.indexOf(SECONDARY_DIMENSION_UOM), uoms);
+
+            addDropdown(sheet, 1, lastDataRow,
+                    PACKING_TEMPLATE_HEADERS.indexOf(TERTIARY_DIMENSION_UOM), uoms);
+
+            // =====================================================
+            // AUTO SIZE
+            // =====================================================
             for (int i = 0; i < PACKING_TEMPLATE_HEADERS.size(); i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            log.debug("{} | PackingTemplateDownload | Column auto-size completed", logId);
-
-            // =========================
-            // Write Workbook
-            // =========================
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            workbook.write(outputStream);
-
-            long durationMs = System.currentTimeMillis() - startTime;
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
 
             log.info("{} | PackingTemplateDownload | SUCCESS | rows={} | durationMs={}",
-                    logId, totalRowsGenerated, durationMs);
+                    logId, lastDataRow, System.currentTimeMillis() - startTime);
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             "attachment; filename=Packing_Config_Template.xlsx")
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(outputStream.toByteArray());
+                    .body(out.toByteArray());
 
         } catch (Exception ex) {
-
-            long durationMs = System.currentTimeMillis() - startTime;
-
-            log.error("{} | PackingTemplateDownload | FAILED | areaId={} | zoneId={} | durationMs={}",
-                    logId, areaId, zoneId, durationMs, ex);
-
+            log.error("{} | PackingTemplateDownload | FAILED", logId, ex);
             throw new RuntimeException("Failed to generate Packing Configuration template", ex);
         }
     }
+
+    private static final String[] DIMENSION_UOMS = {
+            "MM", "CM", "METER", "INCH"
+    };
+
+
+    private void addDropdown(
+            Sheet sheet,
+            int firstRow,
+            int lastRow,
+            int columnIndex,
+            List<String> values) {
+
+        DataValidationHelper helper = sheet.getDataValidationHelper();
+
+        DataValidationConstraint constraint =
+                helper.createExplicitListConstraint(
+                        values.toArray(new String[0])
+                );
+
+        CellRangeAddressList addressList =
+                new CellRangeAddressList(
+                        firstRow,
+                        lastRow,
+                        columnIndex,
+                        columnIndex
+                );
+
+        DataValidation validation =
+                helper.createValidation(constraint, addressList);
+
+        validation.setSuppressDropDownArrow(true);
+        validation.setShowErrorBox(true);
+
+        sheet.addValidationData(validation);
+    }
+
 
 
     @Transactional
@@ -299,20 +275,193 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
         String logId = loginUser.getLogId();
         long startTime = System.currentTimeMillis();
 
-        log.info("{} | PackingProfileUpload | START | areaId={} | zoneId={}",
-                logId, areaId, zoneId);
-
-        int successCount = 0;
         List<UploadErrorDetail> errors = new ArrayList<>();
+        AtomicInteger successCount = new AtomicInteger();
 
         // =====================================================
-        // 1️⃣ FETCH ITEMS BY ZONE
+        // LOAD MASTER DATA ONCE
         // =====================================================
+        Map<String, Item> itemMap = loadItemsByZone(zoneId);
+        Map<String, SupplierItemMapper> supplierItemMap = loadSupplierItemMap(itemMap);
+        Map<String, PackingHierarchyLevel> hierarchyMap = loadHierarchyLevels();
+
+        // 🔥 MOST IMPORTANT
+        packagingMasterCache.load();
+
+        List<PackingProfileConfigMaster> profilesToSave = new ArrayList<>();
+        List<ItemSupplierPackingProfileMap> mappingsToSave = new ArrayList<>();
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            Map<String, Integer> headerMap =
+                    buildHeaderIndexMap(sheet.getRow(0));
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+
+                Row row = sheet.getRow(i);
+                if (row == null || isRowCompletelyEmpty(row, headerMap.size())) {
+                    break;
+                }
+
+                int excelRow = i + 1;
+
+                try {
+                    // =================================================
+                    // BASIC IDENTIFIERS
+                    // =================================================
+                    String itemCode = getString(row, headerMap, "Item Code", excelRow);
+                    String supplierCode = getString(row, headerMap, "Supplier Code", excelRow);
+                    String packingLevelCode = getString(row, headerMap, "Packing Level", excelRow);
+
+                    Item item = itemMap.get(itemCode);
+                    SupplierItemMapper sim =
+                            supplierItemMap.get(itemCode + "|" + supplierCode);
+                    PackingHierarchyLevel hierarchy =
+                            hierarchyMap.get(packingLevelCode);
+
+                    if (item == null || sim == null || hierarchy == null) {
+                        throw error(excelRow, "Validation",
+                                "Invalid Item / Supplier / Packing Level");
+                    }
+
+                    int levelOrder = hierarchy.getLevelOrder();
+
+                    // =================================================
+                    // PRIMARY PACKAGING (MANDATORY)
+                    // =================================================
+                    PackagingMaster primaryPackaging =
+                            resolvePackaging(row, headerMap, excelRow, "Primary");
+
+                    Integer primaryUnits =
+                            getInteger(row, headerMap,
+                                    "Units per Primary Pack", excelRow);
+
+                    if (primaryUnits == null || primaryUnits <= 0) {
+                        throw error(excelRow,
+                                "Units per Primary Pack",
+                                "Must be greater than zero");
+                    }
+
+                    // =================================================
+                    // SECONDARY PACKAGING
+                    // =================================================
+                    PackagingMaster secondaryPackaging = null;
+                    Integer secondaryUnits = null;
+
+                    if (levelOrder >= 2) {
+                        secondaryPackaging =
+                                resolvePackaging(row, headerMap, excelRow, "Secondary");
+
+                        secondaryUnits =
+                                getInteger(row, headerMap,
+                                        "Units per Secondary Pack", excelRow);
+
+                        if (secondaryUnits == null || secondaryUnits <= 0) {
+                            throw error(excelRow,
+                                    "Units per Secondary Pack",
+                                    "Required for secondary level");
+                        }
+                    }
+
+                    // =================================================
+                    // TERTIARY PACKAGING
+                    // =================================================
+                    PackagingMaster tertiaryPackaging = null;
+                    Integer tertiaryUnits = null;
+
+                    if (levelOrder == 3) {
+                        tertiaryPackaging =
+                                resolvePackaging(row, headerMap, excelRow, "Tertiary");
+
+                        tertiaryUnits =
+                                getInteger(row, headerMap,
+                                        "Units per Tertiary Pack", excelRow);
+
+                        if (tertiaryUnits == null || tertiaryUnits <= 0) {
+                            throw error(excelRow,
+                                    "Units per Tertiary Pack",
+                                    "Required for tertiary level");
+                        }
+                    }
+
+                    // =================================================
+                    // CREATE / UPDATE PACKING PROFILE
+                    // =================================================
+                    PackingProfileConfigMaster profile =
+                            new PackingProfileConfigMaster();
+
+                    profile.setOrganizationId(loginUser.getOrgId());
+                    profile.setSubOrganizationId(loginUser.getSubOrgId());
+                    profile.setPackingHierarchyLevel(hierarchy);
+
+                    profile.setPrimaryPackaging(primaryPackaging);
+                    profile.setPrimaryUnits(primaryUnits);
+
+                    profile.setSecondaryPackaging(secondaryPackaging);
+                    profile.setSecondaryUnits(secondaryUnits);
+
+                    profile.setTertiaryPackaging(tertiaryPackaging);
+                    profile.setTertiaryUnits(tertiaryUnits);
+
+                    profile.setIsActive(true);
+                    profile.setIsDeleted(false);
+                    profile.setCreatedBy(loginUser.getUserId());
+                    profile.setCreatedOn(new Date());
+
+                    profilesToSave.add(profile);
+
+                    // =================================================
+                    // ITEM–SUPPLIER MAPPING
+                    // =================================================
+                    ItemSupplierPackingProfileMap mapping =
+                            buildItemSupplierPackingProfileMap(
+                                    item,
+                                    sim.getSupplier(),
+                                    profile
+                            );
+
+                    mappingsToSave.add(mapping);
+
+                    successCount.incrementAndGet();
+
+                } catch (UploadRowException ex) {
+                    errors.add(ex.getErrorDetail());
+                }
+            }
+
+            // =====================================================
+            // BULK SAVE
+            // =====================================================
+            packingProfileRepo.saveAll(profilesToSave);
+            itemSupplierPackingProfileMapRepository.saveAll(mappingsToSave);
+
+        } catch (Exception ex) {
+            log.error("{} | Upload failed", logId, ex);
+            throw new RuntimeException("Packing profile upload failed", ex);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("successCount", successCount.get());
+        response.put("errorCount", errors.size());
+        response.put("errors", errors);
+
+        return response;
+    }
+
+
+    private Map<String, Item> loadItemsByZone(Integer zoneId) {
+
+        String logId = loginUser.getLogId();
+
+        log.info("{} | loadItemsByZone | START | zoneId={}", logId, zoneId);
+
         List<Location> locations =
                 locationRepository.findByZoneIdAndIsDeleted(zoneId, false);
 
         if (locations.isEmpty()) {
-            throw new IllegalStateException("No items found for selected zone");
+            throw new IllegalStateException(
+                    "No locations found for selected zone");
         }
 
         Map<String, Item> itemMap =
@@ -322,183 +471,308 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                         .collect(Collectors.toMap(
                                 Item::getItemCode,
                                 Function.identity(),
-                                (a, b) -> a
+                                (a, b) -> a   // dedupe safeguard
                         ));
 
-        Set<Integer> itemIds =
-                itemMap.values().stream()
-                        .map(Item::getId)
-                        .collect(Collectors.toSet());
+        if (itemMap.isEmpty()) {
+            throw new IllegalStateException(
+                    "No items mapped to locations for selected zone");
+        }
 
-        log.info("{} | PackingProfileUpload | Items loaded | count={}",
+        log.info("{} | loadItemsByZone | SUCCESS | itemCount={}",
                 logId, itemMap.size());
 
-        // =====================================================
-        // 2️⃣ FETCH SUPPLIERS VIA ITEM MAPPER
-        // =====================================================
-        List<SupplierItemMapper> supplierItemMappers =
-                supplierItemMapperRepository
-                        .findByItemIdInAndIsDeleted(
-                                new ArrayList<>(itemIds), false);
-
-        Map<String, SupplierItemMapper> supplierItemMap = new HashMap<>();
-
-        for (SupplierItemMapper sim : supplierItemMappers) {
-            String key = sim.getItem().getItemCode()
-                    + "|" +
-                    sim.getSupplier().getSupplierId();
-            supplierItemMap.put(key, sim);
-        }
-
-        log.info("{} | PackingProfileUpload | Supplier mappings loaded | count={}",
-                logId, supplierItemMap.size());
-
-        // =====================================================
-        // 3️⃣ LOAD EXISTING PACKING PROFILES
-        // =====================================================
-        Map<String, PackingProfileConfigMaster> profileMap =
-                packingProfileRepo
-                        .findByOrganizationIdAndSubOrganizationIdAndIsDeleted(
-                                loginUser.getOrgId(),
-                                loginUser.getSubOrgId(),
-                                false
-                        )
-                        .stream()
-                        .collect(Collectors.toMap(
-                                PackingProfileConfigMaster::getDescription,
-                                Function.identity(),
-                                (a, b) -> a
-                        ));
-
-        // =====================================================
-        // 4️⃣ PROCESS EXCEL
-        // =====================================================
-        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
-
-            Sheet sheet = workbook.getSheetAt(0);
-
-            Row headerRow = sheet.getRow(0);
-            validateHeader(headerRow);
-
-            // HEADER MAP IS BUILT
-            Map<String, Integer> headerIndexMap =
-                    buildHeaderIndexMap(headerRow);
-
-            for (Row row : sheet) {
-
-                if (row.getRowNum() == 0) continue;
-                int excelRowNum = row.getRowNum() + 1;
-
-                try {
-                    // ---------- BASIC FIELDS ----------
-                    String itemCode =
-                            getString(row, headerIndexMap, "Item Code", excelRowNum);
-
-                    String supplierCode =
-                            getString(row, headerIndexMap, "Supplier Code", excelRowNum);
-
-                    String profileDesc =
-                            getString(row, headerIndexMap, "Packing Profile Code", excelRowNum);
-
-                    // ---------- ITEM VALIDATION ----------
-                    Item item = itemMap.get(itemCode);
-                    if (item == null) {
-                        throw error(excelRowNum, "Item Code",
-                                "Item not in selected zone");
-                    }
-
-                    // ---------- SUPPLIER VALIDATION ----------
-                    SupplierItemMapper sim =
-                            supplierItemMap.get(itemCode + "|" + supplierCode);
-
-                    if (sim == null) {
-                        throw error(excelRowNum, "Supplier Code",
-                                "Supplier not mapped to this item");
-                    }
-
-                    Supplier supplier = sim.getSupplier();
-
-                    // ---------- PACKING VALUES ----------
-                    String primaryUom =
-                            getString(row, headerIndexMap, "Primary Pack UOM", excelRowNum);
-                    Integer primaryUnits =
-                            getInteger(row, headerIndexMap, "Units per Primary Pack", excelRowNum);
-
-                    String secondaryUom =
-                            getString(row, headerIndexMap, "Secondary Pack UOM", excelRowNum);
-                    Integer secondaryUnits =
-                            getInteger(row, headerIndexMap, "Units per Secondary Pack", excelRowNum);
-
-                    String tertiaryUom =
-                            getString(row, headerIndexMap, "Tertiary Pack UOM", excelRowNum);
-                    Integer tertiaryUnits =
-                            getInteger(row, headerIndexMap, "Units per Tertiary Pack", excelRowNum);
-
-
-                    // ---------- VALIDATIONS ----------
-
-                    if (primaryUom == null || primaryUnits == null || primaryUnits <= 0) {
-                        throw error(excelRowNum, "Primary Pack",
-                                "Primary pack is mandatory");
-                    }
-
-
-                    // ---------- UPSERT PROFILE ----------
-                    PackingProfileConfigMaster profile =
-                            profileMap.computeIfAbsent(profileDesc, k -> {
-                                PackingProfileConfigMaster p =
-                                        new PackingProfileConfigMaster();
-                                p.setOrganizationId(loginUser.getOrgId());
-                                p.setSubOrganizationId(loginUser.getSubOrgId());
-                                p.setPackingLevel(k);
-                                p.setCreatedBy(loginUser.getUserId());
-                                p.setCreatedOn(new Date());
-                                return p;
-                            });
-
-                    profile.setPrimaryUom(primaryUom);
-                    profile.setPrimaryUnits(primaryUnits);
-                    profile.setSecondaryUom(secondaryUom);
-                    profile.setSecondaryUnits(secondaryUnits);
-                    profile.setTertiaryUom(tertiaryUom);
-                    profile.setTertiaryUnits(tertiaryUnits);
-                    profile.setIsActive(true);
-                    profile.setIsDeleted(false);
-                    profile.setModifiedBy(loginUser.getUserId());
-                    profile.setModifiedOn(new Date());
-
-                    packingProfileRepo.save(profile);
-
-                    // ---------- MAP ITEM + SUPPLIER ----------
-                    upsertItemSupplierPackingProfile(item, supplier, profile);
-
-                    successCount++;
-
-                } catch (UploadRowException ure) {
-                    errors.add(ure.getErrorDetail());
-                    log.warn("{} | PackingProfileUpload | Row {} failed | {}",
-                            logId, excelRowNum, ure.getErrorDetail());
-                }
-            }
-
-        } catch (Exception ex) {
-            log.error("{} | PackingProfileUpload | FILE FAILED", logId, ex);
-            throw new RuntimeException("Failed to upload packing profile template", ex);
-        }
-
-        log.info("{} | PackingProfileUpload | END | successRows={} | errorRows={} | durationMs={}",
-                logId, successCount, errors.size(),
-                System.currentTimeMillis() - startTime);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("successCount", successCount);
-        response.put("errorCount", errors.size());
-        response.put("errors", errors);
-
-        return response;
+        return itemMap;
     }
 
 
+    private Map<String, SupplierItemMapper> loadSupplierItemMap(
+            Map<String, Item> itemMap) {
+
+        String logId = loginUser.getLogId();
+
+        log.info("{} | loadSupplierItemMap | START", logId);
+
+        Set<Integer> itemIds =
+                itemMap.values()
+                        .stream()
+                        .map(Item::getId)
+                        .collect(Collectors.toSet());
+
+        if (itemIds.isEmpty()) {
+            throw new IllegalStateException("Item list is empty");
+        }
+
+        List<SupplierItemMapper> mappings =
+                supplierItemMapperRepository
+                        .findByItemIdInAndIsDeleted(
+                                new ArrayList<>(itemIds),
+                                false
+                        );
+
+        Map<String, SupplierItemMapper> supplierItemMap =
+                mappings.stream()
+                        .filter(sim ->
+                                sim.getItem() != null &&
+                                        sim.getSupplier() != null)
+                        .collect(Collectors.toMap(
+                                sim -> sim.getItem().getItemCode()
+                                        + "|" +
+                                        sim.getSupplier().getSupplierId(),
+                                Function.identity(),
+                                (a, b) -> a   // dedupe safeguard
+                        ));
+
+        log.info("{} | loadSupplierItemMap | SUCCESS | mappingCount={}",
+                logId, supplierItemMap.size());
+
+        return supplierItemMap;
+    }
+
+
+    private Map<String, PackingHierarchyLevel> loadHierarchyLevels() {
+
+        String logId = loginUser.getLogId();
+
+        log.info("{} | loadHierarchyLevels | START", logId);
+
+        List<PackingHierarchyLevel> levels =
+                packingHierarchyLevelRepository
+                        .findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndIsActive(
+                                loginUser.getOrgId(),
+                                loginUser.getSubOrgId(),
+                                false,
+                                true
+                        );
+
+        if (levels.isEmpty()) {
+            throw new IllegalStateException(
+                    "Packing hierarchy levels are not configured");
+        }
+
+        Map<String, PackingHierarchyLevel> hierarchyMap =
+                levels.stream()
+                        .collect(Collectors.toMap(
+                                PackingHierarchyLevel::getLevelCode,
+                                Function.identity()
+                        ));
+
+        log.info("{} | loadHierarchyLevels | SUCCESS | levels={}",
+                logId, hierarchyMap.keySet());
+
+        return hierarchyMap;
+    }
+
+
+    private PackagingMaster resolvePackaging(
+            Row row,
+            Map<String, Integer> headerMap,
+            int excelRow,
+            String level) {
+
+        String type =
+                getString(row, headerMap, level + " Pack Type", excelRow);
+
+        String subtype =
+                getString(row, headerMap, level + " Pack Sub Type", excelRow);
+
+        String dimension =
+                getString(row, headerMap,
+                        level + " Dimension (L x W x H)", excelRow);
+
+        String excelUom =
+                getString(row, headerMap,
+                        level + " Dimension UOM", excelRow);
+
+        Double diameter =
+                getDouble(row, headerMap,
+                        level + " Circumference / Diameter", excelRow);
+
+        BigDecimal[] dims =
+                DimensionKeyUtil.parseLwh(
+                        dimension,
+                        excelRow,
+                        level + " Dimension (L x W x H)"
+                );
+
+        // 🔥 Convert EXCEL → MM
+        BigDecimal lMm =
+                UomConversionUtil.toMillimeter(dims[0], excelUom);
+        BigDecimal wMm =
+                UomConversionUtil.toMillimeter(dims[1], excelUom);
+        BigDecimal hMm =
+                UomConversionUtil.toMillimeter(dims[2], excelUom);
+        BigDecimal dMm =
+                diameter == null ? null :
+                        UomConversionUtil.toMillimeter(
+                                BigDecimal.valueOf(diameter), excelUom);
+
+        BigDecimal volume =
+                DimensionKeyUtil.calculateCanonicalVolume(lMm, wMm, hMm);
+
+        String lookupKey =
+                DimensionKeyUtil.buildKey(
+                        type,
+                        subtype,
+                        volume,
+                        dMm
+                );
+
+
+        PackagingMaster master =
+                packagingMasterCache.findByKey(lookupKey);
+
+        if (master == null) {
+            log.warn("PackagingLookup | NOT FOUND | row={} | level={} | lookupKey={}",
+                    excelRow, level, lookupKey);
+
+            packagingMasterCache.logSimilar(type, subtype);
+
+            throw error(
+                    excelRow,
+                    level + " Packaging",
+                    "No matching packaging master found"
+            );
+        }
+
+        return master;
+    }
+
+
+
+    private Double getDouble(
+            Row row,
+            Map<String, Integer> headerIndexMap,
+            String columnName,
+            int excelRowNum) {
+
+        Integer idx = headerIndexMap.get(columnName);
+
+        if (idx == null) {
+            throw error(excelRowNum, columnName,
+                    "Column not found in template");
+        }
+
+        Cell cell = row.getCell(idx, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+
+        if (cell == null) {
+            return null;
+        }
+
+        try {
+            switch (cell.getCellType()) {
+
+                case NUMERIC:
+                    return cell.getNumericCellValue();
+
+                case STRING:
+                    String val = cell.getStringCellValue().trim();
+                    if (val.isEmpty()) return null;
+                    return Double.parseDouble(val);
+
+                case FORMULA:
+                    return cell.getNumericCellValue();
+
+                case BLANK:
+                    return null;
+
+                default:
+                    throw error(excelRowNum, columnName,
+                            "Invalid numeric value");
+            }
+
+        } catch (NumberFormatException ex) {
+            throw error(excelRowNum, columnName,
+                    "Invalid number format");
+        }
+    }
+
+
+    private ItemSupplierPackingProfileMap buildItemSupplierPackingProfileMap(
+            Item item,
+            Supplier supplier,
+            PackingProfileConfigMaster profile) {
+
+        ItemSupplierPackingProfileMap mapping =
+                itemSupplierPackingProfileMapRepository
+                        .findByOrganizationIdAndSubOrganizationIdAndItemAndSupplierAndIsDeleted(
+                                loginUser.getOrgId(),
+                                loginUser.getSubOrgId(),
+                                item,
+                                supplier,
+                                false
+                        )
+                        .orElseGet(ItemSupplierPackingProfileMap::new);
+
+        // =========================
+        // SET COMMON FIELDS
+        // =========================
+        mapping.setOrganizationId(loginUser.getOrgId());
+        mapping.setSubOrganizationId(loginUser.getSubOrgId());
+
+        mapping.setItem(item);
+        mapping.setSupplier(supplier);
+        mapping.setPackingProfile(profile);
+
+        mapping.setIsActive(true);
+        mapping.setIsDeleted(false);
+
+        Date now = new Date();
+
+        if (mapping.getId() == null) {
+            mapping.setCreatedBy(loginUser.getUserId());
+            mapping.setCreatedOn(now);
+        }
+
+        mapping.setModifiedBy(loginUser.getUserId());
+        mapping.setModifiedOn(now);
+
+        return mapping;
+    }
+
+
+    private boolean isRowCompletelyEmpty(Row row, int totalColumns) {
+        if (row == null) return true;
+
+        for (int i = 0; i < totalColumns; i++) {
+            Cell cell = row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+            if (cell != null && cell.getCellType() != CellType.BLANK) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
+    private void validateByHierarchy(
+            int excelRowNum,
+            PackingHierarchyLevel hierarchyLevel,
+            String primaryUom, Integer primaryUnits,
+            String secondaryUom, Integer secondaryUnits,
+            String tertiaryUom, Integer tertiaryUnits) {
+
+        int levelOrder = hierarchyLevel.getLevelOrder();
+
+        if (primaryUom == null || primaryUnits == null || primaryUnits <= 0) {
+            throw error(excelRowNum, "Primary Pack",
+                    "Primary pack is mandatory");
+        }
+
+        if (levelOrder >= 2) {
+            if (secondaryUom == null || secondaryUnits == null || secondaryUnits <= 0) {
+                throw error(excelRowNum, "Secondary Pack",
+                        "Secondary pack mandatory for level SECONDARY / TERTIARY");
+            }
+        }
+
+        if (levelOrder == 3) {
+            if (tertiaryUom == null || tertiaryUnits == null || tertiaryUnits <= 0) {
+                throw error(excelRowNum, "Tertiary Pack",
+                        "Tertiary pack mandatory for level TERTIARY");
+            }
+        }
+    }
 
 
     private UploadRowException error(int row, String column, String message) {
@@ -752,7 +1026,7 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                                     "CONF-" + p.getId(),
                                     p.getItemName(),
                                     p.getSupplierName(),
-                                    p.getPackingLevel(),
+                                    p.getPackingHierarchyLevelCode(),
                                     p.getIsActive()
                             ))
                             .collect(Collectors.toList());
@@ -823,12 +1097,9 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                     item.getName(),
                     supplier.getSupplierId(),
                     supplier.getSupplierName(),
-                    p.getPackingLevel(),
-                    p.getPrimaryUom(),
+                    p.getPackingHierarchyLevel() !=null ? p.getPackingHierarchyLevel().getLevelCode():null,
                     p.getPrimaryUnits(),
-                    p.getSecondaryUom(),
                     p.getSecondaryUnits(),
-                    p.getTertiaryUom(),
                     p.getTertiaryUnits(),
                     p.getIsActive()
             );
@@ -872,6 +1143,167 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
         return response;
     }
+
+    @Transactional
+    @Override
+    public BaseResponse<ItemSupplierPackingProfileMap> updateItemSupplierPackingProfile(
+            Long mappingId,
+            ItemSupplierPackingProfileUpdateRequest request) {
+
+        String logId = loginUser.getLogId();
+        long startTime = System.currentTimeMillis();
+
+        log.info(
+                "{} | UpdateItemSupplierPackingProfile | START | mappingId={} | profileId={} | hierarchyLevelId={}",
+                logId, mappingId, request.getPackingProfileId(), request.getPackingHierarchyLevelId()
+        );
+
+        BaseResponse<ItemSupplierPackingProfileMap> response = new BaseResponse<>();
+
+        try {
+            // =====================================================
+            // 1️⃣ FETCH ITEM–SUPPLIER MAPPING
+            // =====================================================
+            ItemSupplierPackingProfileMap mapping =
+                    itemSupplierPackingProfileMapRepository
+                            .findById(Math.toIntExact(mappingId))
+                            .filter(m ->
+                                    !m.getIsDeleted()
+                                            && m.getOrganizationId().equals(loginUser.getOrgId())
+                                            && m.getSubOrganizationId().equals(loginUser.getSubOrgId()))
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException(
+                                            "Item-Supplier packing mapping not found"));
+
+            // =====================================================
+            // 2️⃣ FETCH PACKING PROFILE MASTER
+            // =====================================================
+            PackingProfileConfigMaster profile =
+                    packingProfileRepo
+                            .findById(Math.toIntExact(request.getPackingProfileId()))
+                            .filter(p ->
+                                    !p.getIsDeleted()
+                                            && p.getOrganizationId().equals(loginUser.getOrgId())
+                                            && p.getSubOrganizationId().equals(loginUser.getSubOrgId())
+                                            && Boolean.TRUE.equals(p.getIsActive()))
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException(
+                                            "Packing profile master not found or inactive"));
+
+            // =====================================================
+            // 3️⃣ FETCH PACKING HIERARCHY LEVEL
+            // =====================================================
+            PackingHierarchyLevel hierarchyLevel =
+                    this.packingHierarchyLevelRepository
+                            .findById(request.getPackingHierarchyLevelId())
+                            .filter(h ->
+                                    !h.getIsDeleted()
+                                            && h.getOrganizationId().equals(loginUser.getOrgId())
+                                            && h.getSubOrganizationId().equals(loginUser.getSubOrgId())
+                                            && Boolean.TRUE.equals(h.getIsActive()))
+                            .orElseThrow(() ->
+                                    new IllegalArgumentException(
+                                            "Packing hierarchy level not found or inactive"));
+
+            // =====================================================
+            // 4️⃣ VALIDATE PACKING DATA AGAINST HIERARCHY
+            // =====================================================
+            int levelOrder = hierarchyLevel.getLevelOrder(); // 1,2,3
+
+            if (request.getPrimaryUom() == null || request.getPrimaryUnits() == null
+                    || request.getPrimaryUnits() <= 0) {
+                throw new IllegalArgumentException("Primary pack UOM and units are mandatory");
+            }
+
+            if (levelOrder >= 2) {
+                if (request.getSecondaryUom() == null || request.getSecondaryUnits() == null
+                        || request.getSecondaryUnits() <= 0) {
+                    throw new IllegalArgumentException(
+                            "Secondary pack details required for hierarchy level >= 2");
+                }
+            }
+
+            if (levelOrder == 3) {
+                if (request.getTertiaryUom() == null || request.getTertiaryUnits() == null
+                        || request.getTertiaryUnits() <= 0) {
+                    throw new IllegalArgumentException(
+                            "Tertiary pack details required for hierarchy level = 3");
+                }
+            }
+
+            // =====================================================
+            // 6️⃣ UPDATE PACKING PROFILE MASTER
+            // =====================================================
+            profile.setPackingHierarchyLevel(hierarchyLevel);
+
+            profile.setPrimaryUnits(request.getPrimaryUnits());
+            profile.setSecondaryUnits(levelOrder >= 2 ? request.getSecondaryUnits() : null);
+
+            profile.setTertiaryUnits(levelOrder == 3 ? request.getTertiaryUnits() : null);
+
+            profile.setMoqLevel(request.getMoqLevel());
+            profile.setMoqQty(request.getMoqQty());
+
+            profile.setModifiedBy(loginUser.getUserId());
+            profile.setModifiedOn(new Date());
+
+            packingProfileRepo.save(profile);
+
+            // =====================================================
+            // 7️⃣ UPDATE MAPPING
+            // =====================================================
+            mapping.setPackingProfile(profile);
+
+            mapping.setModifiedBy(loginUser.getUserId());
+            mapping.setModifiedOn(new Date());
+
+            itemSupplierPackingProfileMapRepository.save(mapping);
+
+            // =====================================================
+            // 8️⃣ RESPONSE
+            // =====================================================
+            response.setStatus(1);
+            response.setCode(200);
+            response.setMessage("Item-Supplier packing profile updated successfully");
+            response.setLogId(logId);
+            response.setData(Collections.singletonList(mapping));
+            response.setTotalPageCount(1);
+            response.setTotalRecordCount(1L);
+
+            log.info("{} | UpdateItemSupplierPackingProfile | SUCCESS | durationMs={}",
+                    logId, System.currentTimeMillis() - startTime);
+
+        } catch (IllegalArgumentException ex) {
+
+            log.warn("{} | UpdateItemSupplierPackingProfile | VALIDATION FAILED | {}",
+                    logId, ex.getMessage());
+
+            response.setStatus(0);
+            response.setCode(400);
+            response.setMessage(ex.getMessage());
+            response.setLogId(logId);
+            response.setData(Collections.emptyList());
+            response.setTotalPageCount(0);
+            response.setTotalRecordCount(0L);
+
+        } catch (Exception ex) {
+
+            log.error("{} | UpdateItemSupplierPackingProfile | FAILED", logId, ex);
+
+            response.setStatus(0);
+            response.setCode(500);
+            response.setMessage("Failed to update item-supplier packing profile");
+            response.setLogId(logId);
+            response.setData(Collections.emptyList());
+            response.setTotalPageCount(0);
+            response.setTotalRecordCount(0L);
+        }
+
+        return response;
+    }
+
+
+
 
 
 }
