@@ -9,5 +9,9 @@ public class UploadErrorDetail {
     private Integer rowNumber;
     private String columnName;
     private String errorMessage;
+
+    public UploadErrorDetail() {
+
+    }
 }
 

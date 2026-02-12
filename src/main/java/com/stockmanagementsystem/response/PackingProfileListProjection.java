@@ -4,13 +4,19 @@ import java.util.Date;
 
 public interface PackingProfileListProjection {
 
-    Long getId();
+    Long getId();                    // ItemSupplierPackingProfileMap.id
+
+    Long getPackingProfileId();      // PackingProfileConfigMaster.id
 
     String getItemName();
+
     String getSupplierName();
 
-    String getPackingLevel();
+    String getPackingHierarchyLevelCode(); // PRIMARY / SECONDARY / TERTIARY
+
     Boolean getIsActive();
 
     Date getModifiedOn();
 }
+
+

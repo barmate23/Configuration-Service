@@ -1,12 +1,13 @@
 package com.stockmanagementsystem.controller;
 
+import com.stockmanagementsystem.entity.ItemSupplierPackingProfileMap;
+import com.stockmanagementsystem.request.ItemSupplierPackingProfileUpdateRequest;
 import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.response.PackingProfileDetailDTO;
 import com.stockmanagementsystem.response.PackingProfileListDTO;
 import com.stockmanagementsystem.service.PackingTemplateService;
 import com.stockmanagementsystem.utils.APIConstants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -71,6 +72,19 @@ public class PackingProfileConfigController {
                 packingTemplateService.getPackingProfileById(id);
 
         return response;
+    }
+
+    @PutMapping("/updateItemSupplierPackingProfile/{mappingId}")
+    public ResponseEntity<BaseResponse<ItemSupplierPackingProfileMap>>
+    updateItemSupplierPackingProfile(
+            @PathVariable Long mappingId,
+            @RequestBody ItemSupplierPackingProfileUpdateRequest request) {
+
+        BaseResponse<ItemSupplierPackingProfileMap> response =
+                packingTemplateService
+                        .updateItemSupplierPackingProfile(mappingId, request);
+
+        return ResponseEntity.ok(response);
     }
 
 

@@ -19,25 +19,28 @@ public interface ItemSupplierPackingProfileMapRepository extends JpaRepository<I
 
     @Query(
             "SELECT " +
-                    "  m.id AS id, " +
-                    "  i.name AS itemName, " +
-                    "  s.supplierName AS supplierName, " +
-                    "  p.packingLevel AS packingLevel, " +
-                    "  p.isActive AS isActive, " +
-                    "  p.modifiedOn AS modifiedOn " +
+                    "   m.id AS id, " +
+                    "   p.id AS packingProfileId, " +
+                    "   i.name AS itemName, " +
+                    "   s.supplierName AS supplierName, " +
+                    "   h.levelCode AS packingHierarchyLevelCode, " +
+                    "   p.isActive AS isActive, " +
+                    "   p.modifiedOn AS modifiedOn " +
                     "FROM ItemSupplierPackingProfileMap m " +
                     "JOIN m.packingProfile p " +
+                    "JOIN p.packingHierarchyLevel h " +
                     "JOIN m.item i " +
                     "JOIN m.supplier s " +
-                    "WHERE p.organizationId = :orgId " +
-                    "AND p.subOrganizationId = :subOrgId " +
-                    "AND p.isDeleted = false"
+                    "WHERE m.organizationId = :orgId " +
+                    "AND m.subOrganizationId = :subOrgId "
     )
     Page<PackingProfileListProjection> findAllPackingProfiles(
             @Param("orgId") Integer orgId,
             @Param("subOrgId") Integer subOrgId,
             Pageable pageable
     );
+
+
 
     @Query(
             "SELECT m " +
