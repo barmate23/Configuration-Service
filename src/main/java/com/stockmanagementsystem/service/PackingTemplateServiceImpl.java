@@ -11,6 +11,7 @@ import com.stockmanagementsystem.utils.UomConversionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,9 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
     @Autowired
     private PackagingMasterCache packagingMasterCache;
 
+    @Autowired
+    private PackagingMasterRepository packagingMasterRepository;
+
     @Override
     public ResponseEntity<byte[]> downloadTemplate(Integer areaId, Integer zoneId) {
 
@@ -76,6 +80,9 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
         try (SXSSFWorkbook workbook = new SXSSFWorkbook(100)) {
 
+            // =====================================================
+            // MAIN SHEET
+            // =====================================================
             SXSSFSheet sheet = workbook.createSheet("Packing_Config");
             sheet.trackAllColumnsForAutoSizing();
 
@@ -99,7 +106,7 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
             dataStyle.setBorderRight(BorderStyle.THIN);
 
             // =====================================================
-            // HEADER ROW
+            // HEADER
             // =====================================================
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < PACKING_TEMPLATE_HEADERS.size(); i++) {
@@ -109,13 +116,12 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
             }
 
             // =====================================================
-            // FETCH & DEDUPE (ITEM + ZONE)
+            // DATA ROWS
             // =====================================================
             List<Location> locations =
                     locationRepository.findByZoneIdAndIsDeleted(zoneId, false);
 
             Map<String, Location> uniqueMap = new LinkedHashMap<>();
-
             for (Location loc : locations) {
                 if (loc.getItem() == null) continue;
                 String key = loc.getItem().getId() + "|" + loc.getZone().getId();
@@ -132,9 +138,6 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                             .stream()
                             .collect(Collectors.groupingBy(sim -> sim.getItem().getId()));
 
-            // =====================================================
-            // DATA ROWS (BORDER FIX APPLIED)
-            // =====================================================
             int rowIndex = 1;
 
             for (Location location : uniqueMap.values()) {
@@ -147,14 +150,12 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
                     Row row = sheet.createRow(rowIndex++);
 
-                    // 🔑 CREATE ALL CELLS FIRST
                     for (int c = 0; c < PACKING_TEMPLATE_HEADERS.size(); c++) {
                         Cell cell = row.createCell(c);
                         cell.setCellValue("");
                         cell.setCellStyle(dataStyle);
                     }
 
-                    // SET VALUES
                     row.getCell(0).setCellValue(item.getItemCode());
                     row.getCell(1).setCellValue(item.getName());
                     row.getCell(2).setCellValue(sim.getSupplier().getSupplierId());
@@ -167,7 +168,72 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
             int lastDataRow = rowIndex - 1;
 
             // =====================================================
-            // DROPDOWN: PACKING LEVEL
+            // HIDDEN SHEET – PACKAGING MASTER
+            // =====================================================
+            Sheet hidden = workbook.createSheet("__PACKAGING__");
+
+            List<PackagingMaster> masters = packagingMasterRepository.findAll();
+
+            Set<String> packTypes = new LinkedHashSet<>();
+            Map<String, Set<String>> subtypeMap = new LinkedHashMap<>();
+            Map<String, Set<String>> dimensionMap = new LinkedHashMap<>();
+
+            for (PackagingMaster pm : masters) {
+
+                if (!Boolean.TRUE.equals(pm.getIsActive())
+                        || Boolean.TRUE.equals(pm.getIsDeleted())) {
+                    continue;
+                }
+
+                PackagingSubtype ps = pm.getPackagingSubtype();
+                PackagingType pt = ps.getPackagingType();
+
+                String type = normalize(pt.getTypeName());
+                String subtype = normalize(ps.getSubtypeName());
+
+                BigDecimal factor = toMmFactor(pm.getUom());
+
+                BigDecimal l = pm.getLength() != null
+                        ? pm.getLength().multiply(factor)
+                        : BigDecimal.ZERO;
+
+                BigDecimal w = pm.getWidth() != null
+                        ? pm.getWidth().multiply(factor)
+                        : BigDecimal.ZERO;
+
+                BigDecimal h = pm.getHeight() != null
+                        ? pm.getHeight().multiply(factor)
+                        : BigDecimal.ZERO;
+
+                String dimension =
+                        l.stripTrailingZeros().toPlainString() + "x" +
+                                w.stripTrailingZeros().toPlainString() + "x" +
+                                h.stripTrailingZeros().toPlainString();
+
+                packTypes.add(type);
+
+                subtypeMap.computeIfAbsent(type, k -> new LinkedHashSet<>())
+                        .add(subtype);
+
+                dimensionMap.computeIfAbsent(type + "_" + subtype,
+                        k -> new LinkedHashSet<>()).add(dimension);
+            }
+
+            int col = 0;
+            writeNamedRange(workbook, hidden, "PACK_TYPES", packTypes, col++);
+
+            for (String type : subtypeMap.keySet()) {
+                writeNamedRange(workbook, hidden, type, subtypeMap.get(type), col++);
+            }
+
+            for (String key : dimensionMap.keySet()) {
+                writeNamedRange(workbook, hidden, key, dimensionMap.get(key), col++);
+            }
+
+            workbook.setSheetHidden(workbook.getSheetIndex(hidden), true);
+
+            // =====================================================
+            // DROPDOWNS – PACKING LEVEL
             // =====================================================
             List<String> packingLevels =
                     packingHierarchyLevelRepository
@@ -181,27 +247,39 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                             .map(PackingHierarchyLevel::getLevelCode)
                             .collect(Collectors.toList());
 
-            addDropdown(
-                    sheet,
-                    1,
-                    lastDataRow,
+            addDropdown(sheet, 1, lastDataRow,
                     PACKING_TEMPLATE_HEADERS.indexOf(PACKING_LEVEL),
-                    packingLevels
-            );
+                    packingLevels);
 
             // =====================================================
-            // DROPDOWN: DIMENSION UOM (ALL LEVELS)
+            // DROPDOWNS – DIMENSION UOM (ALL LEVELS)
             // =====================================================
             List<String> uoms = Arrays.asList(DIMENSION_UOMS);
 
             addDropdown(sheet, 1, lastDataRow,
                     PACKING_TEMPLATE_HEADERS.indexOf(PRIMARY_DIMENSION_UOM), uoms);
-
             addDropdown(sheet, 1, lastDataRow,
                     PACKING_TEMPLATE_HEADERS.indexOf(SECONDARY_DIMENSION_UOM), uoms);
-
             addDropdown(sheet, 1, lastDataRow,
                     PACKING_TEMPLATE_HEADERS.indexOf(TERTIARY_DIMENSION_UOM), uoms);
+
+            // =====================================================
+            // CASCADING DROPDOWNS – PRIMARY / SECONDARY / TERTIARY
+            // =====================================================
+            applyCascade(sheet, lastDataRow,
+                    "Primary Pack Type",
+                    "Primary Pack Sub Type",
+                    "Primary Dimension (L x W x H)");
+
+            applyCascade(sheet, lastDataRow,
+                    "Secondary Pack Type",
+                    "Secondary Pack Sub Type",
+                    "Secondary Dimension (L x W x H)");
+
+            applyCascade(sheet, lastDataRow,
+                    "Tertiary Pack Type",
+                    "Tertiary Pack Sub Type",
+                    "Tertiary Dimension (L x W x H)");
 
             // =====================================================
             // AUTO SIZE
@@ -228,17 +306,16 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
         }
     }
 
-    private static final String[] DIMENSION_UOMS = {
-            "MM", "CM", "METER", "INCH"
-    };
-
-
     private void addDropdown(
             Sheet sheet,
             int firstRow,
             int lastRow,
             int columnIndex,
             List<String> values) {
+
+        if (values == null || values.isEmpty()) {
+            return; // nothing to apply
+        }
 
         DataValidationHelper helper = sheet.getDataValidationHelper();
 
@@ -258,10 +335,113 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
         DataValidation validation =
                 helper.createValidation(constraint, addressList);
 
+        // Excel behaviour tweaks
         validation.setSuppressDropDownArrow(true);
         validation.setShowErrorBox(true);
+        validation.createErrorBox(
+                "Invalid Value",
+                "Please select a value from the dropdown list"
+        );
 
         sheet.addValidationData(validation);
+    }
+
+
+    private void applyCascade(
+            Sheet sheet,
+            int lastRow,
+            String typeHeader,
+            String subTypeHeader,
+            String dimHeader) {
+
+        addFormulaDropdown(sheet, 1, lastRow,
+                PACKING_TEMPLATE_HEADERS.indexOf(typeHeader),
+                "=PACK_TYPES");
+
+        addFormulaDropdown(sheet, 1, lastRow,
+                PACKING_TEMPLATE_HEADERS.indexOf(subTypeHeader),
+                "=INDIRECT(SUBSTITUTE(" +
+                        getExcelColumn(typeHeader) + "2,\" \",\"_\"))");
+
+        addFormulaDropdown(sheet, 1, lastRow,
+                PACKING_TEMPLATE_HEADERS.indexOf(dimHeader),
+                "=INDIRECT(SUBSTITUTE(" +
+                        getExcelColumn(typeHeader) + "2,\" \",\"_\") & \"_\" & " +
+                        "SUBSTITUTE(" +
+                        getExcelColumn(subTypeHeader) + "2,\" \",\"_\"))");
+    }
+
+    private BigDecimal toMmFactor(String uom) {
+        if (uom == null) return BigDecimal.ONE;
+        uom = uom.toUpperCase();
+        if ("MM".equals(uom)) return BigDecimal.ONE;
+        if ("CM".equals(uom)) return BigDecimal.valueOf(10);
+        if ("METER".equals(uom)) return BigDecimal.valueOf(1000);
+        if ("INCH".equals(uom)) return BigDecimal.valueOf(25.4);
+        throw new IllegalArgumentException("Unsupported UOM: " + uom);
+    }
+
+    private String normalize(String v) {
+        return v == null ? "NA"
+                : v.toUpperCase().replaceAll("[^A-Z0-9]", "_");
+    }
+
+
+
+    private static final String[] DIMENSION_UOMS = {
+            "MM", "CM", "METER", "INCH"
+    };
+
+
+
+    private void writeNamedRange(
+            Workbook workbook,
+            Sheet sheet,
+            String name,
+            Collection<String> values,
+            int col) {
+
+        int r = 0;
+        for (String v : values) {
+            Row row = sheet.getRow(r);
+            if (row == null) row = sheet.createRow(r);
+            row.createCell(col).setCellValue(v);
+            r++;
+        }
+
+        Name n = workbook.createName();
+        n.setNameName(name);
+
+        String colLetter = CellReference.convertNumToColString(col);
+        n.setRefersToFormula(
+                sheet.getSheetName() + "!$" + colLetter + "$1:$" + colLetter + "$" + r);
+    }
+
+    private void addFormulaDropdown(
+            Sheet sheet,
+            int firstRow,
+            int lastRow,
+            int columnIndex,
+            String formula) {
+
+        DataValidationHelper helper = sheet.getDataValidationHelper();
+        DataValidationConstraint constraint =
+                helper.createFormulaListConstraint(formula);
+
+        CellRangeAddressList range =
+                new CellRangeAddressList(firstRow, lastRow, columnIndex, columnIndex);
+
+        DataValidation validation =
+                helper.createValidation(constraint, range);
+
+        validation.setSuppressDropDownArrow(true);
+        validation.setShowErrorBox(true);
+        sheet.addValidationData(validation);
+    }
+
+    private String getExcelColumn(String header) {
+        int idx = PACKING_TEMPLATE_HEADERS.indexOf(header);
+        return CellReference.convertNumToColString(idx);
     }
 
 
