@@ -22,6 +22,7 @@ public class Supplier {
     @Column(name = "SubOrganization")
     private Integer subOrganizationId;
 
+
     @Column(name = "ERPSupplierID")
     private String erpSupplierId;
 
