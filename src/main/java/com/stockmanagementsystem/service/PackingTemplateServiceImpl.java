@@ -158,7 +158,7 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
 
                     row.getCell(0).setCellValue(item.getItemCode());
                     row.getCell(1).setCellValue(item.getName());
-                    row.getCell(2).setCellValue(sim.getSupplier().getSupplierId());
+                    row.getCell(2).setCellValue(sim.getSupplier().getErpSupplierId());
                     row.getCell(3).setCellValue(sim.getSupplier().getSupplierName());
                     row.getCell(4).setCellValue(location.getZone().getArea().getAreaName());
                     row.getCell(5).setCellValue(location.getZone().getZoneName());
@@ -1205,7 +1205,9 @@ public class PackingTemplateServiceImpl implements PackingTemplateService{
                                     p.getId(),
                                     "CONF-" + p.getId(),
                                     p.getItemName(),
+                                    p.getItemCode(),
                                     p.getSupplierName(),
+                                    p.getErpSupplierId(),
                                     p.getPackingHierarchyLevelCode(),
                                     p.getIsActive()
                             ))

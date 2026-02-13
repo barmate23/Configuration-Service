@@ -12,8 +12,10 @@ public class PackingProfileListDTO {
     private Long configId;
     private String configCode;
 
-    private String itemDescription;
+    private String itemName;
+    private String itemCode;
     private String supplierName;
+    private String supplierCode;
 
     private String packingLevel;   // PRIMARY / SECONDARY / TERTIARY / QUATERNARY
 

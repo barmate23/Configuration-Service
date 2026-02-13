@@ -10,6 +10,10 @@ public interface PackingProfileListProjection {
 
     String getItemName();
 
+    String getItemCode();
+
+    String getErpSupplierId();
+
     String getSupplierName();
 
     String getPackingHierarchyLevelCode(); // PRIMARY / SECONDARY / TERTIARY
