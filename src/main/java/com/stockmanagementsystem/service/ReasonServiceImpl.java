@@ -616,7 +616,7 @@ public class ReasonServiceImpl implements ReasonService {
             reason.setOrganizationId(loginUser.getOrgId());
             reason.setCreatedBy(loginUser.getUserId());
             reason.setCreatedOn(new Date());
-            reason.setIsApproved(true);
+            reason.setIsApproved(false);
 
             reasonRepository.save(reason);
             ReasonResponse reasonResponse=new ReasonResponse();
