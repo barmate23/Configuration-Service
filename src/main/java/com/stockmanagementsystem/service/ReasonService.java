@@ -37,4 +37,6 @@ public interface ReasonService {
     BaseResponse<Reason> getAllReasonByCategory(String categoryCode);
 
     BaseResponse<Reason> getApprovalPendingReasons(String categoryCode);
+
+    BaseResponse saveOtherReason(String rejectedReason, String reasonCategory);
 }
