@@ -31,6 +31,11 @@ public class ReasonController {
         return reasonService.saveReason(rejectedReason,reasonCategoryId,isConfigurationRequest);
     }
 
+    @PostMapping(APIConstants.SAVE_OTHER_REASON)
+    public BaseResponse saveOtherReason(@RequestParam String rejectedReason,@RequestParam String reasonCategory){
+        return reasonService.saveOtherReason(rejectedReason,reasonCategory);
+    }
+
     @DeleteMapping(APIConstants.DELETE_REASON)
     public BaseResponse<Reason> deleteReasonById(@PathVariable Integer id){
         return reasonService.deleteReasonById(id);
