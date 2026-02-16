@@ -607,7 +607,7 @@ public class ReasonServiceImpl implements ReasonService {
             Reason reason=new Reason();
             reason.setReasonId(generateReasonId(1));
             reason.setRejectedReason(rejectedReason);
-            ReasonCategoryMaster reasonCategoryMaster=this.categoryMasterRepository.findByIsDeletedAndReasonCategoryName(false,reasonCategory);
+            ReasonCategoryMaster reasonCategoryMaster=this.categoryMasterRepository.findByIsDeletedAndReasonCategoryCode(false,reasonCategory);
             if(reasonCategoryMaster!=null) {
                 reason.setReasonCategoryMaster(reasonCategoryMaster);
             }
