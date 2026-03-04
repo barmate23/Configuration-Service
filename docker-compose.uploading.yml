@@ -22,7 +22,7 @@ services:
 
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres16:5432/postgres
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres16
+      SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
             # HikariCP specific settings
       SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 5
