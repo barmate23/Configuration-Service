@@ -22,7 +22,9 @@ public interface ItemSupplierPackingProfileMapRepository extends JpaRepository<I
                     "   m.id AS id, " +
                     "   p.id AS packingProfileId, " +
                     "   i.name AS itemName, " +
+                    "   i.itemCode AS itemCode, " +
                     "   s.supplierName AS supplierName, " +
+                    "   s.erpSupplierId AS erpSupplierId, " +
                     "   h.levelCode AS packingHierarchyLevelCode, " +
                     "   p.isActive AS isActive, " +
                     "   p.modifiedOn AS modifiedOn " +
