@@ -2717,6 +2717,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         .findByIsDeletedAndSubOrganizationIdAndPlanOrderId(
                                 false, loginUser.getSubOrgId(), planId);
 
+                if(!existingHead.isPresent()){
+                    Optional<PPEHead> existingPlanId =
+                            ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPpeId(false, loginUser.getSubOrgId(), planId);
+                    if(existingPlanId.isPresent()){
+                        errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                                PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
+                    }
+                }
+
                 if (ppeHeadOptional.isPresent()) {
                     if (ppeHeadOptional.get().getPpeStatus().getStatusName().equalsIgnoreCase("Uploaded")) {
                         ppeHead = ppeHeadOptional.get();
@@ -2753,7 +2762,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
                     }
                 }
-
                 if (errors.isEmpty()) {
                     /* ================= PPE HEAD ================= */
 
