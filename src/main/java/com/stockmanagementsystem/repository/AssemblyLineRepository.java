@@ -2,6 +2,7 @@ package com.stockmanagementsystem.repository;
 
 
 import com.stockmanagementsystem.entity.AssemblyLine;
+import com.stockmanagementsystem.entity.ProductionShop;
 import com.stockmanagementsystem.entity.Stage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,7 +16,9 @@ public interface AssemblyLineRepository extends JpaRepository<AssemblyLine,Integ
 
 //    void deleteStagesForAssemblyLine(AssemblyLine assemblyLine);
 
-    List<Stage> findByAssemblyLineId(Integer assemblyLineId);
+    List<Stage> findBySubOrganizationIdAndAssemblyLineId(Integer subOrgId, Integer asmlId);
+
+    List<Stage> findByAssemblyLineAndIsDeletedFalseOrderBySequenceNumberAsc(AssemblyLine assemblyLine);
 
     List<Stage> findAllStagesByAssemblyLineId(AssemblyLine assemblyLine);
 
@@ -35,4 +38,6 @@ public interface AssemblyLineRepository extends JpaRepository<AssemblyLine,Integ
     AssemblyLine findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(boolean b, Integer subOrgId, String lineID);
 
     List<AssemblyLine> findBySubOrganizationId(Integer subOrgId);
+
+    List<AssemblyLine> findByProductionShopAndIsDeletedFalseOrderBySequenceNumberAsc(ProductionShop productionShop);
 }
