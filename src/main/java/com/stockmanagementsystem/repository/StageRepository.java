@@ -32,4 +32,6 @@ public interface StageRepository extends JpaRepository<Stage,Integer> {
     List<Stage> findBySubOrganizationId(Integer subOrgId);
 
     List<Stage> findBySubOrganizationIdAndAssemblyLineId(Integer subOrgId, Integer asmlId);
+
+    List<Stage> findByAssemblyLineAndIsDeletedFalseOrderBySequenceNumberAsc(AssemblyLine assemblyLine);
 }

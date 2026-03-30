@@ -2,25 +2,17 @@ package com.stockmanagementsystem.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Data
-@Table(name = "tbl_AssemblyLine")
-public class AssemblyLine {
-
+@Table(name = "tbl_ProductionLine")
+public class ProductionLine {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
-    @Column(name = "OrganizationId")
-    private Integer organizationId;
-
-    @Column(name = "SubOrganizationId")
-    private Integer subOrganizationId;
 
     @Column(name = "erpLineCode")
     private String erpLineCode;
@@ -42,20 +34,14 @@ public class AssemblyLine {
     @Column(name = "sequenceNumber")
     private Integer sequenceNumber;
 
-    @OneToMany(mappedBy = "assemblyLine", cascade = CascadeType.ALL)
-    private List<Stage> stages;
+    @Column(name = "OrganizationId")
+    private Integer organizationId;
 
-    @Transient
-    private Integer shopId;
-
-    @Column(name = "AssemblyLineId")
-    private String assemblyLineId;
-
-    @Column(name = "LineNumber")
-    private String lineNumber;
+    @Column(name = "SubOrganizationId")
+    private Integer subOrganizationId;
 
     @Column(name = "IsDeleted")
-    private Boolean isDeleted;
+    private Boolean isDeleted = false;
 
     @Column(name = "CreatedBy")
     private Integer createdBy;
@@ -69,4 +55,9 @@ public class AssemblyLine {
     @Column(name = "ModifiedOn")
     private Date modifiedOn;
 
+    @OneToMany(mappedBy = "productionLine", cascade = CascadeType.ALL)
+    private List<ProductionLineStage> stages;
+
+    @Transient
+    private Integer shopId;
 }
