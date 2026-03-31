@@ -12,7 +12,9 @@ public class APIConstants {
     public static final String EQUIPMENT_CONTROLLER="/equipment";
     public static final String ASSEMBLY_LINE_CONTROLLER="/AssemblyLine";
     public static final String ZONE_CONTROLLER="/zone";
-
+    public static final String PRODUCTION_SHOP_CONTROLLER="/productionShop";
+    public static final String PRODUCTION_LINE_CONTROLLER="/productionLine";
+    public static final String PRODUCTION_LINE_STAGE_CONTROLLER="/productionLineStage";
 
     public static final String SERVICENAME= "/UploadingDownloadingService/v1";
     public static final String FILE_DOWNLOAD="/download/excel/{type}";
@@ -123,6 +125,26 @@ public class APIConstants {
     public static final String GET_STAGING_AREA_BY_DOCK = "/getAllStagingArea";
     public static final String GET_WEEKLY_OFF = "/getWeeklyOff";
     public static final String SAVE_WEEKLY_OFF = "/saveWeeklyOff";
+    public static final String PACKING_TEMPLATE_DOWNLOAD = "/packingTemplateDownload";
+    public static final String SAVE_PRODUCTION_SHOP = "/saveProductionShop";
+    public static final String UPDATE_PRODUCTION_SHOP = "/updateProductionShop/{id}";
+    public static final String GET_ALL_PRODUCTION_SHOPS = "/getAllProductionShops";
+    public static final String GET_ALL_PRODUCTION_SHOPS_WITH_PAGINATION = "/getAllProductionShopsWithPagination";
+    public static final String DELETE_PRODUCTION_SHOP_BY_ID = "/deleteProductionShopById/{id}";
+
+    public static final String SAVE_PRODUCTION_LINE = "/saveProductionLine";
+    public static final String UPDATE_PRODUCTION_LINE = "/updateProductionLine/{id}";
+    public static final String GET_ALL_PRODUCTION_LINES = "/getAllProductionLines";
+    public static final String DELETE_PRODUCTION_LINE_BY_ID = "/deleteProductionLineById/{id}";
+
+    public static final String SAVE_PRODUCTION_LINE_STAGE = "/saveProductionLineStage";
+    public static final String UPDATE_PRODUCTION_LINE_STAGE = "/updateProductionLineStage/{id}";
+    public static final String GET_ALL_PRODUCTION_LINE_STAGES = "/getAllProductionLineStages";
+    public static final String DELETE_PRODUCTION_LINE_STAGE_BY_ID = "/deleteProductionLineStageById/{id}";
+    public static final String GET_PRODUCTION_LINES_BY_SHOP_ID = "/getProductionLinesByShopId/{shopId}";
+    public static final String GET_PRODUCTION_SHOP_HIERARCHY = "/getProductionShopHierarchy";
+    public static final String GET_PRODUCTION_LINE_BY_ID = "/getProductionLineById/{id}";
+    public static final String GET_STAGES_BY_LINE_ID = "/getStagesByLineId/{lineId}";
 }
 
 

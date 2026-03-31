@@ -1,5 +1,6 @@
 
 package com.stockmanagementsystem.entity;
+import com.stockmanagementsystem.request.Auditable;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -8,7 +9,7 @@ import java.util.Date;
 @Entity
 @Data
 @Table(name = "tbl_PPELine")
-public class PPELine {
+public class PPELine implements Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

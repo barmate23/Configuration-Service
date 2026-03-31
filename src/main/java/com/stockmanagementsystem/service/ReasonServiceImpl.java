@@ -48,7 +48,7 @@ public class ReasonServiceImpl implements ReasonService {
 
 
     @Override
-    public BaseResponse saveReason(String rejectedReason,Integer reasonCategoryId) {
+    public BaseResponse saveReason(String rejectedReason,Integer reasonCategoryId,Boolean isConfigurationRequest) {
 
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - ReasonServiceImpl - saveReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SAVED REASON START");
@@ -67,6 +67,11 @@ public class ReasonServiceImpl implements ReasonService {
             reason.setOrganizationId(loginUser.getOrgId());
             reason.setCreatedBy(loginUser.getUserId());
             reason.setCreatedOn(new Date());
+            if(isConfigurationRequest) {
+                reason.setIsApproved(true);
+            }else{
+                reason.setIsApproved(false);
+            }
             reasonRepository.save(reason);
             ReasonResponse reasonResponse=new ReasonResponse();
             List<Object> responseData = new ArrayList<>();
@@ -95,6 +100,7 @@ public class ReasonServiceImpl implements ReasonService {
         log.info("LogId:{} - ReasonServiceImpl - saveReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SAVE REASON TIME" + (endTime - startTime));
         return baseResponse;
     }
+
 @Override
     public String generateReasonId(Integer count) {
     List<Reason> reasons = reasonRepository.findBySubOrganizationId(loginUser.getSubOrgId());
@@ -145,7 +151,7 @@ public class ReasonServiceImpl implements ReasonService {
     }
 
     @Override
-    public BaseResponse updateReason(Integer id,String rejectedReason,Integer reasonCategoryId) {
+    public BaseResponse updateReason(Integer id,String rejectedReason,Integer reasonCategoryId,Boolean isApproved) {
 
         long startTime = System.currentTimeMillis();
         log.info("LogId:{} - ReasonServiceImpl - updateReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," UPDATE REASON METHOD START");
@@ -156,6 +162,7 @@ public class ReasonServiceImpl implements ReasonService {
                 Reason reason = optionalReasons.get();
                 //  reason.setReasonId(reasonsRequest.getReasonId());
                 reason.setRejectedReason(rejectedReason);
+                reason.setIsApproved(isApproved!=null?isApproved:false);
                 ReasonCategoryMaster reasonCategoryMaster=this.categoryMasterRepository.findByIsDeletedAndId(false,reasonCategoryId);
                 if(reasonCategoryMaster!=null) {
                     reason.setReasonCategoryMaster(reasonCategoryMaster);
@@ -485,7 +492,7 @@ public class ReasonServiceImpl implements ReasonService {
 
         BaseResponse<Reason> baseResponse=new BaseResponse<>();
         try{
-            List<Reason> reasons=reasonRepository.findByIsDeletedAndSubOrganizationIdAndReasonCategoryMasterReasonCategoryCode(false,loginUser.getSubOrgId(),categoryCode);
+            List<Reason> reasons=reasonRepository.findByIsDeletedAndSubOrganizationIdAndReasonCategoryMasterReasonCategoryCodeAndIsApproved(false,loginUser.getSubOrgId(),categoryCode,true);
             ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10072S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
@@ -509,4 +516,137 @@ public class ReasonServiceImpl implements ReasonService {
 
         return baseResponse;
     }
+
+
+    @Override
+    public BaseResponse<Reason> getApprovalPendingReasons(String categoryCode) {
+
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ReasonServiceImpl - getApprovalPendingReasons - UserId:{} - {}",
+                loginUser.getLogId(), loginUser.getUserId(),
+                " getApprovalPendingReasons Method Started");
+
+        BaseResponse<Reason> baseResponse = new BaseResponse<>();
+
+        try {
+
+            List<Reason> reasons;
+
+            if (categoryCode != null && !categoryCode.trim().isEmpty()) {
+
+                // Search by category code (Approval Pending)
+                reasons =
+                        reasonRepository
+                                .findByIsDeletedAndSubOrganizationIdAndReasonCategoryMasterReasonCategoryCodeAndIsApproved(
+                                        false,
+                                        loginUser.getSubOrgId(),
+                                        categoryCode,
+                                        false
+                                );
+
+            } else {
+
+                // Fetch ALL approval-pending reasons
+                reasons =
+                        reasonRepository
+                                .findByIsDeletedAndSubOrganizationIdAndIsApproved(
+                                        false,
+                                        loginUser.getSubOrgId(),
+                                        false
+                                );
+            }
+
+            ResponseMessage responseMessage =
+                    getResponseMessages(ResponseKeyConstant.UPLD10072S);
+
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(reasons);
+            baseResponse.setLogId(loginUser.getLogId());
+
+            log.info("LogId:{} - ReasonServiceImpl - getApprovalPendingReasons - UserId:{} - {}",
+                    loginUser.getLogId(), loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage());
+
+            return baseResponse;
+
+        } catch (Exception ex) {
+
+            ResponseMessage responseMessage =
+                    getResponseMessages(ResponseKeyConstant.UPLD10069F);
+
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ReasonServiceImpl - getApprovalPendingReasons - UserId:{} - {}",
+                    loginUser.getLogId(), loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage()
+                            + " EXECUTION TIME " + (endTime - startTime),
+                    ex);
+        }
+
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - ReasonServiceImpl - getApprovalPendingReasons - UserId:{} - {}",
+                loginUser.getLogId(), loginUser.getUserId(),
+                " FETCHED APPROVAL PENDING REASONS TIME " + (endTime - startTime));
+
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse saveOtherReason(String rejectedReason, String reasonCategory) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ReasonServiceImpl - saveReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SAVED REASON START");
+        BaseResponse  baseResponse=new BaseResponse();
+
+        try {
+            Reason reason=new Reason();
+            reason.setReasonId(generateReasonId(1));
+            reason.setRejectedReason(rejectedReason);
+            ReasonCategoryMaster reasonCategoryMaster=this.categoryMasterRepository.findByIsDeletedAndReasonCategoryCode(false,reasonCategory);
+            if(reasonCategoryMaster!=null) {
+                reason.setReasonCategoryMaster(reasonCategoryMaster);
+            }
+            reason.setIsDeleted(false);
+            reason.setSubOrganizationId(loginUser.getSubOrgId());
+            reason.setOrganizationId(loginUser.getOrgId());
+            reason.setCreatedBy(loginUser.getUserId());
+            reason.setCreatedOn(new Date());
+            reason.setIsApproved(false);
+
+            reasonRepository.save(reason);
+            ReasonResponse reasonResponse=new ReasonResponse();
+            List<Object> responseData = new ArrayList<>();
+            responseData.add(reason);
+            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10065S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+
+            baseResponse.setData(responseData);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - ReasonServiceImpl - saveReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+        }catch (Exception e){
+            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10062F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ReasonServiceImpl - saveReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),e);
+
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - ReasonServiceImpl - saveReason - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SAVE REASON TIME" + (endTime - startTime));
+        return baseResponse;
+    }
+
+
+
+
 }

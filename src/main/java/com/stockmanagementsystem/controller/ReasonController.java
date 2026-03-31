@@ -27,8 +27,13 @@ public class ReasonController {
     ReasonService reasonService;
 
     @PostMapping(APIConstants.SAVE_REASON)
-    public BaseResponse saveReason(@RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId){
-        return reasonService.saveReason(rejectedReason,reasonCategoryId);
+    public BaseResponse saveReason(@RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId,@RequestParam(required = false) Boolean isConfigurationRequest){
+        return reasonService.saveReason(rejectedReason,reasonCategoryId,isConfigurationRequest);
+    }
+
+    @PostMapping(APIConstants.SAVE_OTHER_REASON)
+    public BaseResponse saveOtherReason(@RequestParam String rejectedReason,@RequestParam String reasonCategory){
+        return reasonService.saveOtherReason(rejectedReason,reasonCategory);
     }
 
     @DeleteMapping(APIConstants.DELETE_REASON)
@@ -37,8 +42,8 @@ public class ReasonController {
     }
 
     @PutMapping(APIConstants.UPDATE_REASON)
-    public ResponseEntity<BaseResponse> updateReason(@RequestParam Integer id, @RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId) {
-        BaseResponse baseResponse = reasonService.updateReason(id, rejectedReason,reasonCategoryId);
+    public ResponseEntity<BaseResponse> updateReason(@RequestParam Integer id, @RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId,@RequestParam(required = false) Boolean isApproved) {
+        BaseResponse baseResponse = reasonService.updateReason(id, rejectedReason,reasonCategoryId,isApproved);
         return new ResponseEntity<>(baseResponse, HttpStatus.valueOf(baseResponse.getStatus()));
     }
 
@@ -110,6 +115,15 @@ public class ReasonController {
     public BaseResponse<Reason> getAllReasonByCategory(@PathVariable String categoryCode){
         return reasonService.getAllReasonByCategory(categoryCode);
     }
+
+
+    @GetMapping("/getApprovalPendingReasons")
+    public BaseResponse<Reason> getApprovalPendingReasons(
+            @RequestParam(required = false) String categoryCode) {
+
+        return reasonService.getApprovalPendingReasons(categoryCode);
+    }
+
 
 }
 

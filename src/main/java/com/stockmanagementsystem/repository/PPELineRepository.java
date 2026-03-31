@@ -11,4 +11,6 @@ public interface PPELineRepository extends JpaRepository<PPELine,Integer> {
     List<PPELine> findByIsDeletedAndSubOrganizationIdAndItemIdAndPPEHeadPpeId(boolean b, Integer subOrgId, String itemId, String planId);
 
     List<PPELine> findByIsDeletedAndSubOrganizationIdAndItemItemIdAndPPEHeadPlanOrderId(boolean b, Integer subOrgId, String itemId, String planId);
+
+    PPELine findByIsDeletedAndSubOrganizationIdAndItemIdAndPPEHeadId(boolean b, Integer subOrgId, Integer id, Integer id1);
 }

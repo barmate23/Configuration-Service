@@ -4,6 +4,7 @@ import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.exception.ExceptionLogger;
 import com.stockmanagementsystem.exception.ValidationFailureException;
 import com.stockmanagementsystem.repository.*;
+import com.stockmanagementsystem.request.Auditable;
 import com.stockmanagementsystem.request.ItemSupplierMapperRequest;
 import com.stockmanagementsystem.response.*;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
@@ -20,8 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -201,7 +202,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ITEM_GROUP,
                     ITEM_CATEGORY,
                     ITEM_SUB_CATEGORY,
-                    TYPE, TYPE_SERIAL, QC_REQUIRED,ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT,PHYSICAL_FORM, CONTAINER_CAPACITY_UOM,CONTAINER_CAPACITY, CODE, TYPES,
+                    TYPE, TYPE_SERIAL, QC_REQUIRED, ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, PHYSICAL_FORM, CONTAINER_CAPACITY_UOM, CONTAINER_CAPACITY, CODE, TYPES,
                     DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, MINIMUM_ORDER_QTY,
                     OPTIMUM_LEVEL, REORDER_LEVEL, SAFETY_LEVEL, CRITICAL_LEVEL, DOCK, DOCKS_NAME
             ));
@@ -254,7 +255,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         String uom = getCellStringValue(data, ServiceConstants.CELL_INDEX_13, resultResponses, type, headerNames);
                         Float itemUnitWeight = getCellFloatValue(data, ServiceConstants.CELL_INDEX_14, resultResponses, type, headerNames);
 
-                        String physicalForm   = getCellStringValue(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
+                        String physicalForm = getCellStringValue(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
 
                         String containerCapacityUom = getCellStringValue(
                                 data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
@@ -365,7 +366,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                 item.setQcRequired(false);
                                 item.setInspection(false);
 
-                            } else if(isQCRequired.equalsIgnoreCase("Certificate")){
+                            } else if (isQCRequired.equalsIgnoreCase("Certificate")) {
                                 item.setQcRequired(true);
                                 item.setInspection(true);
                             }
@@ -1686,12 +1687,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         } else {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.STORE_ERP_CODE, ServiceConstants.DOCK_SUPERVISOR_NOT_FOUND));
                         }
-                        Users userId = userRepository.findBySubOrganizationIdAndIsDeletedAndUsernameAndModuleUserLicenceKeyLicenceLineSubModuleSubModuleCode(loginUser.getSubOrgId(), false, dockSupervisor, "DOSU");
-                        if (userId == null) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.DOCK_SUPERVISOR_ID, ServiceConstants.DOCK_SUPERVISOR_NOT_FOUND));
-                        } else {
-                            dock.setDockSupervisor(userId);
-                        }
+
                         docks.add(dock);
                         count++;
                     }
@@ -1931,12 +1927,13 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     purchaseOrderHead.setModifiedBy(loginUser.getUserId());
                     purchaseOrderHead.setModifiedOn(new Date());
                     Optional<PurchaseOrderHead> orderHeadOptional = purchaseOrderHeadRepository.findByIsDeletedAndSubOrganizationIdAndPurchaseOrderNumber(false, loginUser.getSubOrgId(), purchaseOrderNumber);
+                    PurchaseOrderHead head=null;
                     if (orderHeadOptional.isEmpty() && resultResponses.size() == 0) {
-                        purchaseOrderHeadRepository.save(purchaseOrderHead);
+                        head= purchaseOrderHeadRepository.save(purchaseOrderHead);
                     }
                     PurchaseOrderLine purchaseOrderLine = new PurchaseOrderLine();
 
-                    if (purchaseOrderHead.getId() != null) {
+                    if (head.getId() != null) {
                         purchaseOrderLine.setPurchaseOrderHead(purchaseOrderHead);
                     } else if (orderHeadOptional.isPresent() && resultResponses.size() == 0) {
                         purchaseOrderLine.setPurchaseOrderHead(orderHeadOptional.get());
@@ -2088,7 +2085,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     purchaseOrderHeadRepository.save(purchaseOrderHead);
                 }
                 supplierService.mapItemBySupplier(itemSupplierMapperRequests);
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_200, ServiceConstants.PURCHASE_ORDER_DATA_UPLOAD_SUCCESSFULLY, resultResponses, ServiceConstants.ERROR_CODE, logId));
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_200, ServiceConstants.PURCHASE_ORDER_DATA_UPLOAD_SUCCESSFULLY, resultResponses, ServiceConstants.SUCCESS_CODE, logId));
             } else {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, ServiceConstants.PURCHASE_ORDER_DATA_UPLOAD_FAILED, resultResponses, ServiceConstants.ERROR_CODE, logId));
             }
@@ -2324,7 +2321,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Date date = getDateValue(sheet.getRow(5).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 5, ServiceConstants.DATE);
             Float version = getFloatValue(sheet.getRow(6).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 6, ServiceConstants.VERSION);
             String assemblyLineId = getStringValue(sheet.getRow(7).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 8, ServiceConstants.LIFECYCLE_PHASE);
-            AssemblyLine assemblyLine1 = assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(false, loginUser.getSubOrgId(), assemblyLineId);
+            AssemblyLine assemblyLine1 = assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndLineCode(false, loginUser.getSubOrgId(), assemblyLineId);
             String lifecyclePhase = getStringValue(sheet.getRow(8).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 8, ServiceConstants.LIFECYCLE_PHASE);
             if (resultResponses.size() == 0) {
                 boMHead.setProduct(product);
@@ -2599,424 +2596,320 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
     //Added BY Kamlesh
     @Override
-    public ResponseEntity<BaseResponse> uploadPpeDetails(MultipartFile file, String type) throws IOException, ValidationFailureException {
-        long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - UploadExcelServiceImpl - uploadPpeDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ServiceConstants.SPACE + ServiceConstants.UPLOAD_PPE_DETAIL_METHOD_STARTED);
+    public ResponseEntity<BaseResponse> uploadPpeDetails(MultipartFile file, String type)
+            throws IOException, ValidationFailureException {
 
-        try {
-            Workbook workbook = WorkbookFactory.create(file.getInputStream());
-            Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX); // Assuming the data is in the first sheet
+        long startTimeMillis = System.currentTimeMillis();
+        log.info("LogId:{} - uploadPpeDetails started - UserId:{}",
+                loginUser.getLogId(), loginUser.getUserId());
 
-            List<PPEHead> ppePlans = new ArrayList<>();
-            List<PPELine> ppeLineList = new ArrayList<>();
-            List<ValidationResultResponse> resultResponses = new ArrayList<>();
-            List<String> headerNames = new ArrayList<>();
-            Integer count = 0;
+        List<PPEHead> ppePlans = new ArrayList<>();
+        List<PPELine> ppeLineList = new ArrayList<>();
+        List<ValidationResultResponse> errors = new ArrayList<>();
 
-            List<String> expectedColumns = Arrays.asList(PPE_PLAN_ID, ERP_ID, BOM_ID, PRODUCT_NAME,
-                    BRAND, MODEL, VARIANT, COLOR, UOM1, PLAN_QUANTITY, PRODUCTION_SHOP, SHOP_ID, LINE,
-                    LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME, ITEM_CODE_PPE, ITEM_NAME_PPE,
-                    ITEM_TYPE, ITEM_CLASS_PPE, ATTRIBUTE_PPE
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+
+            Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
+
+            /* ================= HEADER VALIDATION ================= */
+            List<String> expectedColumns = Arrays.asList(
+                    PPE_PLAN_ID, ERP_ID, BOM_ID, PRODUCT_NAME,
+                    UOM1, PLAN_QUANTITY, PRODUCTION_SHOP, SHOP_ID,
+                    LINE, LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME
             );
-            List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
-            if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.INTERNAL_SERVER_ERROR, excellHeaderValidatorResponse.get(0).getErrorMessage(), excellHeaderValidatorResponse, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
+            List<ExcellHeaderValidatorResponse> headerValidation =
+                    validateExcelHeader(sheet, expectedColumns);
+
+            if (!headerValidation.get(0).getIsValid()) {
+                return ResponseEntity.ok(new BaseResponse<>(
+                        500,
+                        headerValidation.get(0).getErrorMessage(),
+                        headerValidation,
+                        ServiceConstants.ERROR_CODE,
+                        loginUser.getLogId()));
             }
 
-            String lastPpeId = null;
-            List<PPEHead> existingPpeHeads = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdOrderByIdAsc(false, loginUser.getSubOrgId());
-            if (existingPpeHeads != null && !existingPpeHeads.isEmpty()) {
-                lastPpeId = existingPpeHeads.get(existingPpeHeads.size() - 1).getPpeId();
-            }
+            /* ================= LAST PPE ID ================= */
+            String lastPpeId = ppeHeadRepository
+                    .findByIsDeletedAndSubOrganizationIdOrderByIdAsc(false, loginUser.getSubOrgId())
+                    .stream().reduce((a, b) -> b)
+                    .map(PPEHead::getPpeId)
+                    .orElse(null);
 
-            // Iterate through the first row to get the header names
-            Row headerRow = sheet.getRow(ServiceConstants.HEADER_INDEX);
-            for (int cellIndex = 0; cellIndex < headerRow.getLastCellNum(); cellIndex++) {
-                Cell headerCell = headerRow.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-                if (headerCell != null) {
-                    String headerName = headerCell.getStringCellValue();
-                    headerNames.add(headerName);
+            /* ================= ITERATE ROWS ================= */
+            for (Row row : sheet) {
+
+                if (row.getRowNum() <= ServiceConstants.ITEM_COLUMN_HEADER_ROW_INDEX) continue;
+                if (isRowEmpty(row)) continue;
+
+                /* ================= READ CELLS ================= */
+                String planId = getCellStringValue(row, 0, errors, type, expectedColumns);
+                String sapId = getCellStringValue(row, 1, errors, type, expectedColumns);
+                String bomCode = getCellStringValue(row, 2, errors, type, expectedColumns);
+                String productName = getCellStringValue(row, 3, errors, type, expectedColumns);
+                String uom = getCellStringValue(row, 4, errors, type, expectedColumns);
+                Integer planQuantity = getCellIntegerValue(row, 5, errors, type, expectedColumns);
+                String productionShop = getCellStringValue(row, 6, errors, type, expectedColumns);
+                String shopId = getCellStringValue(row, 7, errors, type, expectedColumns);
+                String line = getCellStringValue(row, 8, errors, type, expectedColumns);
+                String lineId = getCellStringValue(row, 9, errors, type, expectedColumns);
+                Date startDate = getCellDateValue(row, 10, errors, type, expectedColumns);
+                LocalTime startTime = getCellTimeValueForPPE(row, 11, errors, type, expectedColumns);
+                Date endDate = getCellDateValueForPPE(row, 12, errors, type, expectedColumns);
+                LocalTime endTime = getCellTimeValueForPPE(row, 13, errors, type, expectedColumns);
+
+                /* ================= BASIC VALIDATIONS ================= */
+                if (StringUtils.isEmpty(planId)) {
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                            PPE_PLAN_ID, "PLAN ID CANNOT BE NULL"));
                 }
-            }
-            Map<String, List<String>> headLineMap = new HashMap<>();
-            for (Row data : sheet) {
 
-                int emptyCellCount = 0;
-                int lastCellNum = data.getLastCellNum();
-                if (lastCellNum != -1) {
-                    for (int i = 0; i < data.getLastCellNum(); i++) {
-                        Cell emptyCell = data.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-                        if (emptyCell == null) {
-                            emptyCellCount++;
+
+                if (StringUtils.isEmpty(bomCode)) {
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                            BOM_ID, "BOM ID CANNOT BE NULL"));
+                }
+
+                Optional<BoMHead> bomHeadOpt =
+                        bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomERPCode(
+                                false, loginUser.getSubOrgId(), bomCode);
+
+                if (bomHeadOpt.isEmpty()) {
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                            BOM_ID, "BOM NOT FOUND"));
+                }
+
+                if (planQuantity == null) {
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                            PLAN_QUANTITY, "PLAN QUANTITY CANNOT BE NULL"));
+                }
+
+                if (!isFutureStartDate(startDate, startTime)) {
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                            START_DATE, "START DATE & TIME MUST BE IN FUTURE"));
+                }
+
+                if (isStartAfterEnd(startDate, startTime, endDate, endTime)) {
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                            END_DATE, "START DATE & TIME CANNOT BE AFTER END DATE & TIME"));
+                }
+
+                AssemblyLine assemblyLine =
+                        assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndLineCode(
+                                false, loginUser.getSubOrgId(), lineId);
+
+                if (assemblyLine == null) {
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                            LINE_ID, "ASSEMBLY LINE NOT FOUND"));
+                }
+
+                /* ================= DUPLICATE PLAN CHECK ================= */
+                Optional<PPEHead> existingHead =
+                        ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndAssemblyLineId(
+                                false,
+                                startDate,
+                                Time.valueOf(startTime),
+                                assemblyLine.getId());
+
+                PPEHead ppeHead = null;
+                Optional<PPEHead> ppeHeadOptional = ppeHeadRepository
+                        .findByIsDeletedAndSubOrganizationIdAndPlanOrderId(
+                                false, loginUser.getSubOrgId(), planId);
+
+                if(!existingHead.isPresent()){
+                    Optional<PPEHead> existingPlanId =
+                            ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPpeId(false, loginUser.getSubOrgId(), planId);
+                    if(existingPlanId.isPresent()){
+                        errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                                PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
+                    }
+                }
+
+                if (ppeHeadOptional.isPresent()) {
+                    if (ppeHeadOptional.get().getPpeStatus().getStatusName().equalsIgnoreCase("Uploaded")) {
+                        ppeHead = ppeHeadOptional.get();
+                    } else {
+                        errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                                PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
+                    }
+                } else {
+                    ppeHead = new PPEHead();
+                }
+
+                if (existingHead.isPresent()) {
+
+                    boolean isSameRecord =
+                            ppeHeadOptional.isPresent() &&
+                                    Objects.equals(ppeHeadOptional.get().getId(), existingHead.get().getId());
+
+                    // Only check duplicates if it's NOT the same record
+                    if (!isSameRecord) {
+
+                        boolean duplicateInFile = ppePlans.stream().anyMatch(existing ->
+                                Objects.equals(existing.getStartDate(), startDate) &&
+                                        Objects.equals(existing.getStartTime(), Time.valueOf(startTime)) &&
+                                        Objects.equals(existing.getAssemblyLine(), assemblyLine)
+                        );
+
+                        if (duplicateInFile) {
+                            errors.add(new ValidationResultResponse(
+                                    type,
+                                    row.getRowNum() + 1,
+                                    PPE_PLAN_ID,
+                                    "PLAN ALREADY MAPPED WITH SAME LINE, START DATE & TIME"
+                            ));
                         }
                     }
-                    if (emptyCellCount != data.getLastCellNum()) {
+                }
+                if (errors.isEmpty()) {
+                    /* ================= PPE HEAD ================= */
 
-                        // Assuming the data starts from the second row (index 1)
-                        if (data.getRowNum() <= ServiceConstants.ITEM_COLUMN_HEADER_ROW_INDEX) {
-                            // Skip the header row
+                    lastPpeId = validations.generateNextPpeId(lastPpeId);
+
+                    ppeHead.setPpeId(lastPpeId);
+                    ppeHead.setPlanOrderId(planId);
+                    ppeHead.setSapId(sapId);
+                    ppeHead.setProduct(productName);
+                    ppeHead.setUom(uom);
+                    ppeHead.setPlanQuantity(planQuantity);
+                    ppeHead.setProductionShop(productionShop);
+                    ppeHead.setShopId(shopId);
+                    ppeHead.setLine(line);
+                    ppeHead.setAssemblyLine(assemblyLine);
+
+                    BoMHead bomHead = bomHeadOpt.get();
+                    ppeHead.setBomHead(bomHead);
+                    ppeHead.setBrand(bomHead.getBrand());
+                    ppeHead.setModel(bomHead.getModel());
+                    ppeHead.setVariant(bomHead.getVariant());
+                    ppeHead.setColor(bomHead.getColour());
+
+                    ppeHead.setStartDate(startDate);
+                    ppeHead.setStartTime(Time.valueOf(startTime));
+                    ppeHead.setEndDate(endDate);
+                    ppeHead.setEndTime(Time.valueOf(endTime));
+
+                    PpeStatus uploaded =
+                            ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
+
+                    ppeHead.setPpeStatus(uploaded);
+
+                    setAuditFields(ppeHead);
+                    ppePlans.add(ppeHead);
+
+                    /* ================= PPE LINES ================= */
+                    List<BOMLine> bomLineList =
+                            bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadIdBomERPCode(
+                                    false, loginUser.getSubOrgId(), bomCode);
+
+                    for (BOMLine bomLine : bomLineList) {
+                        PPELine ppeLine = null;
+
+                        if(ppeHeadOptional.isPresent()){
+                            ppeLine = ppeLineRepository.findByIsDeletedAndSubOrganizationIdAndItemIdAndPPEHeadId(false, loginUser.getSubOrgId(), bomLine.getItem().getId(), ppeHead.getId());
+                        } else {
+                            ppeLine = new PPELine();
+                        }
+                        ppeLine.setBomLine(bomLine);
+                        ppeLine.setItem(bomLine.getItem());
+
+                        ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQuantity);
+
+                        List<Location> locationList =
+                                locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(
+                                        false, loginUser.getSubOrgId(), bomLine.getItem().getId());
+
+                        if (locationList == null || locationList.isEmpty()) {
+                            errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
+                                    ITEM, "STORE LOCATION NOT FOUND FOR ITEM"));
                             continue;
                         }
 
-                        String planId = getCellStringValue(data, ServiceConstants.CELL_INDEX_0, resultResponses, type, headerNames);
-                        String sapId = getCellStringValue(data, ServiceConstants.CELL_INDEX_1, resultResponses, type, headerNames);
-                        String bomCode = getCellStringValue(data, ServiceConstants.CELL_INDEX_2, resultResponses, type, headerNames);
-                        String productName = getCellStringValue(data, ServiceConstants.CELL_INDEX_3, resultResponses, type, headerNames);
-                        String brand = getCellStringValue(data, ServiceConstants.CELL_INDEX_4, resultResponses, type, headerNames);
-                        String model = getCellStringValue(data, ServiceConstants.CELL_INDEX_5, resultResponses, type, headerNames);
-                        String variant = getCellStringValue(data, ServiceConstants.CELL_INDEX_6, resultResponses, type, headerNames);
-                        String color = getCellStringValue(data, ServiceConstants.CELL_INDEX_7, resultResponses, type, headerNames);
-                        String uom1 = getCellStringValue(data, ServiceConstants.CELL_INDEX_8, resultResponses, type, headerNames);
-                        Integer planQunatity = getCellIntegerValue(data, ServiceConstants.CELL_INDEX_9, resultResponses, type, headerNames);
-                        String productionShop = getCellStringValue(data, ServiceConstants.CELL_INDEX_10, resultResponses, type, headerNames);
-                        String shopId = getCellStringValue(data, ServiceConstants.CELL_INDEX_11, resultResponses, type, headerNames);
-                        String line = getCellStringValue(data, ServiceConstants.CELL_INDEX_12, resultResponses, type, headerNames);
-                        String lineID = getCellStringValue(data, ServiceConstants.CELL_INDEX_13, resultResponses, type, headerNames);
-                        Date startDate = getCellDateValue(data, ServiceConstants.CELL_INDEX_14, resultResponses, type, headerNames);
-                        LocalTime starTime = getCellTimeValueForPPE(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
-                        Date endDate = getCellDateValueForPPE(data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
-                        LocalTime endTime = getCellTimeValueForPPE(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
-                        String itemId = getCellStringValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
-                        String itemName = getCellStringValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
-                        String itemType = getCellStringValue(data, ServiceConstants.CELL_INDEX_20, resultResponses, type, headerNames);
-                        String itemClass = getCellStringValue(data, ServiceConstants.CELL_INDEX_21, resultResponses, type, headerNames);
-                        String attribute = getCellStringValue(data, ServiceConstants.CELL_INDEX_22, resultResponses, type, headerNames);
+                        Location location = locationList.get(0);
+                        ppeLine.setStore(
+                                location.getZone().getArea().getStore().getStoreName()
+                        );
 
-                        //setting the values to ppehead
-                        PPEHead ppeHead = new PPEHead();
-                        PPELine ppeLine = new PPELine();
-
-                        // Generate and set the next PPE ID
-                        lastPpeId = validations.generateNextPpeId(lastPpeId);
-                        ppeHead.setPpeId(lastPpeId);
-                        if (ppeHead.getPpeId().equals(null)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_ID, " PPEID CANNOT BE NULL "));
-                        }
-
-                        Optional<PPEHead> ppeHead1 = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPlanOrderId(false, loginUser.getSubOrgId(), planId);
-
-                        if (!StringUtils.isEmpty(planId)) {
-                            if(ppeHead1.isPresent()){
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_PLAN_ID, " Plan Id Already Exist in Database "));
-                            } else {
-                                ppeHead.setPlanOrderId(planId);
-                            }
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_PLAN_ID, " PLANID CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(sapId)) {
-                            ppeHead.setSapId(sapId);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ERP_ID, " SAPID CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(bomCode)) {
-                            Optional<BoMHead> boMHeadOptional = bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomERPCode(false, loginUser.getSubOrgId(), bomCode);
-                            if (boMHeadOptional.isPresent()) {
-                                ppeHead.setBomHead(boMHeadOptional.get());
-                            } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BOM_ID, "THIS BOM ID IS NOT PRESENT IN DATABASE "));
-                            }
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BOM_ID, " BOMID CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(productName)) {
-                            ppeHead.setProduct(productName);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRODUCT_NAME, " PRODUCT NAME CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(brand)) {
-                            ppeHead.setBrand(brand);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BRAND, " BRAND NAME CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(model)) {
-                            ppeHead.setModel(model);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.MODEL, " MODEL NAME CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(variant)) {
-                            ppeHead.setVariant(variant);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.VARIANT, " VARIANT NAME CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(color)) {
-                            ppeHead.setColor(color);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BOM_ID, " COLOR CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(uom1)) {
-                            ppeHead.setUom(uom1);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.UOM1, " UOM CANNOT BE NULL "));
-                        }
-
-                        if (planQunatity != null) {
-                            ppeHead.setPlanQuantity(planQunatity);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PLAN_QUANTITY, " PLAN QUANTITY CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(productionShop)) {
-                            ppeHead.setProductionShop(productionShop);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PRODUCTION_SHOP, " PRODUCTION SHOP CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(shopId)) {
-                            ppeHead.setShopId(shopId);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SHOP_ID, " SHOPID SHOP CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(line)) {
-                            ppeHead.setLine(line);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LINE, " Line SHOP CANNOT BE NULL "));
-                        }
-
-                        if (!StringUtils.isEmpty(lineID)) {
-                            AssemblyLine assemblyLine = assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(false, loginUser.getSubOrgId(), lineID);
-                            ppeHead.setAssemblyLine(assemblyLine);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.LINE_ID, " Line Id CANNOT BE NULL "));
-                        }
-//                        if (startDate != null) {
-//                            Date currentDate = new Date();
-//                            if (startDate.after(currentDate)) {
-//                                ppeHead.setStartDate(startDate);
-//                            } else {
-//                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, "PLAN START DATE MUST BE A FUTURE DATE"));
-//                            }
-//                        } else {
-//                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.START_DATE, " START DATE SHOP CANNOT BE NULL "));
-//                        }
-//                        if (starTime != null) {
-//                            ppeHead.setStartTime(starTime);
-//                        }
-
-                        if (startDate != null && starTime != null) {
-                            try {
-                                // Define UTC zone
-                                ZoneId utcZone = ZoneId.of("UTC");
-
-                                // Convert startDate (java.util.Date) to LocalDate
-                                LocalDate startLocalDate = startDate.toInstant()
-                                        .atZone(utcZone)
-                                        .toLocalDate();
-
-                                // starTime is already a LocalTime (from your getCellTimeValueForPPE)
-                                LocalDateTime planStartDateTime = LocalDateTime.of(startLocalDate, starTime);
-
-                                // Convert to ZonedDateTime in UTC
-                                ZonedDateTime planStartUTC = planStartDateTime.atZone(utcZone);
-
-                                // Current UTC time
-                                ZonedDateTime currentUTC = ZonedDateTime.now(utcZone);
-
-                                // Compare
-                                if (planStartUTC.isAfter(currentUTC)) {
-                                    // Valid — save values
-                                    ppeHead.setStartDate(startDate);
-                                    ppeHead.setStartTime(Time.valueOf(starTime)); // convert LocalTime → java.sql.Time if needed
-                                } else {
-                                    resultResponses.add(new ValidationResultResponse(
-                                            type,
-                                            (data.getRowNum() + 1),
-                                            ServiceConstants.START_DATE,
-                                            "PLAN START DATE & TIME MUST BE IN THE FUTURE"
-                                    ));
-                                }
-                            } catch (Exception e) {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        ServiceConstants.START_DATE,
-                                        "ERROR PROCESSING START DATE/TIME"
-                                ));
-                            }
-                        }
-
-                        // Validate that start date/time is not after end date/time
-                        if (startDate != null && starTime != null && endDate != null && endTime != null) {
-
-                            ZoneOffset utcZone = ZoneOffset.UTC;
-
-                            // Convert start date/time to UTC
-                            LocalDate startLocalDate = startDate.toInstant().atZone(utcZone).toLocalDate();
-                            LocalTime startLocalTime = starTime.atOffset(ZoneOffset.UTC).toLocalTime();
-                            LocalDateTime startDateTime = LocalDateTime.of(startLocalDate, startLocalTime);
-
-                            // Convert end date/time to UTC
-                            LocalDate endLocalDate = endDate.toInstant().atZone(utcZone).toLocalDate();
-                            LocalTime endLocalTime = endTime.atOffset(ZoneOffset.UTC).toLocalTime();
-                            LocalDateTime endDateTime = LocalDateTime.of(endLocalDate, endLocalTime);
-
-                            // Compare
-                            if (startDateTime.isAfter(endDateTime)) {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        ServiceConstants.END_DATE,
-                                        "START DATE & TIME CANNOT BE AFTER END DATE & TIME"
-                                ));
-                            }
-                        }
-
-                        if (endDate != null) {
-                            ppeHead.setEndDate(endDate);
-                        }
-
-                        if (endTime != null) {
-                            ppeHead.setEndTime(Time.valueOf(endTime)); // endTime is also LocalTime
-                        }
-
-
-                        PpeStatus status = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
-                        ppeHead.setPpeStatus(status);
-
-                        ppeHead.setOrganizationId(loginUser.getOrgId());
-                        ppeHead.setSubOrganizationId(loginUser.getSubOrgId());
-                        ppeHead.setIsDeleted(false);
-                        ppeHead.setCreatedBy(loginUser.getUserId());
-                        ppeHead.setCreatedOn(new Date());
-                        ppeHead.setModifiedBy(loginUser.getUserId());
-                        ppeHead.setModifiedOn(new Date());
-
-                        BOMLine bomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeAndBomHeadIdBomERPCode(false, loginUser.getSubOrgId(), itemId, bomCode);
-                        if (bomLine != null) {
-                            ppeLine.setBomLine(bomLine);
-                            ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQunatity);
-                        } else {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_ID, " BOM ItemId and PPE ItemId is not matched "));
-                        }
-
-                        Date planstartTime = null;
-                        Date startTimeDate = null;
-                        if (ppeHead.getStartTime() != null) {
-                            planstartTime = ppeHead.getStartTime();
-                            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                            String formattedstartTime = sdf.format(planstartTime);
-                            try {
-
-                                startTimeDate = sdf.parse(formattedstartTime);
-
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-                        } else {
-                            startTimeDate = null;
-                        }
-
-                        Optional<PPEHead> headOptional = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPlanOrderId(false, loginUser.getSubOrgId(), planId);
-
-                        Optional<PPEHead> existingHeads = ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndAssemblyLineId(false, ppeHead.getStartDate(), startTimeDate, ppeHead.getAssemblyLine().getId());
-
-                        Optional<PPEHead> duplicateInListByPlanId = ppePlans.stream().filter(existingPpeHead ->
-                                existingPpeHead.getPlanOrderId().equals(planId)
-                        ).findFirst();
-
-                        Boolean duplicateInList = false;
-
-                        for (PPEHead existingPpeHead : ppePlans) {
-                            if (!existingPpeHead.getPlanOrderId().equals(ppeHead.getPlanOrderId()) && Objects.equals(existingPpeHead.getStartDate(), ppeHead.getStartDate()) &&
-                                    existingPpeHead.getStartTime().equals(ppeHead.getStartTime()) &&
-                                    existingPpeHead.getAssemblyLine().equals(ppeHead.getAssemblyLine())) {
-                                duplicateInList = true;
-                            }
-                        }
-
-
-                        if (headOptional.isPresent()) {
-                            continue;
-                        } else if (existingHeads.isPresent() || duplicateInList) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.PPE_PLAN_ID, " This Plan is already mapped with existing plan's Production Shop, Line, Start Date and Start Time "));
-                        }
-                        List<PPELine> ppeLines = ppeLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemIdAndPPEHeadPlanOrderId(false, loginUser.getSubOrgId(), itemId, planId);
-                        if (ppeLines.size() > 0) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.BOM_ID, " This Item Is Already Exist In This Plan "));
-                        } else {
-                            Optional<Item> itemOption = itemRepository.findByIsDeletedAndSubOrganizationIdAndItemCode(false, loginUser.getSubOrgId(), itemId);
-                            if (itemOption.isPresent()) {
-                                ppeLine.setItem(itemOption.get());
-                                List<Location> locationList =  locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), itemOption.get().getId());
-                                ppeLine.setStore(locationList.get(0).getZone().getArea().getStore().getStoreName());
-//                                ppeLine.setEta(itemOption.get().getLeadTime());
-
-                            } else {
-                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.ITEM_ID, "THIS ITEM ID IS NOT PRESENT IN DATABASE"));
-                            }
-
-                        }
-                        ppeLine.setOrganizationId(loginUser.getOrgId());
-                        ppeLine.setSubOrganizationId(loginUser.getSubOrgId());
                         ppeLine.setRequiredBy(new Date());
-                        ppeLine.setIsDeleted(false);
-                        ppeLine.setCreatedBy(loginUser.getUserId());
-                        ppeLine.setCreatedOn(new Date());
-                        ppeLine.setModifiedBy(loginUser.getUserId());
-                        ppeLine.setModifiedOn(new Date());
-                        if (duplicateInListByPlanId.isEmpty()) {
-                            ppeLine.setPPEHead(ppeHead);
-                            ppePlans.add(ppeHead);
-                        } else {
-                            ppeLine.setPPEHead(duplicateInListByPlanId.get());
-                        }
+                        ppeLine.setPPEHead(ppeHead);
+                        setAuditFields(ppeLine);
 
                         ppeLineList.add(ppeLine);
-
-
-                        count++;
                     }
                 }
-
             }
-            log.info(String.valueOf(new StringBuilder().append(loginUser.getLogId()).append(ServiceConstants.TOTAL_ROWS_SCANNED).append(count)));
+            if (errors.isEmpty()) {
+                ppeHeadRepository.saveAll(ppePlans);
+                ppeLineRepository.saveAll(ppeLineList);
 
-            long endTime = System.currentTimeMillis();
-            // Close the workbook
-            workbook.close();
-            for (PPEHead ppeHead : ppePlans) {
-                List<String> ppeItemIdList = ppeLineList.stream()
-                        .filter(e -> e.getPPEHead().getPlanOrderId().equals(ppeHead.getPlanOrderId()))
-                        .map(e -> e.getItem().getItemCode())
-                        .collect(Collectors.toList());
-                List<BOMLine> extraBomLine = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndItemItemCodeNotInAndBomHeadIdBomERPCode(false, loginUser.getSubOrgId(), ppeItemIdList, ppeHead.getBomHead().getBomERPCode());
-                if (extraBomLine.size() != 0) {
-                    List<String> itemids = extraBomLine.stream().map(e -> e.getItem().getItemId()).collect(Collectors.toList());
-                    resultResponses.add(new ValidationResultResponse(type, null, ServiceConstants.ITEM_ID, "THIS BOM ITEM IDS :" + itemids.toString() + "IS NOT PRESENT IN PLAN/ORDER: " + ppeHead.getPlanOrderId()));
-                }
+                log.info("LogId:{} - PPE upload success in {} ms",
+                        loginUser.getLogId(),
+                        System.currentTimeMillis() - startTimeMillis);
+
+                return ResponseEntity.ok(new BaseResponse<>(
+                        HttpStatus.OK.value(),
+                        ServiceConstants.FILE_UPLOADED_SUCCESSFULLY,
+                        null,
+                        ServiceConstants.SUCCESS_CODE,
+                        loginUser.getLogId()));
             }
-            if (resultResponses.size() == 0) {
-                this.ppeHeadRepository.saveAll(ppePlans);
-                this.ppeLineRepository.saveAll(ppeLineList);
 
-                log.error("LogId:{} - UploadExcelServiceImpl - uploadPpeDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + ServiceConstants.UPLOAD_PPE_DETAIL_METHOD_EXECUTED + (endTime - startTime));
-
-                return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(), ServiceConstants.FILE_UPLOADED_SUCCESSFULLY, null, ServiceConstants.SUCCESS_CODE, loginUser.getLogId()));
-            } else {
-                log.error("LogId:{} - UploadExcelServiceImpl - uploadPpeDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + ServiceConstants.PPE_DATA_UPLOAD_FAILED + (endTime - startTime));
-
-                return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(), ServiceConstants.STORE_DATA_UPLOAD_FAILED, resultResponses, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
-            }
+            return ResponseEntity.ok(new BaseResponse<>(
+                    HttpStatus.OK.value(),
+                    ServiceConstants.STORE_DATA_UPLOAD_FAILED,
+                    errors,
+                    ServiceConstants.ERROR_CODE,
+                    loginUser.getLogId()));
 
         } catch (Exception e) {
-            long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - UploadExcelServiceImpl - uploadPpeDetails - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + ServiceConstants.PPE_DATA_UPLOAD_FAILED + (endTime - startTime), e);
-
+            log.error("PPE upload failed", e);
             ExceptionLogger.logException(e, loginUser.getLogId());
-            e.printStackTrace();
-            return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, ServiceConstants.STORE_DATA_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
+
+            return ResponseEntity.ok(new BaseResponse<>(
+                    500,
+                    ServiceConstants.STORE_DATA_UPLOAD_FAILED,
+                    null,
+                    ServiceConstants.ERROR_CODE,
+                    loginUser.getLogId()));
         }
+    }
+
+    private boolean isFutureStartDate(Date date, LocalTime time) {
+        if (date == null || time == null) return false;
+        ZonedDateTime start = LocalDateTime.of(
+                date.toInstant().atZone(ZoneOffset.UTC).toLocalDate(),
+                time).atZone(ZoneOffset.UTC);
+        return start.isAfter(ZonedDateTime.now(ZoneOffset.UTC));
+    }
+
+    private boolean isStartAfterEnd(Date sd, LocalTime st, Date ed, LocalTime et) {
+        if (sd == null || st == null || ed == null || et == null) return false;
+        LocalDateTime start = LocalDateTime.of(
+                sd.toInstant().atZone(ZoneOffset.UTC).toLocalDate(), st);
+        LocalDateTime end = LocalDateTime.of(
+                ed.toInstant().atZone(ZoneOffset.UTC).toLocalDate(), et);
+        return start.isAfter(end);
+    }
+
+    private boolean isRowEmpty(Row row) {
+        for (int i = 0; i < row.getLastCellNum(); i++) {
+            if (row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private <T extends Auditable> void setAuditFields(T entity) {
+        Date now = new Date();
+        entity.setOrganizationId(loginUser.getOrgId());
+        entity.setSubOrganizationId(loginUser.getSubOrgId());
+        entity.setIsDeleted(false);
+        entity.setCreatedBy(loginUser.getUserId());
+        entity.setCreatedOn(now);
+        entity.setModifiedBy(loginUser.getUserId());
+        entity.setModifiedOn(now);
     }
 
 
@@ -3593,10 +3486,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 Map<String, String> dataMap = new HashMap<>();
                 dataMap.put("itemCode", getCellStringValue(row, 1, resultResponses, type, headerNames));
                 dataMap.put("itemName", getCellStringValue(row, 2, resultResponses, type, headerNames));
-                dataMap.put("uom", getCellStringValue(row, 3, resultResponses, type, headerNames));
-                dataMap.put("serialBatchNumber", getCellStringValue(row, 4, resultResponses, type, headerNames));
-                dataMap.put("containerCode", getCellStringValue(row, 5, resultResponses, type, headerNames));
-                dataMap.put("containerType", getCellStringValue(row, 6, resultResponses, type, headerNames));
+                dataMap.put("serialBatchNumber", getCellStringValue(row, 3, resultResponses, type, headerNames));
+                dataMap.put("containerCode", getCellStringValue(row, 4, resultResponses, type, headerNames));
+                dataMap.put("containerType", getCellStringValue(row, 5, resultResponses, type, headerNames));
 
                 // 🔹 Skip blank rows early
                 if (isBlank(dataMap.get("itemCode")) ||
@@ -3622,7 +3514,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 String container = row.get("containerCode");
                 String serial = row.get("serialBatchNumber");
 
-                if (isBlank(itemCode) || isBlank(container) || isBlank(serial)) continue; // extra safety
+                if (isBlank(itemCode) || isBlank(container) || isBlank(serial)) continue;
 
                 itemToContainerSerials
                         .computeIfAbsent(itemCode, k -> new HashMap<>())
@@ -3635,8 +3527,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             // ==== Validate ASN ====
             ASNLine asnLine = null;
+            Boolean isBatchMode = null;
             if ("ASN".equalsIgnoreCase(requestType)) {
                 asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+                isBatchMode = asnLine.getItem().getTypeSerialBatchNone().equalsIgnoreCase("Batch");
             }
             if (asnLine == null) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
@@ -3652,24 +3546,38 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toList());
 
-            Set<String> duplicateSerials = serialNumbers.stream()
-                    .filter(s -> Collections.frequency(serialNumbers, s) > 1)
-                    .collect(Collectors.toSet());
-            if (!duplicateSerials.isEmpty()) {
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
-                        null, ServiceConstants.ERROR_CODE, logId));
+            // In SERIAL mode, duplicates in Excel are NOT allowed
+            if (!isBatchMode) {
+                Set<String> duplicateSerials = serialNumbers.stream()
+                        .filter(s -> Collections.frequency(serialNumbers, s) > 1)
+                        .collect(Collectors.toSet());
+
+                if (!duplicateSerials.isEmpty()) {
+                    return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
+                            "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
+                            null, ServiceConstants.ERROR_CODE, logId));
+                }
             }
 
-            List<String> existingSerials = serialBatchNumberRepository
-                    .findByIsDeletedFalseAndAsnLineId(asnLine.getId())
-                    .stream()
-                    .map(SerialBatchNumber::getSerialBatchNumber)
-                    .collect(Collectors.toList());
+            Integer itemId = asnLine.getItem().getId();
 
-            List<String> overlap = serialNumbers.stream()
-                    .filter(existingSerials::contains)
-                    .collect(Collectors.toList());
+            Integer supplierId = null;
+
+            if (asnLine != null
+                    && asnLine.getAsnHeadId() != null
+                    && asnLine.getAsnHeadId().getSupplier() != null
+                    && asnLine.getAsnHeadId().getSupplier().getId() != null) {
+
+                supplierId = asnLine.getAsnHeadId().getSupplier().getId();
+            }
+
+            List<String> serialsForDbCheck = isBatchMode
+                    ? serialNumbers.stream().distinct().collect(Collectors.toList())
+                    : serialNumbers;
+
+            List<String> overlap = serialBatchNumberRepository
+                    .findExistingSerialsForItemSupplierAndSerials(itemId, supplierId, serialsForDbCheck);
+
             if (!overlap.isEmpty()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
                         "Serial Numbers already exist in system: " + String.join(", ", overlap),
@@ -3766,7 +3674,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (isBlank(containerCode) || serials == null || serials.isEmpty()) continue;
 
                     // ✅ Generate unique packing slip number
-                     String nextPackingSlipNumber = generateNextPackingSlipNumber();
+                    String nextPackingSlipNumber = generateNextPackingSlipNumber();
 
                     // ✅ Get container type from first matching Excel row
                     String containerType = packingRows.stream()
@@ -3857,7 +3765,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
     private String generateNextPackingSlipNumber() {
 
-        String[] monthLetters = {"A","B","C","D","E","F","G","H","I","J","K","L"};
+        String[] monthLetters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
 
         LocalDate today = LocalDate.now();
         String year = String.valueOf(today.getYear());
@@ -3874,9 +3782,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         // Final slip number -> PKG-2025A01-001
         return String.format("%s%d", prefix, nextSequence);
     }
-
-
-
 
 
 }
