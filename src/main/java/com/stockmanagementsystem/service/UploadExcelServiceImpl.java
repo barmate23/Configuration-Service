@@ -2321,7 +2321,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Date date = getDateValue(sheet.getRow(5).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 5, ServiceConstants.DATE);
             Float version = getFloatValue(sheet.getRow(6).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 6, ServiceConstants.VERSION);
             String assemblyLineId = getStringValue(sheet.getRow(7).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 8, ServiceConstants.LIFECYCLE_PHASE);
-            AssemblyLine assemblyLine1 = assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(false, loginUser.getSubOrgId(), assemblyLineId);
+            AssemblyLine assemblyLine1 = assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndLineCode(false, loginUser.getSubOrgId(), assemblyLineId);
             String lifecyclePhase = getStringValue(sheet.getRow(8).getCell(1, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL), resultResponses, type, 8, ServiceConstants.LIFECYCLE_PHASE);
             if (resultResponses.size() == 0) {
                 boMHead.setProduct(product);
@@ -2696,7 +2696,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 }
 
                 AssemblyLine assemblyLine =
-                        assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(
+                        assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndLineCode(
                                 false, loginUser.getSubOrgId(), lineId);
 
                 if (assemblyLine == null) {

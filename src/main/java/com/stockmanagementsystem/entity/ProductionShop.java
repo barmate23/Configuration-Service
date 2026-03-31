@@ -7,25 +7,26 @@ import java.util.List;
 
 @Entity
 @Data
-@Table(name = "tbl_ProductionShop")
+@Table(name = "tbl_production_shop")
 public class ProductionShop {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "erpShopCode")
+    @Column(name = "erp_shop_code")
     private String erpShopCode;
 
-    @Column(name = "shopCode", unique = true)
+    @Column(name = "shop_code", unique = true)
     private String shopCode;
 
-    @Column(name = "shopName")
+    @Column(name = "shop_name")
     private String shopName;
 
     @Column(name = "description")
     private String description;
 
-    @Column(name = "shopType")
+    @Column(name = "shop_type")
     private String shopType; // Assembly / Machine / Formulation
 
     @Column(name = "OrganizationId")
@@ -35,7 +36,7 @@ public class ProductionShop {
     private Integer subOrganizationId;
 
     @Column(name = "IsDeleted")
-    private Boolean isDeleted = false;
+    private Boolean isDeleted;
 
     @Column(name = "CreatedBy")
     private Integer createdBy;
@@ -49,6 +50,6 @@ public class ProductionShop {
     @Column(name = "ModifiedOn")
     private Date modifiedOn;
 
-    @OneToMany(mappedBy = "productionShop", cascade = CascadeType.ALL)
-    private List<ProductionLine> productionLines;
+    @OneToMany(mappedBy = "productionShop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AssemblyLine> assemblyLines;
 }

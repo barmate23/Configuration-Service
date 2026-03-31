@@ -1,18 +1,15 @@
-package com.stockmanagementsystem.request;
+package com.stockmanagementsystem.response;
 
 import lombok.Data;
-
 import java.util.List;
 
-
 @Data
-public class AssemblyLineRequest {
-
+public class AssemblyLineResponse {
+    private Integer id;
     private String erpLineCode;
     private String lineCode;
     private String lineName;
     private String description;
     private Integer sequenceNumber;
-    private Integer shopId;
-    List<StageRequest> stageRequests;
+    private List<StageResponse> stages;
 }

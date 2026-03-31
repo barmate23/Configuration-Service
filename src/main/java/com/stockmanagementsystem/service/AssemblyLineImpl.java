@@ -36,9 +36,7 @@ public class AssemblyLineImpl implements  AssemblyLineService{
         BaseResponse<AssemblyLine> response = new BaseResponse<>();
         try {
             AssemblyLine assemblyLine = new AssemblyLine();
-            assemblyLine.setLineNumber(assemblyLineRequest.getLineNumber());
             List<AssemblyLine> assemblyLines=assemblyLineRepository.findByIsDeletedAndSubOrganizationId(false,loginUser.getSubOrgId());
-            assemblyLine.setAssemblyLineId(assemblyLineIdGenerator());
             assemblyLine.setIsDeleted(false);
             assemblyLine.setCreatedOn(new Date());
             assemblyLine.setCreatedBy(loginUser.getUserId());
@@ -56,10 +54,9 @@ public class AssemblyLineImpl implements  AssemblyLineService{
                     String stageCode=stageIdGenerator(assemblyLine.getId(),st);
                     st++;
                     stage.setStageCode(stageCode);
-                    stage.setStageId(assemblyLine.getAssemblyLineId()+"-"+stageCode);
                     stage.setAssemblyLine(assemblyLine);
                     stage.setStageName(stageRequest.getStageName());
-                    stage.setStageId(stageRequest.getStageId());
+                    stage.setStageCode(stageRequest.getStageCode());
                     stage.setIsDeleted(false);
                     stage.setCreatedOn(new Date());
                     stage.setCreatedBy(loginUser.getUserId());
@@ -112,8 +109,6 @@ public class AssemblyLineImpl implements  AssemblyLineService{
         BaseResponse<AssemblyLine> response = new BaseResponse<>();
         try {
             AssemblyLine assemblyLine = assemblyLineRepository.findByIsDeletedAndId(false,id);
-            assemblyLine.setLineNumber(assemblyLineRequest.getLineNumber());
-            assemblyLine.setAssemblyLineId(assemblyLineRequest.getAssemblyLineId());
             assemblyLine.setIsDeleted(false);
             assemblyLine.setCreatedOn(new Date());
             assemblyLine.setCreatedBy(loginUser.getUserId());
@@ -136,7 +131,7 @@ public class AssemblyLineImpl implements  AssemblyLineService{
                     }
                     stage.setAssemblyLine(assemblyLine);
                     stage.setStageName(stageRequest.getStageName());
-                    stage.setStageId(stageRequest.getStageId());
+                    stage.setStageCode(stageRequest.getStageCode());
                     stage.setIsDeleted(false);
                     stage.setCreatedOn(new Date());
                     stage.setCreatedBy(loginUser.getUserId());

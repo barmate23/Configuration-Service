@@ -1,28 +1,40 @@
 package com.stockmanagementsystem.service;
 
-import com.stockmanagementsystem.entity.*;
+import com.stockmanagementsystem.entity.LoginUser;
+import com.stockmanagementsystem.entity.AssemblyLine;
+import com.stockmanagementsystem.entity.ProductionShop;
+import com.stockmanagementsystem.entity.ResponseMessage;
+import com.stockmanagementsystem.entity.Stage;
 import com.stockmanagementsystem.repository.AssemblyLineRepository;
-import com.stockmanagementsystem.repository.StageRepository;
 import com.stockmanagementsystem.repository.ProductionShopRepository;
-import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.repository.StageRepository;
+import com.stockmanagementsystem.request.ProductionLineRequest;
+import com.stockmanagementsystem.request.ProductionLineStageRequest;
+import com.stockmanagementsystem.request.ProductionShopRequest;
+import com.stockmanagementsystem.response.*;
+import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
+
+import static com.stockmanagementsystem.utils.GlobalMessages.getResponseMessages;
 
 @Slf4j
 @Service
 public class ProductionShopServiceImpl implements ProductionShopService {
 
     @Autowired
-    private ProductionShopRepository shopRepository;
+    private ProductionShopRepository productionShopRepository;
 
     @Autowired
-    private AssemblyLineRepository lineRepository;
+    private AssemblyLineRepository assemblyLineRepository;
 
     @Autowired
     private StageRepository stageRepository;
@@ -30,210 +42,327 @@ public class ProductionShopServiceImpl implements ProductionShopService {
     @Autowired
     private LoginUser loginUser;
 
-    private void setAuditFields(Object entity, boolean isUpdate) {
-        Date now = new Date();
+    @Override
+    public BaseResponse<ProductionShopResponse> saveProductionShop(ProductionShopRequest request) {
+        long startTime = System.currentTimeMillis();
+        BaseResponse<ProductionShopResponse> response = new BaseResponse<>();
         try {
-            if (!isUpdate) {
-                entity.getClass().getMethod("setCreatedBy", Integer.class).invoke(entity, loginUser.getUserId());
-                entity.getClass().getMethod("setCreatedOn", Date.class).invoke(entity, now);
-                entity.getClass().getMethod("setOrganizationId", Integer.class).invoke(entity, loginUser.getOrgId());
-                entity.getClass().getMethod("setSubOrganizationId", Integer.class).invoke(entity,
-                        loginUser.getSubOrgId());
-                entity.getClass().getMethod("setIsDeleted", Boolean.class).invoke(entity, false);
+            ProductionShop shop = new ProductionShop();
+            shop.setErpShopCode(request.getErpShopCode());
+            shop.setShopCode(request.getShopCode());
+            shop.setShopName(request.getShopName());
+            shop.setDescription(request.getDescription());
+            shop.setShopType(request.getShopType());
+            shop.setIsDeleted(false);
+            shop.setCreatedOn(new Date());
+            shop.setCreatedBy(loginUser.getUserId());
+            shop.setModifiedBy(loginUser.getUserId());
+            shop.setModifiedOn(new Date());
+            shop.setOrganizationId(loginUser.getOrgId());
+            shop.setSubOrganizationId(loginUser.getSubOrgId());
+            
+            productionShopRepository.save(shop);
+
+            if (request.getProductionLineRequests() != null) {
+                for (ProductionLineRequest lineReq : request.getProductionLineRequests()) {
+                    AssemblyLine line = new AssemblyLine();
+                    line.setErpLineCode(lineReq.getErpLineCode());
+                    line.setLineCode(lineReq.getLineCode());
+                    line.setLineName(lineReq.getLineName());
+                    line.setDescription(lineReq.getDescription());
+                    line.setSequenceNumber(lineReq.getSequenceNumber());
+                    line.setProductionShop(shop);
+                    line.setIsDeleted(false);
+                    line.setCreatedOn(new Date());
+                    line.setCreatedBy(loginUser.getUserId());
+                    line.setModifiedBy(loginUser.getUserId());
+                    line.setModifiedOn(new Date());
+                    line.setOrganizationId(loginUser.getOrgId());
+                    line.setSubOrganizationId(loginUser.getSubOrgId());
+                    assemblyLineRepository.save(line);
+
+                    if (lineReq.getStageRequests() != null) {
+                        for (ProductionLineStageRequest stageReq : lineReq.getStageRequests()) {
+                            Stage stage = new Stage();
+                            stage.setErpStageCode(stageReq.getErpStageCode());
+                            stage.setStageCode(stageReq.getStageCode());
+                            stage.setStageName(stageReq.getStageName());
+                            stage.setSequenceNumber(stageReq.getSequenceNumber());
+                            stage.setAssemblyLine(line);
+                            stage.setIsDeleted(false);
+                            stage.setCreatedOn(new Date());
+                            stage.setCreatedBy(loginUser.getUserId());
+                            stage.setModifiedBy(loginUser.getUserId());
+                            stage.setModifiedOn(new Date());
+                            stage.setOrganizationId(loginUser.getOrgId());
+                            stage.setSubOrganizationId(loginUser.getSubOrgId());
+                            stageRepository.save(stage);
+                        }
+                    }
+                }
             }
-            entity.getClass().getMethod("setModifiedBy", Integer.class).invoke(entity, loginUser.getUserId());
-            entity.getClass().getMethod("setModifiedOn", Date.class).invoke(entity, now);
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10024S);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            List<ProductionShopResponse> data = new ArrayList<>();
+            data.add(mapToProductionShopResponse(shop));
+            response.setData(data);
+            response.setStatus(1);
         } catch (Exception e) {
-            log.error("Error setting audit fields", e);
+            log.error("Error in saveProductionShop", e);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10023F);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(0);
+            response.setMessage(responseMessage.getMessage());
         }
+        return response;
     }
 
     @Override
-    public BaseResponse<ProductionShop> saveProductionShop(ProductionShop shop) {
-        setAuditFields(shop, false);
-        ProductionShop savedShop = shopRepository.save(shop);
-        List<ProductionShop> data = new ArrayList<>();
-        data.add(savedShop);
-        return new BaseResponse<>(200, "Shop saved successfully", data, 200, loginUser.getLogId());
-    }
+    public BaseResponse<ProductionShopResponse> updateProductionShop(Integer id, ProductionShopRequest request) {
+        BaseResponse<ProductionShopResponse> response = new BaseResponse<>();
+        try {
+            ProductionShop shop = productionShopRepository.findByIsDeletedAndId(false, id);
+            if (shop != null) {
+                shop.setErpShopCode(request.getErpShopCode());
+                shop.setShopCode(request.getShopCode());
+                shop.setShopName(request.getShopName());
+                shop.setDescription(request.getDescription());
+                shop.setShopType(request.getShopType());
+                shop.setModifiedBy(loginUser.getUserId());
+                shop.setModifiedOn(new Date());
+                productionShopRepository.save(shop);
 
-    @Override
-    public BaseResponse<ProductionShop> updateProductionShop(Integer id, ProductionShop shop) {
-        Optional<ProductionShop> existing = shopRepository.findById(id);
-        if (existing.isPresent()) {
-            ProductionShop updated = existing.get();
-            updated.setErpShopCode(shop.getErpShopCode());
-            updated.setShopCode(shop.getShopCode());
-            updated.setShopName(shop.getShopName());
-            updated.setDescription(shop.getDescription());
-            updated.setShopType(shop.getShopType());
-            setAuditFields(updated, true);
-            shopRepository.save(updated);
-            List<ProductionShop> data = new ArrayList<>();
-            data.add(updated);
-            return new BaseResponse<>(200, "Shop updated successfully", data, 200, loginUser.getLogId());
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10023S);
+                response.setCode(responseMessage.getCode());
+                response.setStatus(responseMessage.getStatus());
+                response.setMessage(responseMessage.getMessage());
+                List<ProductionShopResponse> data = new ArrayList<>();
+                data.add(mapToProductionShopResponse(shop));
+                response.setData(data);
+                response.setStatus(1);
+            }
+        } catch (Exception e) {
+            log.error("Error in updateProductionShop", e);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10022F);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(0);
+            response.setMessage(responseMessage.getMessage());
         }
-        return new BaseResponse<>(404, "Shop not found", null, 404, loginUser.getLogId());
+        return response;
     }
 
     @Override
-    public BaseResponse<ProductionShop> deleteProductionShop(Integer id) {
-        Optional<ProductionShop> existing = shopRepository.findById(id);
-        if (existing.isPresent()) {
-            ProductionShop shop = existing.get();
-            shop.setIsDeleted(true);
-            setAuditFields(shop, true);
-            shopRepository.save(shop);
-            return new BaseResponse<>(200, "Shop deleted successfully", null, 200, loginUser.getLogId());
+    public BaseResponse<ProductionShopResponse> getAllProductionShops() {
+        BaseResponse<ProductionShopResponse> response = new BaseResponse<>();
+        try {
+            List<ProductionShop> shops = productionShopRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10021S);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            response.setData(mapToProductionShopResponseList(shops));
+            response.setStatus(1);
+        } catch (Exception e) {
+            log.error("Error in getAllProductionShops", e);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10020F);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(0);
+            response.setMessage(responseMessage.getMessage());
         }
-        return new BaseResponse<>(404, "Shop not found", null, 404, loginUser.getLogId());
+        return response;
     }
 
     @Override
-    public BaseResponse<ProductionShop> getAllProductionShops() {
-        List<ProductionShop> shops = shopRepository.findByIsDeletedFalse();
-        return new BaseResponse<>(200, "Shops fetched successfully", shops, 200, loginUser.getLogId());
-    }
-
-    @Override
-    public BaseResponse<ProductionShop> getProductionShopById(Integer id) {
-        Optional<ProductionShop> shop = shopRepository.findById(id);
-        if (shop.isPresent() && !shop.get().getIsDeleted()) {
-            List<ProductionShop> data = new ArrayList<>();
-            data.add(shop.get());
-            return new BaseResponse<>(200, "Shop fetched successfully", data, 200, loginUser.getLogId());
+    public BaseResponse<ProductionShopResponse> getProductionShopById(Integer id) {
+        BaseResponse<ProductionShopResponse> response = new BaseResponse<>();
+        try {
+            ProductionShop shop = productionShopRepository.findByIsDeletedAndId(false, id);
+            List<ProductionShopResponse> data = new ArrayList<>();
+            if (shop != null) data.add(mapToProductionShopResponse(shop));
+            response.setData(data);
+            response.setStatus(1);
+        } catch (Exception e) {
+            log.error("Error in getProductionShopById", e);
+            response.setStatus(0);
         }
-        return new BaseResponse<>(404, "Shop not found", null, 404, loginUser.getLogId());
+        return response;
     }
 
     @Override
-    public BaseResponse<AssemblyLine> saveProductionLine(AssemblyLine line) {
-        if (line.getShopId() != null) {
-            Optional<ProductionShop> shop = shopRepository.findById(line.getShopId());
-            if (shop.isPresent()) {
-                line.setProductionShop(shop.get());
+    public BaseResponse<ProductionShopResponse> deleteProductionShopById(Integer id) {
+        BaseResponse<ProductionShopResponse> response = new BaseResponse<>();
+        try {
+            ProductionShop shop = productionShopRepository.findByIsDeletedAndId(false, id);
+            if (shop != null) {
+                shop.setIsDeleted(true);
+                productionShopRepository.save(shop);
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10019S);
+                response.setCode(responseMessage.getCode());
+                response.setStatus(responseMessage.getStatus());
+                response.setMessage(responseMessage.getMessage());
+                response.setStatus(1);
+            }
+        } catch (Exception e) {
+            log.error("Error in deleteProductionShopById", e);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10018F);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(0);
+            response.setMessage(responseMessage.getMessage());
+        }
+        return response;
+    }
+
+    @Override
+    public BaseResponse<ProductionShopResponse> getAllProductionShopsWithPagination(Integer pageNo, Integer pageSize) {
+        BaseResponse<ProductionShopResponse> response = new BaseResponse<>();
+        try {
+            Pageable pageable = PageRequest.of(pageNo, pageSize);
+            Page<ProductionShop> page = productionShopRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+            response.setData(mapToProductionShopResponseList(page.getContent()));
+            response.setTotalRecordCount(page.getTotalElements());
+            response.setTotalPageCount(page.getTotalPages());
+            response.setStatus(1);
+        } catch (Exception e) {
+            log.error("Error in getAllProductionShopsWithPagination", e);
+            response.setStatus(0);
+        }
+        return response;
+    }
+
+    @Override
+    public BaseResponse<ProductionShopResponse> getProductionShopHierarchy() {
+        BaseResponse<ProductionShopResponse> response = new BaseResponse<>();
+        try {
+            List<ProductionShop> shops = productionShopRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
+            response.setData(mapToProductionShopResponseList(shops));
+            response.setStatus(1);
+            response.setMessage("Hierarchy fetched successfully");
+        } catch (Exception e) {
+            log.error("Error in getProductionShopHierarchy", e);
+            response.setStatus(0);
+            response.setMessage("Failed to fetch hierarchy");
+        }
+        return response;
+    }
+
+    @Override
+    public BaseResponse<AssemblyLineResponse> getProductionLinesByShopId(Integer shopId) {
+        BaseResponse<AssemblyLineResponse> response = new BaseResponse<>();
+        try {
+            List<AssemblyLine> lines = assemblyLineRepository.findByIsDeletedAndProductionShopId(false, shopId);
+            response.setData(mapToAssemblyLineResponseList(lines));
+            response.setStatus(1);
+            response.setMessage("Production lines fetched successfully");
+        } catch (Exception e) {
+            log.error("Error in getProductionLinesByShopId", e);
+            response.setStatus(0);
+            response.setMessage("Failed to fetch production lines");
+        }
+        return response;
+    }
+
+    @Override
+    public BaseResponse<AssemblyLineResponse> getProductionLineById(Integer id) {
+        BaseResponse<AssemblyLineResponse> response = new BaseResponse<>();
+        try {
+            AssemblyLine line = assemblyLineRepository.findByIsDeletedAndId(false, id);
+            List<AssemblyLineResponse> data = new ArrayList<>();
+            if (line != null) data.add(mapToAssemblyLineResponse(line));
+            response.setData(data);
+            response.setStatus(1);
+            response.setMessage("Production line fetched successfully");
+        } catch (Exception e) {
+            log.error("Error in getProductionLineById", e);
+            response.setStatus(0);
+            response.setMessage("Failed to fetch production line");
+        }
+        return response;
+    }
+
+    @Override
+    public BaseResponse<StageResponse> getStagesByLineId(Integer lineId) {
+        BaseResponse<StageResponse> response = new BaseResponse<>();
+        try {
+            List<Stage> stages = stageRepository.findByIsDeletedAndAssemblyLineId(false, lineId);
+            response.setData(mapToStageResponseList(stages));
+            response.setStatus(1);
+            response.setMessage("Stages fetched successfully");
+        } catch (Exception e) {
+            log.error("Error in getStagesByLineId", e);
+            response.setStatus(0);
+            response.setMessage("Failed to fetch stages");
+        }
+        return response;
+    }
+
+    private List<ProductionShopResponse> mapToProductionShopResponseList(List<ProductionShop> shops) {
+        List<ProductionShopResponse> responseList = new ArrayList<>();
+        if (shops != null) {
+            for (ProductionShop shop : shops) {
+                responseList.add(mapToProductionShopResponse(shop));
             }
         }
-        setAuditFields(line, false);
-        AssemblyLine savedLine = lineRepository.save(line);
-        List<AssemblyLine> data = new ArrayList<>();
-        data.add(savedLine);
-        return new BaseResponse<>(200, "Line saved successfully", data, 200, loginUser.getLogId());
+        return responseList;
     }
 
-    @Override
-    public BaseResponse<AssemblyLine> updateProductionLine(Integer id, AssemblyLine line) {
-        AssemblyLine updated = lineRepository.findByIsDeletedAndId(false, id);
-        if (updated != null) {
-            updated.setErpLineCode(line.getErpLineCode());
-            updated.setLineCode(line.getLineCode());
-            updated.setLineName(line.getLineName());
-            updated.setDescription(line.getDescription());
-            updated.setSequenceNumber(line.getSequenceNumber());
-            if (line.getShopId() != null) {
-                Optional<ProductionShop> shop = shopRepository.findById(line.getShopId());
-                shop.ifPresent(updated::setProductionShop);
-            }
-            setAuditFields(updated, true);
-            lineRepository.save(updated);
-            List<AssemblyLine> data = new ArrayList<>();
-            data.add(updated);
-            return new BaseResponse<>(200, "Line updated successfully", data, 200, loginUser.getLogId());
+    private ProductionShopResponse mapToProductionShopResponse(ProductionShop shop) {
+        ProductionShopResponse response = new ProductionShopResponse();
+        response.setId(shop.getId());
+        response.setErpShopCode(shop.getErpShopCode());
+        response.setShopCode(shop.getShopCode());
+        response.setShopName(shop.getShopName());
+        response.setDescription(shop.getDescription());
+        response.setShopType(shop.getShopType());
+        if (shop.getAssemblyLines() != null) {
+            response.setAssemblyLines(mapToAssemblyLineResponseList(shop.getAssemblyLines()));
         }
-        return new BaseResponse<>(404, "Line not found", null, 404, loginUser.getLogId());
+        return response;
     }
 
-    @Override
-    public BaseResponse<AssemblyLine> deleteProductionLine(Integer id) {
-        AssemblyLine line = lineRepository.findByIsDeletedAndId(false, id);
-        if (line != null) {
-            line.setIsDeleted(true);
-            setAuditFields(line, true);
-            lineRepository.save(line);
-            return new BaseResponse<>(200, "Line deleted successfully", null, 200, loginUser.getLogId());
-        }
-        return new BaseResponse<>(404, "Line not found", null, 404, loginUser.getLogId());
-    }
-
-    @Override
-    public BaseResponse<AssemblyLine> getAllProductionLines() {
-        List<AssemblyLine> lines = lineRepository.findByIsDeleted(false);
-        return new BaseResponse<>(200, "Lines fetched successfully", lines, 200, loginUser.getLogId());
-    }
-
-    @Override
-    public BaseResponse<AssemblyLine> getProductionLinesByShopId(Integer shopId) {
-        Optional<ProductionShop> shop = shopRepository.findById(shopId);
-        if (shop.isPresent()) {
-            List<AssemblyLine> lines = lineRepository
-                    .findByProductionShopAndIsDeletedFalseOrderBySequenceNumberAsc(shop.get());
-            return new BaseResponse<>(200, "Lines fetched successfully", lines, 200, loginUser.getLogId());
-        }
-        return new BaseResponse<>(404, "Shop not found", null, 404, loginUser.getLogId());
-    }
-
-    @Override
-    public BaseResponse<Stage> saveProductionLineStage(Stage stage) {
-        if (stage.getLineId() != null) {
-            Optional<AssemblyLine> line = lineRepository.findById(stage.getLineId());
-            if (line.isPresent()) {
-                stage.setAssemblyLine(line.get());
+    private List<AssemblyLineResponse> mapToAssemblyLineResponseList(List<AssemblyLine> lines) {
+        List<AssemblyLineResponse> responseList = new ArrayList<>();
+        if (lines != null) {
+            for (AssemblyLine line : lines) {
+                responseList.add(mapToAssemblyLineResponse(line));
             }
         }
-        setAuditFields(stage, false);
-        Stage savedStage = stageRepository.save(stage);
-        List<Stage> data = new ArrayList<>();
-        data.add(savedStage);
-        return new BaseResponse<>(200, "Stage saved successfully", data, 200, loginUser.getLogId());
+        return responseList;
     }
 
-    @Override
-    public BaseResponse<Stage> updateProductionLineStage(Integer id, Stage stage) {
-        Stage updated = stageRepository.findByIsDeletedAndId(false, id);
-        if (updated != null) {
-            updated.setErpStageCode(stage.getErpStageCode());
-            updated.setStageCode(stage.getStageCode());
-            updated.setStageName(stage.getStageName());
-            updated.setSequenceNumber(stage.getSequenceNumber());
-            if (stage.getLineId() != null) {
-                Optional<AssemblyLine> line = lineRepository.findById(stage.getLineId());
-                line.ifPresent(updated::setAssemblyLine);
+    private AssemblyLineResponse mapToAssemblyLineResponse(AssemblyLine line) {
+        AssemblyLineResponse response = new AssemblyLineResponse();
+        response.setId(line.getId());
+        response.setErpLineCode(line.getErpLineCode());
+        response.setLineCode(line.getLineCode());
+        response.setLineName(line.getLineName());
+        response.setDescription(line.getDescription());
+        response.setSequenceNumber(line.getSequenceNumber());
+        if (line.getStages() != null) {
+            response.setStages(mapToStageResponseList(line.getStages()));
+        }
+        return response;
+    }
+
+    private List<StageResponse> mapToStageResponseList(List<Stage> stages) {
+        List<StageResponse> responseList = new ArrayList<>();
+        if (stages != null) {
+            for (Stage stage : stages) {
+                responseList.add(mapToStageResponse(stage));
             }
-            setAuditFields(updated, true);
-            stageRepository.save(updated);
-            List<Stage> data = new ArrayList<>();
-            data.add(updated);
-            return new BaseResponse<>(200, "Stage updated successfully", data, 200, loginUser.getLogId());
         }
-        return new BaseResponse<>(404, "Stage not found", null, 404, loginUser.getLogId());
+        return responseList;
     }
 
-    @Override
-    public BaseResponse<Stage> deleteProductionLineStage(Integer id) {
-        Stage stage = stageRepository.findByIsDeletedAndId(false, id);
-        if (stage != null) {
-            stage.setIsDeleted(true);
-            setAuditFields(stage, true);
-            stageRepository.save(stage);
-            return new BaseResponse<>(200, "Stage deleted successfully", null, 200, loginUser.getLogId());
-        }
-        return new BaseResponse<>(404, "Stage not found", null, 404, loginUser.getLogId());
-    }
-
-    @Override
-    public BaseResponse<Stage> getAllProductionLineStages() {
-        List<Stage> stages = stageRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
-        return new BaseResponse<>(200, "Stages fetched successfully", stages, 200, loginUser.getLogId());
-    }
-
-    @Override
-    public BaseResponse<Stage> getStagesByLineId(Integer lineId) {
-        Optional<AssemblyLine> line = lineRepository.findById(lineId);
-        if (line.isPresent()) {
-            List<Stage> stages = stageRepository
-                    .findByAssemblyLineAndIsDeletedFalseOrderBySequenceNumberAsc(line.get());
-            return new BaseResponse<>(200, "Stages fetched successfully", stages, 200, loginUser.getLogId());
-        }
-        return new BaseResponse<>(404, "Line not found", null, 404, loginUser.getLogId());
+    private StageResponse mapToStageResponse(Stage stage) {
+        StageResponse response = new StageResponse();
+        response.setId(stage.getId());
+        response.setErpStageCode(stage.getErpStageCode());
+        response.setStageCode(stage.getStageCode());
+        response.setStageName(stage.getStageName());
+        response.setSequenceNumber(stage.getSequenceNumber());
+        return response;
     }
 }
