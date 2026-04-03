@@ -4,7 +4,7 @@ import com.stockmanagementsystem.entity.AcceptedRejectedStagingArea;
 import com.stockmanagementsystem.entity.Dock;
 import com.stockmanagementsystem.request.DockRequest;
 import com.stockmanagementsystem.response.*;
-import com.stockmanagementsystem.service.DocksService;
+import com.stockmanagementsystem.service.*;
 import com.stockmanagementsystem.utils.APIConstants;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +16,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Date;
+import org.springframework.format.annotation.DateTimeFormat;
 
 
 @RestController
@@ -114,25 +115,6 @@ public class DocksController {
     }
 
 
-    @GetMapping(APIConstants.GET_STORE)
-    public ResponseEntity<BaseResponse<List<StoreWithIdResponse>>> getStoresWithIds() {
-        BaseResponse<List<StoreWithIdResponse>> response = docksService.getStoresWithIds();
-        HttpStatus status = HttpStatus.resolve(response.getCode());
-        if (status == null) {
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        return ResponseEntity.ok(response);
-    }
-    @GetMapping(APIConstants.GET_ALL_USERS)
-    public ResponseEntity<BaseResponse<List<UserResponse>>> getUsersWithIds() {
-        BaseResponse<List<UserResponse>> response = docksService.getUsersWithIds();
-        HttpStatus status = HttpStatus.resolve(response.getCode());
-        if (status == null) {
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping(APIConstants.GET_BARCODE_DOCKS)
     public ResponseEntity<byte[]> generateDockBarcodePDF() {
         byte[] pdfFile =  docksService.generateDockBarcodePDF();
@@ -167,5 +149,15 @@ public class DocksController {
         return docksService.getAllStagingArea();
     }
 
+    @GetMapping("/v2" + APIConstants.GET_DOCK)
+    public BaseResponse<DockResponse> getAllDocksV2(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return docksService.getAllDocksV2(page, pageSize);
+    }
 
+    @GetMapping("/v2/getDocksById/{dockId}")
+    public BaseResponse<DockResponse> getDocksByIdV2(@PathVariable Integer dockId){
+        return docksService.getDocksByIdV2(dockId);
+    }
 }

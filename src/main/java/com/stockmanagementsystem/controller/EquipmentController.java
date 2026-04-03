@@ -5,6 +5,7 @@ import com.stockmanagementsystem.entity.LoginUser;
 import com.stockmanagementsystem.entity.Zone;
 import com.stockmanagementsystem.request.EquipmentRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.EquipmentResponseV2;
 import com.stockmanagementsystem.service.EquipmentService;
 import com.stockmanagementsystem.utils.APIConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ import java.util.List;
 
 @RestController
 @Slf4j
-@RequestMapping({APIConstants.BASE_REQUEST + APIConstants.SERVICENAME+APIConstants.EQUIPMENT_CONTROLLER})
+@RequestMapping({ APIConstants.BASE_REQUEST + APIConstants.SERVICENAME + APIConstants.EQUIPMENT_CONTROLLER })
 public class EquipmentController {
 
     @Autowired
@@ -29,47 +30,61 @@ public class EquipmentController {
     @Autowired
     LoginUser loginUser;
 
-
     @GetMapping("/getAllEquipmentWithPagination")
     public BaseResponse<Equipment> getAllEquipmentWithPagination(@RequestParam(defaultValue = "0") Integer pageNo,
-                                                                 @RequestParam(defaultValue = "10") Integer pageSize,
-                                                                 @RequestParam(required = false ) List<Integer> storeId,
-                                                                 @RequestParam(required = false) List<String> trolleyType){
-        return equipmentService.getAllEquipmentWithPagination(pageNo,pageSize,storeId,trolleyType);
-        }
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) List<Integer> storeId,
+            @RequestParam(required = false) List<String> trolleyType) {
+        return equipmentService.getAllEquipmentWithPagination(pageNo, pageSize, storeId, trolleyType);
+    }
+
     @PostMapping("/saveEquipment")
-    public BaseResponse<Equipment> saveEquipment(@RequestBody EquipmentRequest equipmentRequest){
+    public BaseResponse<Equipment> saveEquipment(@RequestBody EquipmentRequest equipmentRequest) {
         return equipmentService.saveEquipment(equipmentRequest);
     }
 
     @PostMapping("/updateEquipment/{id}")
-    public BaseResponse<Equipment> updateEquipment(@PathVariable Integer id,@RequestBody EquipmentRequest equipmentRequest){
-        return equipmentService.updateEquipment(id,equipmentRequest);
+    public BaseResponse<Equipment> updateEquipment(@PathVariable Integer id,
+            @RequestBody EquipmentRequest equipmentRequest) {
+        return equipmentService.updateEquipment(id, equipmentRequest);
     }
+
     @DeleteMapping("/deleteEquipmentById/{id}")
-    public BaseResponse<Equipment> deleteEquipmentById(@PathVariable Integer id){
+    public BaseResponse<Equipment> deleteEquipmentById(@PathVariable Integer id) {
         return equipmentService.deleteEquipmentById(id);
     }
+
     @GetMapping("/getAllEquipment")
-    public BaseResponse<Equipment> deleteEquipmentById(){
+    public BaseResponse<Equipment> deleteEquipmentById() {
         return equipmentService.getAllEquipment();
     }
 
     @GetMapping(APIConstants.GET_BARCODE_EQUIPMENT)
     public ResponseEntity<byte[]> generateBarcodePDF() {
         try {
-            log.info("LogId:{} - EquipmentController - generateBarcodePDF - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET STAGE BARCODE START");
+            log.info("LogId:{} - EquipmentController - generateBarcodePDF - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), " GET STAGE BARCODE START");
             ByteArrayOutputStream outputStream = equipmentService.generateBarcodePDF();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("filename", "Stage_barcode_list.pdf");
             headers.setContentLength(outputStream.size());
-            log.info("LogId:{} - EquipmentController - generateBarcodePDF - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET STAGE BARCODE END");
+            log.info("LogId:{} - EquipmentController - generateBarcodePDF - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), " GET STAGE BARCODE END");
 
             return new ResponseEntity<>(outputStream.toByteArray(), headers, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/v2/getAllEquipmentWithPagination")
+    public BaseResponse<EquipmentResponseV2> getAllEquipmentWithPaginationV2(
+            @RequestParam(defaultValue = "0") Integer pageNo,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) List<Integer> storeId,
+            @RequestParam(required = false) List<String> trolleyType) {
+        return equipmentService.getAllEquipmentWithPaginationV2(pageNo, pageSize, storeId, trolleyType);
     }
 }

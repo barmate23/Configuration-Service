@@ -6,6 +6,7 @@ import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.response.ItemNameResponse;
 import com.stockmanagementsystem.response.ReasonCategoryResponse;
 import com.stockmanagementsystem.response.ReasonResponse;
+import com.stockmanagementsystem.response.ReasonResponseV2;
 
 import java.util.List;
 
@@ -39,4 +40,14 @@ public interface ReasonService {
     BaseResponse<Reason> getApprovalPendingReasons(String categoryCode);
 
     BaseResponse saveOtherReason(String rejectedReason, String reasonCategory);
+
+    BaseResponse<ReasonResponseV2> getAllReasonsWithoutPaginationV2();
+
+    BaseResponse<ReasonResponseV2> getAllReasonByCategoryV2(String categoryCode);
+
+    BaseResponse<ReasonResponseV2> getApprovalPendingReasonsV2(String categoryCode);
+
+    BaseResponse<ReasonResponseV2> searchReasonsV2(Integer pageNumber, Integer pageSize, List<String> reasonId, String reasonCategory, List<String> itemName, Boolean userCreatedReason);
+
+    BaseResponse<ReasonResponseV2> getAllReasonsV2(int page, int pageSize);
 }

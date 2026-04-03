@@ -7,6 +7,7 @@ import com.stockmanagementsystem.request.StoreRequest;
 import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.response.CreateYearResponse;
 import com.stockmanagementsystem.response.StoreResponse;
+import com.stockmanagementsystem.response.StoreResponseDto;
 import com.stockmanagementsystem.service.StoreService;
 import com.stockmanagementsystem.utils.APIConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -92,5 +93,11 @@ public class StoreController {
     @GetMapping("/getAreaLicense")
     public BaseResponse<Users> getAreaLicense(){
         return storeService.getAreaLicense();
+    }
+
+    @GetMapping("/v2/getStoresWithPagination")
+    public BaseResponse<StoreResponseDto> getStoresWithPaginationV2(@RequestParam(defaultValue = "0") Integer pageNo,
+                                                               @RequestParam(defaultValue = "10") Integer pageSize){
+        return storeService.getStoresWithPaginationV2(pageNo, pageSize);
     }
 }

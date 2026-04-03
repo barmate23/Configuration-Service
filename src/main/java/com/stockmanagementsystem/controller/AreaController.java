@@ -3,6 +3,7 @@ package com.stockmanagementsystem.controller;
 import com.stockmanagementsystem.entity.Address;
 import com.stockmanagementsystem.entity.Area;
 import com.stockmanagementsystem.response.AddressResponse;
+import com.stockmanagementsystem.response.AreaResponseDto;
 import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.service.AreaServices;
 import com.stockmanagementsystem.utils.APIConstants;
@@ -56,4 +57,11 @@ public class AreaController {
         return response;
     }
 
+    @GetMapping("/v2/getAllAreaWithPagination")
+    public BaseResponse<AreaResponseDto> getAllAreaWithPaginationV2(@RequestParam(defaultValue = "0") Integer pageNo,
+                                                        @RequestParam(defaultValue = "10") Integer pageSize,
+                                                        @RequestParam(required = false) List<Integer> storeId,
+                                                        @RequestParam(required = false) List<Integer> areaId){
+        return areaServices.getALlAreasWithPaginationV2(pageNo, pageSize, storeId, areaId);
+    }
 }

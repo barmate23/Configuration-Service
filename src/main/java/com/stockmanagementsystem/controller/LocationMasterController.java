@@ -3,6 +3,7 @@ package com.stockmanagementsystem.controller;
 import com.stockmanagementsystem.entity.Location;
 import com.stockmanagementsystem.request.LocationRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.LocationResponse;
 import com.stockmanagementsystem.service.LocationService;
 import com.stockmanagementsystem.utils.APIConstants;
 import com.stockmanagementsystem.utils.ServiceConstants;
@@ -86,6 +87,16 @@ public class LocationMasterController {
     public ResponseEntity<BaseResponse> uploadExcelLocationFile(@RequestPart("file") MultipartFile file, @RequestParam("zoneId") Integer zoneId) throws IOException {
         return locationService.uploadLocationDetail(file,zoneId);
     }
+    @GetMapping("/v2/getAllLocationWithPagination")
+    public BaseResponse<LocationResponse> getAllLocationWithPaginationV2(@RequestParam(defaultValue = "0") Integer pageNo,
+                                                                         @RequestParam(defaultValue = "10") Integer pageSize,
+                                                                         @RequestParam(required = false) List<Integer> storeId,
+                                                                         @RequestParam(required = false) List<Integer> areaId,
+                                                                         @RequestParam(required = false) List<Integer> zoneId,
+                                                                         @RequestParam(required = false) List<Integer> itemId,
+                                                                         @RequestParam(required = false) List<Integer> locationId){
+        return locationService.getLocationWithFilterV2(storeId,areaId,zoneId,locationId,itemId,pageNo,pageSize);
 
+    }
 
 }

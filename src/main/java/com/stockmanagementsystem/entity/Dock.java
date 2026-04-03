@@ -38,6 +38,9 @@ public class Dock {
     @Transient
     private List<Store> store;
 
+    @Transient
+    private List<Users> supervisors;
+
 
     @Column(name = "IsOccupied")
     private Boolean isOccupied;

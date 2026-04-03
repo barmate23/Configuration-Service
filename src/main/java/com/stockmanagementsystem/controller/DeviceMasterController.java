@@ -4,6 +4,7 @@ import com.stockmanagementsystem.entity.DeviceMaster;
 import com.stockmanagementsystem.entity.SubModule;
 import com.stockmanagementsystem.request.DeviceMasterRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.DeviceMasterResponseV2;
 import com.stockmanagementsystem.service.DeviceMasterService;
 import com.stockmanagementsystem.service.DeviceRequest;
 import com.stockmanagementsystem.utils.APIConstants;
@@ -70,5 +71,16 @@ public class DeviceMasterController {
     @GetMapping(APIConstants.GET_ALL_SUB_MODULE)
     public BaseResponse<SubModule> getAllSubModule(){
         return deviceMasterService.getAllSubModule();
+    }
+
+    @GetMapping("/v2/getDeviceWithPagination")
+    public BaseResponse<DeviceMasterResponseV2> searchDeviceMastersV2(
+            @RequestParam(value = "page", defaultValue = "0", required = false) Integer page,
+            @RequestParam(value = "size", defaultValue = "10", required = false) Integer size,
+            @RequestParam(required = false) List<String> deviceIp,
+            @RequestParam(required = false) List<String> deviceName,
+            @RequestParam(required = false) List<String> deviceBrandName
+    ) {
+        return deviceMasterService.searchDeviceMasterV2(page, size, deviceIp, deviceName, deviceBrandName);
     }
 }

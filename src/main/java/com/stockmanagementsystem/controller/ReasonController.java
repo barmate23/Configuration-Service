@@ -8,6 +8,7 @@ import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.response.ItemNameResponse;
 import com.stockmanagementsystem.response.ReasonCategoryResponse;
 import com.stockmanagementsystem.response.ReasonResponse;
+import com.stockmanagementsystem.response.ReasonResponseV2;
 import com.stockmanagementsystem.service.ReasonService;
 import com.stockmanagementsystem.utils.APIConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,10 +121,42 @@ public class ReasonController {
     @GetMapping("/getApprovalPendingReasons")
     public BaseResponse<Reason> getApprovalPendingReasons(
             @RequestParam(required = false) String categoryCode) {
-
         return reasonService.getApprovalPendingReasons(categoryCode);
     }
 
 
+    @GetMapping("/v2/getAllReasonsWithoutPagination")
+    public BaseResponse<ReasonResponseV2> getAllReasonsWithoutPaginationV2() {
+        return reasonService.getAllReasonsWithoutPaginationV2();
+    }
+
+    @GetMapping("/v2/getReasonByCategoryCode/{categoryCode}")
+    public BaseResponse<ReasonResponseV2> getAllReasonByCategoryV2(@PathVariable String categoryCode) {
+        return reasonService.getAllReasonByCategoryV2(categoryCode);
+    }
+
+    @GetMapping("/v2/getApprovalPendingReasons")
+    public BaseResponse<ReasonResponseV2> getApprovalPendingReasonsV2(@RequestParam(required = false) String categoryCode) {
+        return reasonService.getApprovalPendingReasonsV2(categoryCode);
+    }
+
+    @GetMapping("/v2/searchReasons")
+    public BaseResponse<ReasonResponseV2> searchReasonsV2(
+            @RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
+            @RequestParam(required = false) List<String> reasonId,
+            @RequestParam(required = false) String reasonCategory,
+            @RequestParam(required = false) List<String> itemName,
+            @RequestParam(required = false) Boolean userCreatedReason
+    ) {
+        return reasonService.searchReasonsV2(pageNumber, pageSize, reasonId, reasonCategory, itemName, userCreatedReason);
+    }
+
+    @GetMapping("/v2/getAllReasons")
+    public BaseResponse<ReasonResponseV2> getAllReasonsV2(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return reasonService.getAllReasonsV2(page, pageSize);
+    }
 }
 

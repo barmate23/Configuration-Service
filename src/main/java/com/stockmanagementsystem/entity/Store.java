@@ -61,7 +61,6 @@ public class Store {
     @Column(name = "CreatedBy")
     private Integer createdBy;
 
-
     @Column(name = "CreatedOn")
     private Date createdOn;
 
@@ -72,4 +71,3 @@ public class Store {
     private Date modifiedOn;
 
 }
-

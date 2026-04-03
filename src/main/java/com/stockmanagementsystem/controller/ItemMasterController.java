@@ -5,6 +5,7 @@ import com.stockmanagementsystem.entity.Item;
 import com.stockmanagementsystem.entity.Zone;
 import com.stockmanagementsystem.request.ItemRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.ItemResponseV2;
 import com.stockmanagementsystem.response.SupplierResponse;
 import com.stockmanagementsystem.service.ItemService;
 import com.stockmanagementsystem.utils.APIConstants;
@@ -70,5 +71,41 @@ public class ItemMasterController {
             @RequestParam(required = false)@DateTimeFormat(pattern = "yyyy/MM/dd")Date endDate
     ) {
         return itemService.searchItems(pageNumber, pageSize, name, itemGroup,itemCategory,issueType,classABC, startDate,endDate);
+    }
+
+    @GetMapping("/v2/getAllItemWithPagination")
+    public BaseResponse<ItemResponseV2> getAllItemWithPaginationV2(@RequestParam(defaultValue = "0") Integer pageNo,
+                                                                   @RequestParam(defaultValue = "10") Integer pageSize) {
+        return itemService.getAllItemWithPaginationV2(pageNo, pageSize);
+    }
+
+    @GetMapping("/v2/getItemById/{itemId}")
+    public BaseResponse<ItemResponseV2> getItemByIdV2(@PathVariable Integer itemId) {
+        return itemService.getItemByIdV2(itemId);
+    }
+
+    @GetMapping("/v2/getAllItem")
+    public BaseResponse<ItemResponseV2> getAllItemV2() {
+        return itemService.getAllItemV2();
+    }
+
+    @GetMapping("/v2/getAllAlternativeItem")
+    public BaseResponse<ItemResponseV2> getAllAlternativeItemV2() {
+        return itemService.getAllAlternativeItemV2();
+    }
+
+    @GetMapping("/v2/searchItem")
+    public BaseResponse<ItemResponseV2> searchItemsV2(
+            @RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
+            @RequestParam(required = false) List<String> name,
+            @RequestParam(required = false) List<String> itemGroup,
+            @RequestParam(required = false) List<String> itemCategory,
+            @RequestParam(required = false) List<String> issueType,
+            @RequestParam(required = false) List<String> classABC,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy/MM/dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy/MM/dd") Date endDate
+    ) {
+        return itemService.searchItemsV2(pageNumber, pageSize, name, itemGroup, itemCategory, issueType, classABC, startDate, endDate);
     }
 }

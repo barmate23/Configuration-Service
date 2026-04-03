@@ -6,7 +6,9 @@ import com.stockmanagementsystem.repository.BomLineRepository;
 import com.stockmanagementsystem.repository.ItemRepository;
 import com.stockmanagementsystem.request.BOMHeadRequest;
 import com.stockmanagementsystem.request.BOMLineRequest;
+import com.stockmanagementsystem.response.BOMLineResponseV2;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.BoMHeadResponseV2;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import com.stockmanagementsystem.validation.Validations;
 import lombok.extern.slf4j.Slf4j;
@@ -419,4 +421,143 @@ public class BOMServiceImpl implements BOMService {
         return baseResponse;
     }
 
+    @Override
+    public BaseResponse<BoMHeadResponseV2> getAllBomHeadWithPaginationV2(Integer pageNo, Integer pageSize, List<String> bomERPCode, List<String> varient, List<String> model, Date date) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - BOMServiceImpl - getAllBomHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL BOM HEAD WITH PAGINATION V2 METHOD START");
+        BaseResponse<BoMHeadResponseV2> baseResponse = new BaseResponse<>();
+        List<BoMHeadResponseV2> boMHeadsV2 = new ArrayList<>();
+        Page<BoMHead> pageResult = null;
+        try {
+            final Pageable pageable = PageRequest.of(pageNo, pageSize);
+            if (bomERPCode == null && varient == null && model == null && date == null) {
+                pageResult = this.bomHeadRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+                baseResponse.setTotalPageCount(pageResult.getTotalPages());
+                boMHeadsV2 = pageResult.getContent().stream().map(this::mapToBoMHeadResponseV2).collect(Collectors.toList());
+                baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            } else if (bomERPCode != null) {
+                pageResult = this.bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomERPCodeIn(false, loginUser.getSubOrgId(), bomERPCode, pageable);
+                baseResponse.setTotalPageCount(pageResult.getTotalPages());
+                boMHeadsV2 = pageResult.getContent().stream().map(this::mapToBoMHeadResponseV2).collect(Collectors.toList());
+                baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            } else if (model != null) {
+                pageResult = this.bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndModelIn(false, loginUser.getSubOrgId(), model, pageable);
+                baseResponse.setTotalPageCount(pageResult.getTotalPages());
+                boMHeadsV2 = pageResult.getContent().stream().map(this::mapToBoMHeadResponseV2).collect(Collectors.toList());
+                baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            } else if (varient != null) {
+                pageResult = this.bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndVariantIn(false, loginUser.getSubOrgId(), varient, pageable);
+                baseResponse.setTotalPageCount(pageResult.getTotalPages());
+                boMHeadsV2 = pageResult.getContent().stream().map(this::mapToBoMHeadResponseV2).collect(Collectors.toList());
+                baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            } else {
+                pageResult = this.bomHeadRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+                baseResponse.setTotalPageCount(pageResult.getTotalPages());
+                boMHeadsV2 = pageResult.getContent().stream()
+                        .filter(k -> k.getDate().equals(date))
+                        .map(this::mapToBoMHeadResponseV2)
+                        .collect(Collectors.toList());
+                baseResponse.setTotalRecordCount((long) boMHeadsV2.size());
+            }
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10073S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(boMHeadsV2);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - BOMServiceImpl - getAllBomHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+            return baseResponse;
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10070F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - BOMServiceImpl - getAllBomHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - BOMServiceImpl - getAllBomHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL BOM HEAD WITH PAGINATION V2 METHOD EXECUTED TIME :" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<BOMLineResponseV2> getAllBomLineByBomIdV2(Integer id) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - BOMServiceImpl - getAllBomLineByBomIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL BOM LINE BY BOM HEAD ID V2 METHOD START");
+        BaseResponse<BOMLineResponseV2> baseResponse = new BaseResponse<>();
+        try {
+            List<BOMLine> bomLines = this.bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadIdId(false, loginUser.getSubOrgId(), id);
+            List<BOMLineResponseV2> bomLinesV2 = bomLines.stream().map(this::mapToBOMLineResponseV2).collect(Collectors.toList());
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10074S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(bomLinesV2);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - BOMServiceImpl - getAllBomLineByBomIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+            return baseResponse;
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10071F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - BOMServiceImpl - getAllBomLineByBomIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - BOMServiceImpl - getAllBomLineByBomIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL BOM LINE BY BOM HEAD ID V2 METHOD EXECUTED TIME :" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    private BoMHeadResponseV2 mapToBoMHeadResponseV2(BoMHead head) {
+        BoMHeadResponseV2 response = new BoMHeadResponseV2();
+        response.setId(head.getId());
+        response.setModel(head.getModel());
+        response.setBrand(head.getBrand());
+        response.setProduct(head.getProduct());
+        response.setVariant(head.getVariant());
+        response.setColour(head.getColour());
+        response.setBomId(head.getBomId());
+        response.setBomERPCode(head.getBomERPCode());
+        response.setDate(head.getDate());
+        response.setVersion(head.getVersion());
+        response.setLifecyclePhase(head.getLifecyclePhase());
+        response.setAssemblyLine(head.getAssemblyLine());
+        response.setIsActive(head.getIsActive());
+        return response;
+    }
+
+    private BOMLineResponseV2 mapToBOMLineResponseV2(BOMLine line) {
+        BOMLineResponseV2 response = new BOMLineResponseV2();
+        response.setId(line.getId());
+        if (line.getBomHeadId() != null) {
+            response.setBomHeadId(line.getBomHeadId().getId());
+            response.setBomCode(line.getBomHeadId().getBomId());
+        }
+        response.setOrganizationId(line.getOrganizationId());
+        response.setSubOrganizationId(line.getSubOrganizationId());
+        response.setLevel(line.getLevel());
+        response.setLineNumber(line.getLineNumber());
+        if (line.getItem() != null) {
+            response.setItemId(line.getItem().getId());
+            response.setItemCode(line.getItem().getItemCode());
+            response.setItemName(line.getItem().getName());
+        }
+        response.setQuantity(line.getQuantity());
+        response.setUnitOfMeasure(line.getUnitOfMeasure());
+        response.setClassType(line.getClassType());
+        if (line.getIssueType() != null) {
+            response.setIssueType(line.getIssueType());
+        }
+        response.setDependency(line.getDependency());
+        response.setReferenceDesignators(line.getReferenceDesignators());
+        response.setBomNotes(line.getBomNotes());
+        if (line.getStageId() != null) {
+            response.setStageId(line.getStageId().getId());
+            response.setStageCode(line.getStageId().getStageCode());
+        }
+        return response;
+    }
 }

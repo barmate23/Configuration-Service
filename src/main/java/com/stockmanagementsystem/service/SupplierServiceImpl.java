@@ -39,21 +39,24 @@ public class SupplierServiceImpl implements SupplierService {
     @Autowired
     PurchaseOrderHeadRepository purchaseOrderHeadRepository;
 
-
     @Override
     public BaseResponse<Supplier> saveSupplier(SupplierRequest supplierRequest) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), "START SAVE SUPPLIER METHOD" + (startTime));
+        log.info("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), "START SAVE SUPPLIER METHOD" + (startTime));
         BaseResponse<Supplier> baseResponse = new BaseResponse();
-        List<Supplier> suppliers=new ArrayList<>();
+        List<Supplier> suppliers = new ArrayList<>();
         try {
 
             Supplier existingGSTSupplier = supplierRepository.findBySupplierGSTRegistrationNumberAndIsDeleted(
                     supplierRequest.getSupplierGSTRegistrationNumber(), false);
-            List<ModuleUserLicenceKey> moduleUserLicenceKeyList = userLicenseKeyRepository.findByIsDeletedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationId(false, "ASNS", 1, loginUser.getSubOrgId());
-            List<Supplier> supplierList = supplierRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
+            List<ModuleUserLicenceKey> moduleUserLicenceKeyList = userLicenseKeyRepository
+                    .findByIsDeletedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationId(
+                            false, "ASNS", 1, loginUser.getSubOrgId());
+            List<Supplier> supplierList = supplierRepository.findByIsDeletedAndSubOrganizationId(false,
+                    loginUser.getSubOrgId());
             if (moduleUserLicenceKeyList.size() < supplierList.size()) {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10056E);
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10056E);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
@@ -62,7 +65,7 @@ public class SupplierServiceImpl implements SupplierService {
                 return baseResponse;
             }
             if (existingGSTSupplier != null) {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10057E);
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10057E);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
@@ -76,7 +79,7 @@ public class SupplierServiceImpl implements SupplierService {
                     supplierRequest.getSupplierPANNumber(), false);
 
             if (existingPANSupplier != null) {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10058E);
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10058E);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
@@ -85,7 +88,6 @@ public class SupplierServiceImpl implements SupplierService {
                 return baseResponse;
             }
             Supplier supplier = new Supplier();
-            String generatedDockId;
             supplier.setSupplierId(generateSupplierId(1));
             supplier.setAddress1(supplierRequest.getAddress1());
             supplier.setAddress2(supplierRequest.getAddress2());
@@ -140,51 +142,127 @@ public class SupplierServiceImpl implements SupplierService {
             supplier.setCreatedOn(new Date());
             supplierRepository.save(supplier);
             suppliers.add(supplier);
-
-//            List<SupplierItemMapper> supplierItemMapperList = new ArrayList<>();
-//            for (Integer items : supplierRequest.getItemId()) {
-//                Optional<Item> itemList = itemRepository.findByIsDeletedAndId(false, items);
-//                SupplierItemMapper supplierItemMapper = new SupplierItemMapper();
-//                supplierItemMapper.setSupplier(save);
-//                supplierItemMapper.setItem(itemList.get());
-//                supplierItemMapper.setOrganizationId(loginUser.getOrgId());
-//                supplierItemMapper.setSubOrganizationId(loginUser.getSubOrgId());
-//                supplierItemMapper.setCreatedBy(loginUser.getUserId());
-//                supplierItemMapper.setCreatedOn(new Date());
-//                supplierItemMapper.setIsDeleted(false);
-//                supplierItemMapperList.add(supplierItemMapper);
-//            }
-//            List<SupplierItemMapper> savedSupplierItemMapperList = supplierItemMapperRepository.saveAll(supplierItemMapperList);
-//            SupplierResponse supplierResponse = supplierEntityToSupplierResponse(save);
-//            List<Object> responseData = new ArrayList<>();
-//            responseData.add(supplier);
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10093S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10093S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(suppliers);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10092F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10092F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(new ArrayList<>());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),e);
+            log.error("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SAVE SUPPLIER TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - saveSupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " SAVE SUPPLIER TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
+    @Override
+    public BaseResponse<SupplierResonseDto> getAllSuppliersWithPaginationV2(Integer pageNumber, Integer pageSize,
+            List<String> supplierName, List<String> supplierCategory, List<String> supplierGroup) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - SupplierServiceImpl - getAllSuppliersWithPaginationV2 - UserId:{} - START",
+                loginUser.getLogId(), loginUser.getUserId());
+        BaseResponse<SupplierResonseDto> response = new BaseResponse<>();
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            Specification<Supplier> specification = SupplierSpecifications.withFilters(supplierName, supplierCategory,
+                    supplierGroup, loginUser.getSubOrgId(), true);
+            Page<Supplier> supplierPage = supplierRepository.findAll(specification, pageable);
+
+            List<SupplierResonseDto> responseDtoList = supplierPage.getContent().stream().map(supplier -> {
+                SupplierResonseDto responseDto = new SupplierResonseDto();
+                responseDto.setId(supplier.getId());
+                responseDto.setSupplierId(supplier.getSupplierId());
+                responseDto.setErpSupplierId(supplier.getErpSupplierId());
+                responseDto.setSupplierName(supplier.getSupplierName());
+                responseDto.setDateOfRegistration(supplier.getDateOfRegistration());
+                responseDto.setSupplierCategory(supplier.getSupplierCategory());
+                responseDto.setSupplierGroup(supplier.getSupplierGroup());
+                responseDto.setOtherOrganizationName(supplier.getOtherOrganizationName());
+                responseDto.setSupplierGSTRegistrationNumber(supplier.getSupplierGSTRegistrationNumber());
+                responseDto.setSupplierPANNumber(supplier.getSupplierPANNumber());
+                responseDto.setSupplierTANNumber(supplier.getSupplierTANNumber());
+                responseDto.setPaymentTerms(supplier.getPaymentTerms());
+                responseDto.setPaymentMethod(supplier.getPaymentMethod());
+                responseDto.setCreditLimitRs(supplier.getCreditLimitRs());
+                responseDto.setCreditLimitDays(supplier.getCreditLimitDays());
+                responseDto.setSupplierPrimaryBanker(supplier.getSupplierPrimaryBanker());
+                responseDto.setFullBranchAddress(supplier.getFullBranchAddress());
+                responseDto.setMicrCode(supplier.getMicrCode());
+                responseDto.setIfscCode(supplier.getIfscCode());
+                responseDto.setBranchCode(supplier.getBranchCode());
+                responseDto.setCountry(supplier.getCountry());
+                responseDto.setCountryCode(supplier.getCountryCode());
+                responseDto.setPostCode(supplier.getPostCode());
+                responseDto.setState(supplier.getState());
+                responseDto.setDistrict(supplier.getDistrict());
+                responseDto.setTaluka(supplier.getTaluka());
+                responseDto.setCity(supplier.getCity());
+                responseDto.setTown(supplier.getTown());
+                responseDto.setVillage(supplier.getVillage());
+                responseDto.setAddress1(supplier.getAddress1());
+                responseDto.setAddress2(supplier.getAddress2());
+                responseDto.setBuilding(supplier.getBuilding());
+                responseDto.setStreet(supplier.getStreet());
+                responseDto.setLandmark(supplier.getLandmark());
+                responseDto.setSubLocality(supplier.getSubLocality());
+                responseDto.setLocality(supplier.getLocality());
+                responseDto.setAreaCode(supplier.getAreaCode());
+                responseDto.setLatitude(supplier.getLatitude());
+                responseDto.setLongitude(supplier.getLongitude());
+                responseDto.setOfficePrimaryPhone(supplier.getOfficePrimaryPhone());
+                responseDto.setOfficeAlternatePhone(supplier.getOfficeAlternatePhone());
+                responseDto.setContactPersonName(supplier.getContactPersonName());
+                responseDto.setDesignation(supplier.getDesignation());
+                responseDto.setDepartment(supplier.getDepartment());
+                responseDto.setPrimaryPhone(supplier.getPrimaryPhone());
+                responseDto.setAlternatePhone(supplier.getAlternatePhone());
+                responseDto.setPrimaryEmail(supplier.getPrimaryEmail());
+                responseDto.setAlternateEmail(supplier.getAlternateEmail());
+                return responseDto;
+            }).collect(Collectors.toList());
+
+            response.setData(responseDtoList);
+            response.setTotalRecordCount(supplierPage.getTotalElements());
+            response.setTotalPageCount(supplierPage.getTotalPages());
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10096S);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            response.setLogId(loginUser.getLogId());
+        } catch (Exception e) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10095F);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            response.setData(new ArrayList<>());
+            response.setLogId(loginUser.getLogId());
+            log.error("LogId:{} - SupplierServiceImpl - getAllSuppliersWithPaginationV2 - Error: ",
+                    loginUser.getLogId(), e);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - SupplierServiceImpl - getAllSuppliersWithPaginationV2 - TIME: {}ms", loginUser.getLogId(),
+                (endTime - startTime));
+        return response;
+    }
+
     public String generateSupplierId(Integer count) {
-        List<Supplier> suppliers=supplierRepository.findBySubOrganizationIdOrderByIdAsc(loginUser.getSubOrgId());
-        if(suppliers!=null){
-            return String.format("%s-SPLY%06d", loginUser.getSubOrganizationCode(), suppliers.size()+count);
-        }else {
+        List<Supplier> suppliers = supplierRepository.findBySubOrganizationIdOrderByIdAsc(loginUser.getSubOrgId());
+        if (suppliers != null) {
+            return String.format("%s-SPLY%06d", loginUser.getSubOrganizationCode(), suppliers.size() + count);
+        } else {
             return String.format("%s-SPLY%06d", loginUser.getSubOrganizationCode(), count);
         }
 
@@ -193,13 +271,17 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public BaseResponse deleteBySupplierId(Integer id) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," DELETE SUPPLIER START");
+        log.info("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " DELETE SUPPLIER START");
         BaseResponse baseResponse = new BaseResponse();
         try {
-            Supplier suppliers = supplierRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndId(loginUser.getOrgId(), loginUser.getSubOrgId(), false, id);
-            List<PurchaseOrderHead> purchaseOrderHeads = purchaseOrderHeadRepository.findByIsDeletedAndSubOrganizationIdAndSupplierId(false, loginUser.getSubOrgId(), suppliers.getSupplierId());
-            if(!purchaseOrderHeads.isEmpty()){
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10138F);
+            Supplier suppliers = supplierRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndId(
+                    loginUser.getOrgId(), loginUser.getSubOrgId(), false, id);
+            List<PurchaseOrderHead> purchaseOrderHeads = purchaseOrderHeadRepository
+                    .findByIsDeletedAndSubOrganizationIdAndSupplierId(false, loginUser.getSubOrgId(),
+                            suppliers.getSupplierId());
+            if (!purchaseOrderHeads.isEmpty()) {
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10138F);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
@@ -210,57 +292,65 @@ public class SupplierServiceImpl implements SupplierService {
             suppliers.setIsDeleted(true);
             supplierRepository.save(suppliers);
 
-            List<SupplierItemMapper> supplierItemMappers = supplierItemMapperRepository.findAllByIsDeletedAndSupplier_Id(false, suppliers.getId());
+            List<SupplierItemMapper> supplierItemMappers = supplierItemMapperRepository
+                    .findAllByIsDeletedAndSupplier_Id(false, suppliers.getId());
             for (SupplierItemMapper mapper : supplierItemMappers) {
                 mapper.setIsDeleted(true);
             }
             supplierItemMapperRepository.saveAll(supplierItemMappers);
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10094S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10094S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             baseResponse.setData(new ArrayList<>());
-            log.info("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10093F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10093F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             baseResponse.setData(new ArrayList<>());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),e);
+            log.error("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," DELETE SUPPLIER TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - deleteBySupplierId - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " DELETE SUPPLIER TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
     @Override
     public BaseResponse<Supplier> updateSupplier(Integer id, SupplierRequest supplierRequest) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," UPDATE SUPPLIER START");
+        log.info("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " UPDATE SUPPLIER START");
         BaseResponse<Supplier> baseResponse = new BaseResponse();
         try {
             Optional<Supplier> optionalDocks = supplierRepository.findById(id);
             if (optionalDocks.isPresent()) {
                 Supplier supplier = optionalDocks.get();
 
-                Supplier duplicateGSTSupplier = supplierRepository.findBySupplierGSTRegistrationNumberAndIdNotAndIsDeletedAndSubOrganizationId(
-                        supplierRequest.getSupplierGSTRegistrationNumber(), id, false,loginUser.getSubOrgId());
-                Supplier duplicatePANSupplier = supplierRepository.findBySupplierPANNumberAndIdNotAndIsDeletedAndSubOrganizationId(
-                        supplierRequest.getSupplierPANNumber(), id, false,loginUser.getSubOrgId());
+                Supplier duplicateGSTSupplier = supplierRepository
+                        .findBySupplierGSTRegistrationNumberAndIdNotAndIsDeletedAndSubOrganizationId(
+                                supplierRequest.getSupplierGSTRegistrationNumber(), id, false, loginUser.getSubOrgId());
+                Supplier duplicatePANSupplier = supplierRepository
+                        .findBySupplierPANNumberAndIdNotAndIsDeletedAndSubOrganizationId(
+                                supplierRequest.getSupplierPANNumber(), id, false, loginUser.getSubOrgId());
 
                 if (duplicateGSTSupplier != null || duplicatePANSupplier != null) {
                     baseResponse.setData(Collections.emptyList());
                     if (duplicateGSTSupplier != null) {
-                        ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10059E);
+                        ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10059E);
                         baseResponse.setCode(responseMessage.getCode());
                         baseResponse.setStatus(responseMessage.getStatus());
                         baseResponse.setMessage(responseMessage.getMessage());
                     } else {
-                        ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10060E);
+                        ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10060E);
                         baseResponse.setCode(responseMessage.getCode());
                         baseResponse.setStatus(responseMessage.getStatus());
                         baseResponse.setMessage(responseMessage.getMessage());
@@ -270,7 +360,7 @@ public class SupplierServiceImpl implements SupplierService {
                 }
                 supplier.setAddress1(supplierRequest.getAddress1());
                 supplier.setAddress2(supplierRequest.getAddress2());
-                //  supplier.setSupplierId(supplierRequest.getSupplierId());
+                // supplier.setSupplierId(supplierRequest.getSupplierId());
                 supplier.setErpSupplierId(supplierRequest.getErpSupplierId());
                 supplier.setAlternateEmail(supplierRequest.getAlternateEmail());
                 supplier.setAlternatePhone(supplierRequest.getAlternatePhone());
@@ -318,40 +408,44 @@ public class SupplierServiceImpl implements SupplierService {
                 supplier.setModifiedBy(loginUser.getUserId());
                 supplier.setModifiedOn(new Date());
                 supplierRepository.save(supplier);
-                List<Supplier> suppliers=new ArrayList<>();
+                List<Supplier> suppliers = new ArrayList<>();
                 suppliers.add(supplier);
 
-//                List<SupplierItemMapper> supplierItemMapperList = new ArrayList<>();
-//                for (Integer items : supplierRequest.getItemId()) {
-//                    Optional<Item> itemList = itemRepository.findByIsDeletedAndId(false, items);
-//                    SupplierItemMapper supplierItemMapper = new SupplierItemMapper();
-//                    supplierItemMapper.setSupplier(updatedSupplier);
-//                    supplierItemMapper.setItem(itemList.get());
-//                    supplierItemMapper.setOrganizationId(loginUser.getOrgId());
-//                    supplierItemMapper.setSubOrganizationId(loginUser.getSubOrgId());
-//                    supplierItemMapper.setCreatedBy(loginUser.getUserId());
-//                    supplierItemMapper.setCreatedOn(new Date());
-//                    supplierItemMapper.setIsDeleted(false);
-//                    supplierItemMapperList.add(supplierItemMapper);
-//
-//                }
-//                List<SupplierItemMapper> savedSupplierItemMapperList = supplierItemMapperRepository.saveAll(supplierItemMapperList);
+                // List<SupplierItemMapper> supplierItemMapperList = new ArrayList<>();
+                // for (Integer items : supplierRequest.getItemId()) {
+                // Optional<Item> itemList = itemRepository.findByIsDeletedAndId(false, items);
+                // SupplierItemMapper supplierItemMapper = new SupplierItemMapper();
+                // supplierItemMapper.setSupplier(updatedSupplier);
+                // supplierItemMapper.setItem(itemList.get());
+                // supplierItemMapper.setOrganizationId(loginUser.getOrgId());
+                // supplierItemMapper.setSubOrganizationId(loginUser.getSubOrgId());
+                // supplierItemMapper.setCreatedBy(loginUser.getUserId());
+                // supplierItemMapper.setCreatedOn(new Date());
+                // supplierItemMapper.setIsDeleted(false);
+                // supplierItemMapperList.add(supplierItemMapper);
+                //
+                // }
+                // List<SupplierItemMapper> savedSupplierItemMapperList =
+                // supplierItemMapperRepository.saveAll(supplierItemMapperList);
 
-//                SupplierResponse supplierResponse = supplierEntityToSupplierResponse(updatedSupplier);
-                //   List<SupplierItemMapperResponse> responseList = mapSupplierItemMapperListToResponse(savedSupplierItemMapperList);
+                // SupplierResponse supplierResponse =
+                // supplierEntityToSupplierResponse(updatedSupplier);
+                // List<SupplierItemMapperResponse> responseList =
+                // mapSupplierItemMapperListToResponse(savedSupplierItemMapperList);
 
-//                List<SupplierResponse> responseData = new ArrayList<>();
-//                responseData.add(supplierResponse);
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10095S);
+                // List<SupplierResponse> responseData = new ArrayList<>();
+                // responseData.add(supplierResponse);
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10095S);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
                 baseResponse.setData(suppliers);
                 baseResponse.setLogId(loginUser.getLogId());
-                log.info("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+                log.info("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(),
+                        loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
 
             } else {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10061E);
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10061E);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
@@ -359,80 +453,91 @@ public class SupplierServiceImpl implements SupplierService {
                 baseResponse.setLogId(loginUser.getLogId());
             }
         } catch (Exception e) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10094F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10094F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(new ArrayList<>());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),e);
+            log.error("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," UPDATE SUPPLIER TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - updateSupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " UPDATE SUPPLIER TIME :" + (endTime - startTime));
         return baseResponse;
     }
-
-
-
 
     @Override
     public BaseResponse<Supplier> searchSuppliers(
 
-            Integer pageNumber, Integer pageSize, List<String> supplierName, List<String> supplierCategory, List<String> supplierGroup, Date startDate,Date endDate
-    ) {
+            Integer pageNumber, Integer pageSize, List<String> supplierName, List<String> supplierCategory,
+            List<String> supplierGroup, Date startDate, Date endDate) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SEARCH SUPPLIER START");
+        log.info("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " SEARCH SUPPLIER START");
         BaseResponse<Supplier> response = new BaseResponse<>();
         try {
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
-            Specification<Supplier> specification = SupplierSpecifications.withFilters(supplierName, supplierCategory, supplierGroup,loginUser.getSubOrgId(), true);
+            Specification<Supplier> specification = SupplierSpecifications.withFilters(supplierName, supplierCategory,
+                    supplierGroup, loginUser.getSubOrgId(), true);
             Page<Supplier> supplierPage = supplierRepository.findAll(specification, pageable);
             response.setData(supplierPage.getContent());
             response.setTotalRecordCount(supplierPage.getTotalElements());
             response.setTotalPageCount(supplierPage.getTotalPages());
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10096S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10096S);
             response.setCode(responseMessage.getCode());
             response.setStatus(responseMessage.getStatus());
             response.setMessage(responseMessage.getMessage());
             response.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10095F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10095F);
             response.setCode(responseMessage.getCode());
             response.setStatus(responseMessage.getStatus());
             response.setMessage(responseMessage.getMessage());
             response.setData(new ArrayList<>());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),e);
+            log.error("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
             response.setLogId(loginUser.getLogId());
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SEARCH SUPPLIER TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - searchSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " SEARCH SUPPLIER TIME :" + (endTime - startTime));
         return response;
     }
 
     @Override
     public BaseResponse<List<SupplierNameResponse>> getSupplierWithIds() {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED SUPPLIER NAMES WITH IDS START");
+        log.info("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " FETCHED SUPPLIER NAMES WITH IDS START");
         BaseResponse<List<SupplierNameResponse>> baseResponse = new BaseResponse<>();
         try {
 
-            List<SupplierNameResponse> supplierNameResponseList = supplierRepository.findByIsDeletedAndSubOrganizationId(false,loginUser.getSubOrgId()).stream()
-                    .map(supplier -> new SupplierNameResponse(supplier.getId(), supplier.getSupplierId(), supplier.getSupplierName(),supplier.getErpSupplierId(), supplier.getSupplierCategory(), supplier.getSupplierGroup()))
+            List<SupplierNameResponse> supplierNameResponseList = supplierRepository
+                    .findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId()).stream()
+                    .map(supplier -> new SupplierNameResponse(supplier.getId(), supplier.getSupplierId(),
+                            supplier.getSupplierName(), supplier.getErpSupplierId(), supplier.getSupplierCategory(),
+                            supplier.getSupplierGroup()))
                     .collect(Collectors.toList());
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10097S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10097S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
 
             baseResponse.setData(Collections.singletonList(supplierNameResponseList));
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
 
         } catch (Exception e) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10096F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10096F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
@@ -440,34 +545,40 @@ public class SupplierServiceImpl implements SupplierService {
             baseResponse.setLogId(loginUser.getLogId());
 
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),e);
+            log.error("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED SUPPLIER NAMES WITH IDS TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - getSupplierWithIds - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " FETCHED SUPPLIER NAMES WITH IDS TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
     @Override
     public BaseResponse<Supplier> getSupplierById(Integer id) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET SUPPLIER BY ID  START");
+        log.info("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " GET SUPPLIER BY ID  START");
         BaseResponse<Supplier> response = new BaseResponse();
         try {
-            Supplier supplier = supplierRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndId(loginUser.getOrgId(), loginUser.getSubOrgId(), false, id);
+            Supplier supplier = supplierRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeletedAndId(
+                    loginUser.getOrgId(), loginUser.getSubOrgId(), false, id);
 
             List<Supplier> responseData = new ArrayList<>();
             responseData.add(supplier);
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10098S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10098S);
             response.setCode(responseMessage.getCode());
             response.setStatus(responseMessage.getStatus());
             response.setMessage(responseMessage.getMessage());
 
             response.setLogId(loginUser.getLogId());
             response.setData(responseData);
-            log.info("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10097F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10097F);
             response.setCode(responseMessage.getCode());
             response.setStatus(responseMessage.getStatus());
             response.setMessage(responseMessage.getMessage());
@@ -475,19 +586,25 @@ public class SupplierServiceImpl implements SupplierService {
             response.setData(new ArrayList<>());
             response.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),e);
+            log.error("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET SUPPLIER BY ID TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - getSupplierById - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " GET SUPPLIER BY ID TIME :" + (endTime - startTime));
         return response;
     }
 
-    private List<SupplierItemMapperResponse> mapSupplierItemMapperListToResponse(List<SupplierItemMapper> supplierItemMapperList) {
+    private List<SupplierItemMapperResponse> mapSupplierItemMapperListToResponse(
+            List<SupplierItemMapper> supplierItemMapperList) {
         List<SupplierItemMapperResponse> responseList = new ArrayList<>();
         for (SupplierItemMapper supplierItemMapper : supplierItemMapperList) {
-            SupplierItemMapper supplierItemMapper1 = supplierItemMapperRepository.findByIsDeletedAndSupplier_IdAndSubOrganizationId(true, supplierItemMapper.getSupplier().getId(),loginUser.getSubOrgId());
+            SupplierItemMapper supplierItemMapper1 = supplierItemMapperRepository
+                    .findByIsDeletedAndSupplier_IdAndSubOrganizationId(true, supplierItemMapper.getSupplier().getId(),
+                            loginUser.getSubOrgId());
             SupplierItemMapperResponse response = new SupplierItemMapperResponse();
-            //   response.setSupplierItemId(supplierItemMapper1.getSupplierItemId());
+            // response.setSupplierItemId(supplierItemMapper1.getSupplierItemId());
             response.setItem(supplierItemMapper1.getItem());
             // response.setSupplier(supplierItemMapper.getSupplier());
             responseList.add(response);
@@ -498,25 +615,33 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public BaseResponse<List<ItemNameResponse>> getItemIdWithName() {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED ITEMS WITH NAME START");
+        log.info("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " FETCHED ITEMS WITH NAME START");
         BaseResponse<List<ItemNameResponse>> baseResponse = new BaseResponse<>();
         try {
-         /*   List<ItemNameResponse> itemResponseList = itemRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeleted(loginUser.getOrgId(), loginUser.getSubOrgId(),false).stream()
-                    .map(item -> new ItemNameResponse(item.getId(),item.getItemCode(), item.getItemName()))
-                    .collect(Collectors.toList());*/
-            List<ItemNameResponse> itemResponseList = itemRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId()).stream()
+            /*
+             * List<ItemNameResponse> itemResponseList =
+             * itemRepository.findByOrganizationIdAndSubOrganizationIdAndIsDeleted(loginUser
+             * .getOrgId(), loginUser.getSubOrgId(),false).stream()
+             * .map(item -> new ItemNameResponse(item.getId(),item.getItemCode(),
+             * item.getItemName()))
+             * .collect(Collectors.toList());
+             */
+            List<ItemNameResponse> itemResponseList = itemRepository
+                    .findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId()).stream()
                     .map(item -> new ItemNameResponse(item.getId(), item.getItemId(), item.getName()))
                     .collect(Collectors.toList());
             baseResponse.setData(Collections.singletonList(itemResponseList));
             baseResponse.setLogId(loginUser.getLogId());
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10099S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10099S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
 
-            log.info("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10098F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10098F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
@@ -525,39 +650,48 @@ public class SupplierServiceImpl implements SupplierService {
             baseResponse.setLogId(loginUser.getLogId());
 
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),e);
+            log.error("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FETCHED ITEMS WITH NAME TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - getItemIdWithName - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " FETCHED ITEMS WITH NAME TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
     @Override
     public BaseResponse<Supplier> getAllSuppliers() {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SUPPLIER LIST FETCHED START");
+        log.info("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " SUPPLIER LIST FETCHED START");
         BaseResponse<Supplier> baseResponse = new BaseResponse<>();
         try {
-            List<Supplier> supplierList = supplierRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10100S);
+            List<Supplier> supplierList = supplierRepository.findByIsDeletedAndSubOrganizationId(false,
+                    loginUser.getSubOrgId());
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10100S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(supplierList);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
             return baseResponse;
         } catch (Exception ex) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10099F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10099F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),ex);
+            log.error("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SUPPLIER LIST FETCHED TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - getAllSuppliers - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " SUPPLIER LIST FETCHED TIME :" + (endTime - startTime));
 
         return baseResponse;
     }
@@ -565,15 +699,20 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public BaseResponse<Supplier> changeItemBySuppliersId(Integer id, List<Integer> itemId) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," CHANGE ITEM BY SUPPLIERS ID START");
+        log.info("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " CHANGE ITEM BY SUPPLIERS ID START");
         BaseResponse<Supplier> baseResponse = new BaseResponse<>();
         try {
             for (Integer ids : itemId) {
-                Optional<SupplierItemMapper> itemSupplierMappers = Optional.ofNullable(supplierItemMapperRepository.findByIsDeletedAndSubOrganizationIdAndItemIdAndSupplierId(false, loginUser.getSubOrgId(), ids, id));
+                Optional<SupplierItemMapper> itemSupplierMappers = Optional.ofNullable(
+                        supplierItemMapperRepository.findByIsDeletedAndSubOrganizationIdAndItemIdAndSupplierId(false,
+                                loginUser.getSubOrgId(), ids, id));
                 if (itemSupplierMappers.isEmpty()) {
                     SupplierItemMapper supplierItemMapper = new SupplierItemMapper();
-                    Optional<Item> itemList = itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false, loginUser.getSubOrgId(), ids);
-                    supplierItemMapper.setSupplier(supplierRepository.findByIsDeletedAndSubOrganizationIdAndId(false, loginUser.getSubOrgId(), id));
+                    Optional<Item> itemList = itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false,
+                            loginUser.getSubOrgId(), ids);
+                    supplierItemMapper.setSupplier(supplierRepository.findByIsDeletedAndSubOrganizationIdAndId(false,
+                            loginUser.getSubOrgId(), id));
                     supplierItemMapper.setItem(itemList.get());
                     supplierItemMapper.setOrganizationId(loginUser.getOrgId());
                     supplierItemMapper.setSubOrganizationId(loginUser.getSubOrgId());
@@ -583,107 +722,127 @@ public class SupplierServiceImpl implements SupplierService {
                     supplierItemMapperRepository.save(supplierItemMapper);
                 }
             }
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10101S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10101S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(new ArrayList<>());
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
             return baseResponse;
         } catch (Exception ex) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10100F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10100F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),ex);
+            log.error("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
 
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," CHANGE ITEM BY SUPPLIERS ID TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - changeItemBySuppliersId - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " CHANGE ITEM BY SUPPLIERS ID TIME :" + (endTime - startTime));
         return baseResponse;
     }
-
 
     @Override
     public BaseResponse<SupplierItemMapper> getItemBySupplier(Integer id) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," ITEM LIST FETCHED BY SUPPLIER ID START");
+        log.info("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " ITEM LIST FETCHED BY SUPPLIER ID START");
         BaseResponse<SupplierItemMapper> baseResponse = new BaseResponse<>();
         try {
-            List<SupplierItemMapper> itemSupplierMappers = supplierItemMapperRepository.findByIsDeletedAndSubOrganizationIdAndSupplierId(false, loginUser.getSubOrgId(), id);
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10102S);
+            List<SupplierItemMapper> itemSupplierMappers = supplierItemMapperRepository
+                    .findByIsDeletedAndSubOrganizationIdAndSupplierId(false, loginUser.getSubOrgId(), id);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10102S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(itemSupplierMappers);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
             return baseResponse;
         } catch (Exception ex) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10101F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10101F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
+            log.error("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
 
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," ITEM LIST FETCHED TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - getItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " ITEM LIST FETCHED TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
     @Override
     public BaseResponse<Item> removeItemById(Integer supplierId, Integer itemId) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," REMOVE ITEM BY ID START");
+        log.info("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " REMOVE ITEM BY ID START");
         BaseResponse<Item> baseResponse = new BaseResponse<>();
         try {
-            SupplierItemMapper itemSupplierMappers = supplierItemMapperRepository.findByIsDeletedAndSubOrganizationIdAndItemIdAndSupplierId(false, loginUser.getSubOrgId(), itemId, supplierId);
+            SupplierItemMapper itemSupplierMappers = supplierItemMapperRepository
+                    .findByIsDeletedAndSubOrganizationIdAndItemIdAndSupplierId(false, loginUser.getSubOrgId(), itemId,
+                            supplierId);
             itemSupplierMappers.setIsDeleted(true);
             supplierItemMapperRepository.save(itemSupplierMappers);
             List<Item> items = new ArrayList<>();
             items.add(itemSupplierMappers.getItem());
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10103S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10103S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(items);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
             return baseResponse;
         } catch (Exception ex) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10102F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10102F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),ex);
+            log.error("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
 
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),"REMOVE ITEM BY ID TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - removeItemById - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), "REMOVE ITEM BY ID TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
     @Override
-    public BaseResponse<SupplierItemMapper> mapItemBySupplier(List<ItemSupplierMapperRequest> itemSupplierMapperRequests) {
+    public BaseResponse<SupplierItemMapper> mapItemBySupplier(
+            List<ItemSupplierMapperRequest> itemSupplierMapperRequests) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," MAP ITEM BY SUPPLIER METHOD START");
+        log.info("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " MAP ITEM BY SUPPLIER METHOD START");
         BaseResponse<SupplierItemMapper> baseResponse = new BaseResponse<>();
-        List<SupplierItemMapper> supplierItemMappers=new ArrayList<>();
+        List<SupplierItemMapper> supplierItemMappers = new ArrayList<>();
         try {
 
-            for (ItemSupplierMapperRequest itemSupplierMapperRequest:itemSupplierMapperRequests) {
-                Supplier supplier=supplierRepository.findByIsDeletedAndSubOrganizationIdAndId(false,loginUser.getSubOrgId(),itemSupplierMapperRequest.getSupplierId());
-                if(itemSupplierMapperRequest.getId()==null) {
+            for (ItemSupplierMapperRequest itemSupplierMapperRequest : itemSupplierMapperRequests) {
+                Supplier supplier = supplierRepository.findByIsDeletedAndSubOrganizationIdAndId(false,
+                        loginUser.getSubOrgId(), itemSupplierMapperRequest.getSupplierId());
+                if (itemSupplierMapperRequest.getId() == null) {
                     SupplierItemMapper supplierItemMapper = new SupplierItemMapper();
-                    supplierItemMapper.setItem(itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false, loginUser.getSubOrgId(), itemSupplierMapperRequest.getItemId()).get());
+                    supplierItemMapper.setItem(itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false,
+                            loginUser.getSubOrgId(), itemSupplierMapperRequest.getItemId()).get());
                     supplierItemMapper.setSupplier(supplier);
                     supplierItemMapper.setIsDay(itemSupplierMapperRequest.getIsDay());
                     supplierItemMapper.setLeadTime(itemSupplierMapperRequest.getLeadTime());
@@ -696,9 +855,12 @@ public class SupplierServiceImpl implements SupplierService {
                     supplierItemMapper.setModifiedOn(new Date());
                     supplierItemMapperRepository.save(supplierItemMapper);
                     supplierItemMappers.add(supplierItemMapper);
-                }else {
-                    SupplierItemMapper supplierItemMapper = supplierItemMapperRepository.findByIsDeletedAndSubOrganizationIdAndSupplierItemId(false,loginUser.getSubOrgId(),itemSupplierMapperRequest.getId());
-                    supplierItemMapper.setItem(itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false, loginUser.getSubOrgId(), itemSupplierMapperRequest.getItemId()).get());
+                } else {
+                    SupplierItemMapper supplierItemMapper = supplierItemMapperRepository
+                            .findByIsDeletedAndSubOrganizationIdAndSupplierItemId(false, loginUser.getSubOrgId(),
+                                    itemSupplierMapperRequest.getId());
+                    supplierItemMapper.setItem(itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false,
+                            loginUser.getSubOrgId(), itemSupplierMapperRequest.getItemId()).get());
                     supplierItemMapper.setSupplier(supplier);
                     supplierItemMapper.setIsDay(itemSupplierMapperRequest.getIsDay());
                     supplierItemMapper.setLeadTime(itemSupplierMapperRequest.getLeadTime());
@@ -713,26 +875,30 @@ public class SupplierServiceImpl implements SupplierService {
                     supplierItemMappers.add(supplierItemMapper);
                 }
             }
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10102S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10102S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(supplierItemMappers);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
             return baseResponse;
         } catch (Exception ex) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10101F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10101F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
+            log.error("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                    loginUser.getUserId(),
+                    ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
 
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," MAP ITEM BY SUPPLIER METHOD EXECUTED TIME :" + (endTime - startTime));
+        log.info("LogId:{} - SupplierServiceImpl - mapItemBySupplier - UserId:{} - {}", loginUser.getLogId(),
+                loginUser.getUserId(), " MAP ITEM BY SUPPLIER METHOD EXECUTED TIME :" + (endTime - startTime));
         return baseResponse;
     }
 }

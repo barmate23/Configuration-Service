@@ -22,9 +22,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayOutputStream;
-import java.util.*;
+import com.stockmanagementsystem.response.StoreResponseDto;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.Calendar;
+import java.io.ByteArrayOutputStream;
 import java.util.stream.Collectors;
 
 import static com.stockmanagementsystem.utils.GlobalMessages.getResponseMessages;
@@ -757,5 +761,39 @@ public class StoreServiceImpl implements StoreService{
         calendar.set(year, Calendar.MARCH, 31, 0, 0, 0);
 
         return calendar.getTime();
+    }
+
+    @Override
+    public BaseResponse<com.stockmanagementsystem.response.StoreResponseDto> getStoresWithPaginationV2(Integer pageNo, Integer pageSize) {
+        BaseResponse<com.stockmanagementsystem.response.StoreResponseDto> baseResponse = new BaseResponse<>();
+        try {
+            Pageable pageable = PageRequest.of(pageNo, pageSize);
+            Page<Store> storePage = storeRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+            
+            List<com.stockmanagementsystem.response.StoreResponseDto> storeResponseList = storePage.getContent().stream().map(s -> {
+                com.stockmanagementsystem.response.StoreResponseDto dto = new com.stockmanagementsystem.response.StoreResponseDto();
+                dto.setId(s.getId());
+                dto.setStoreName(s.getStoreName());
+                dto.setStoreId(s.getStoreId());
+                dto.setStoreManagerName(s.getStoreManagerName());
+                dto.setErpStoreId(s.getErpStoreId());
+                dto.setStoreAddress(s.getStoreAddress());
+                dto.setEmailId(s.getEmailId());
+                return dto;
+            }).collect(java.util.stream.Collectors.toList());
+            
+            baseResponse.setCode(1);
+            baseResponse.setStatus(200);
+            baseResponse.setTotalPageCount(storePage.getTotalPages());
+            baseResponse.setTotalRecordCount(storePage.getTotalElements());
+            baseResponse.setData(storeResponseList);
+            baseResponse.setLogId(loginUser.getLogId());
+        } catch (Exception ex) {
+            baseResponse.setCode(0);
+            baseResponse.setStatus(500);
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+        }
+        return baseResponse;
     }
 }

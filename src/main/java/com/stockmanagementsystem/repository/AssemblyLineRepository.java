@@ -14,21 +14,12 @@ import java.util.List;
 @Repository
 public interface AssemblyLineRepository extends JpaRepository<AssemblyLine,Integer> {
 
-//    void deleteStagesForAssemblyLine(AssemblyLine assemblyLine);
-
-    List<Stage> findBySubOrganizationIdAndAssemblyLineId(Integer subOrgId, Integer asmlId);
-
-    List<Stage> findByAssemblyLineAndIsDeletedFalseOrderBySequenceNumberAsc(AssemblyLine assemblyLine);
-
-    List<Stage> findAllStagesByAssemblyLineId(AssemblyLine assemblyLine);
-
     Page<AssemblyLine> findByIsDeletedAndId(boolean b, Integer id, Pageable pageable);
     AssemblyLine findByIsDeletedAndId(boolean b, Integer id);
 
     Page<AssemblyLine> findByIsDeleted(boolean b, Pageable pageable);
     List<AssemblyLine> findByIsDeleted(boolean b);
 
-    Page<AssemblyLine> findByIsDeletedAndIdIn(boolean b, List<Integer> id, Pageable pageable);
 
     List<AssemblyLine> findByIsDeletedAndSubOrganizationId(boolean b, Integer subOrgId);
     Page<AssemblyLine> findByIsDeletedAndSubOrganizationId(boolean b, Integer subOrgId,Pageable pageable);

@@ -9,6 +9,8 @@ import com.stockmanagementsystem.request.ItemSupplierMapperRequest;
 import com.stockmanagementsystem.request.PurchaseOrderHeadRequest;
 import com.stockmanagementsystem.request.PurchaseOrderLineRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.PurchaseOrderHeadResponseV2;
+import com.stockmanagementsystem.response.PurchaseOrderLineResponseV2;
 import com.stockmanagementsystem.response.ValidationResultResponse;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import com.stockmanagementsystem.utils.ServiceConstants;
@@ -507,5 +509,181 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         long endTime = System.currentTimeMillis();
         log.info("LogId:{} - PurchaseOrderServiceImpl - getAllPurchaseOrderHead - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL PURCHASE ORDER HEAD TIME " + (endTime - startTime));
         return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<PurchaseOrderHeadResponseV2> getAllPurchaseOrderHeadWithPaginationV2(List<String> orderNumber, Date orderDate, List<Integer> supplier, Date deliveryDate, Integer pageNo, Integer pageSize) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - PurchaseOrderServiceImpl - getAllPurchaseOrderHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL PURCHASE ORDER HEAD WITH PAGINATION V2 START");
+        BaseResponse<PurchaseOrderHeadResponseV2> baseResponse = new BaseResponse<>();
+        List<PurchaseOrderHeadResponseV2> purchaseOrderHeadsV2 = new ArrayList<>();
+        try {
+            Page<PurchaseOrderHead> pageResult = null;
+            final Pageable pageable = PageRequest.of(pageNo, pageSize);
+
+            if (orderNumber == null && orderDate == null && supplier == null && deliveryDate == null) {
+                pageResult = this.purchaseOrderHeadRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+            } else {
+                List<PurchaseOrderHead> poh = this.purchaseOrderHeadRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
+
+                if (orderNumber != null) {
+                    poh = poh.stream()
+                            .filter(k -> orderNumber.contains(k.getPurchaseOrderNumber()))
+                            .collect(Collectors.toList());
+                }
+
+                if (supplier != null) {
+                    poh = poh.stream()
+                            .filter(k -> supplier.contains(k.getSupplier().getId()))
+                            .collect(Collectors.toList());
+                }
+
+                if (orderDate != null) {
+                    poh = poh.stream()
+                            .filter(k -> k.getPurchaseOrderDate() != null && isSameDay(k.getPurchaseOrderDate(), orderDate))
+                            .collect(Collectors.toList());
+                }
+
+                if (deliveryDate != null) {
+                    poh = poh.stream()
+                            .filter(k -> k.getDeliverByDate() != null && isSameDay(k.getDeliverByDate(), deliveryDate))
+                            .collect(Collectors.toList());
+                }
+
+                purchaseOrderHeadsV2 = poh.stream().map(this::mapToPurchaseOrderHeadResponseV2).collect(Collectors.toList());
+                baseResponse.setTotalRecordCount((long) purchaseOrderHeadsV2.size());
+
+                int start = (int) pageable.getOffset();
+                int end = Math.min((start + pageable.getPageSize()), purchaseOrderHeadsV2.size());
+                if (start <= end) {
+                    purchaseOrderHeadsV2 = purchaseOrderHeadsV2.subList(start, end);
+                } else {
+                    purchaseOrderHeadsV2 = new ArrayList<>();
+                }
+            }
+
+
+            if (pageResult != null) {
+                baseResponse.setTotalPageCount(pageResult.getTotalPages());
+                purchaseOrderHeadsV2 = pageResult.getContent().stream().map(this::mapToPurchaseOrderHeadResponseV2).collect(Collectors.toList());
+                baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            }
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10086S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(purchaseOrderHeadsV2);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - PurchaseOrderServiceImpl - getAllPurchaseOrderHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+            return baseResponse;
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10085F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - PurchaseOrderServiceImpl - getAllPurchaseOrderHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - PurchaseOrderServiceImpl - getAllPurchaseOrderHeadWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL PURCHASE ORDER HEAD WITH PAGINATION V2 TIME " + (endTime - startTime));
+
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<PurchaseOrderLineResponseV2> getPurchaseOrderLineByPoIdV2(Integer poId) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - PurchaseOrderServiceImpl - getPurchaseOrderLineByPoIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET PURCHASE ORDER LINE BY POID V2 START");
+
+        BaseResponse<PurchaseOrderLineResponseV2> baseResponse = new BaseResponse<>();
+        try {
+            List<PurchaseOrderLine> purchaseOrderLineList = purchaseOrderLineRepository.findByIsDeletedAndSubOrganizationIdAndPurchaseOrderHeadId(false, loginUser.getSubOrgId(), poId);
+            List<PurchaseOrderLineResponseV2> purchaseOrderLineResponseV2List = purchaseOrderLineList.stream().map(this::mapToPurchaseOrderLineResponseV2).collect(Collectors.toList());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10089S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(purchaseOrderLineResponseV2List);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - PurchaseOrderServiceImpl - getPurchaseOrderLineByPoIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+            return baseResponse;
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10088F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - PurchaseOrderServiceImpl - getPurchaseOrderLineByPoIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - PurchaseOrderServiceImpl - getPurchaseOrderLineByPoIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET PURCHASE ORDER LINE BY POID V2 TIME " + (endTime - startTime));
+        return baseResponse;
+    }
+
+    private PurchaseOrderHeadResponseV2 mapToPurchaseOrderHeadResponseV2(PurchaseOrderHead head) {
+        PurchaseOrderHeadResponseV2 response = new PurchaseOrderHeadResponseV2();
+        response.setId(head.getId());
+        response.setPurchaseOrderId(head.getPurchaseOrderId());
+        response.setPurchaseOrderNumber(head.getPurchaseOrderNumber());
+        response.setPurchaseOrderDate(head.getPurchaseOrderDate());
+        if (head.getSupplier() != null) {
+            response.setSupplierId(head.getSupplier().getId());
+            response.setSupplierName(head.getSupplier().getSupplierName());
+            response.setSupplierCode(head.getSupplier().getErpSupplierId());
+        }
+        response.setDeliveryType(head.getDeliveryType());
+        response.setTotalAmount(head.getTotalAmount());
+        response.setDeliverByDate(head.getDeliverByDate());
+        response.setStartDate(head.getStartDate());
+        response.setEndDate(head.getEndDate());
+        response.setMobileNumber(head.getMobileNumber());
+        if (head.getStatus() != null) {
+            response.setStatusId(head.getStatus().getIdd());
+            response.setStatusName(head.getStatus().getStatusName());
+        }
+        return response;
+    }
+
+    private PurchaseOrderLineResponseV2 mapToPurchaseOrderLineResponseV2(PurchaseOrderLine line) {
+        PurchaseOrderLineResponseV2 response = new PurchaseOrderLineResponseV2();
+        response.setId(line.getId());
+        response.setPurchaseOrderLineId(line.getPurchaseOrderLineId());
+        if (line.getPurchaseOrderHead() != null) {
+            response.setPurchaseOrderHeadId(line.getPurchaseOrderHead().getId());
+            response.setPurchaseOrderNumber(line.getPurchaseOrderHead().getPurchaseOrderNumber());
+        }
+        response.setLineNumber(line.getLineNumber());
+        if (line.getItem() != null) {
+            response.setItemId(line.getItem().getId());
+            response.setItemCode(line.getItem().getItemCode());
+            response.setItemName(line.getItem().getName());
+        }
+        response.setUom(line.getUom());
+        response.setCurrency(line.getCurrency());
+        response.setUnitPrice(line.getUnitPrice());
+        response.setNumberOfContainer(line.getNumberOfContainer());
+        response.setPurchaseOrderQuantity(line.getPurchaseOrderQuantity());
+        response.setSubTotalRs(line.getSubTotalRs());
+        response.setStateGSTPercentage(line.getStateGSTPercentage());
+        response.setStateGSTAmount(line.getStateGSTAmount());
+        response.setCentralGSTPercentage(line.getCentralGSTPercentage());
+        response.setCentralGSTAmount(line.getCentralGSTAmount());
+        response.setInterStateGSTPercentage(line.getInterStateGSTPercentage());
+        response.setInterStateGSTAmount(line.getInterStateGSTAmount());
+        response.setTotalAmountRs(line.getTotalAmountRs());
+        response.setLeadTime(line.getLeadTime());
+        response.setIsDay(line.getIsDay());
+        if (line.getStatus() != null) {
+            response.setStatusId(line.getStatus().getIdd());
+            response.setStatusName(line.getStatus().getStatusName());
+        }
+        response.setRemainingQuantity(line.getRemainingQuantity());
+        response.setRemainingAmount(line.getRemainingAmount());
+        return response;
     }
 }
