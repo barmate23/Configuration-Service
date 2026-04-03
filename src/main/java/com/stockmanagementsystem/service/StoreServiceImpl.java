@@ -39,7 +39,6 @@ public class StoreServiceImpl implements StoreService{
 
     @Autowired
     StoreRepository storeRepository;
-
     @Autowired
     LoginUser loginUser;
     @Autowired
