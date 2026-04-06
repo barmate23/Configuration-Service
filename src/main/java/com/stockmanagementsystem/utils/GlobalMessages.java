@@ -31,9 +31,9 @@ public class GlobalMessages {
 
     }
     public static ResponseMessage getResponseMessages(String responseKey){
-        Optional optional =  RESPONSEMESSAGES.stream ().filter ( rk->rk.getKey().equals (responseKey)).findFirst ();
-        if (!optional.isEmpty ()){
-            return ( ResponseMessage ) optional.get ();
+        Optional<ResponseMessage> optional = RESPONSEMESSAGES.stream().filter(rk -> rk.getKey().equals(responseKey)).findFirst();
+        if (optional.isPresent()){
+            return optional.get();
         }
         return null;
     }
