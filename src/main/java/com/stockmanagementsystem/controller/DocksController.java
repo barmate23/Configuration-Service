@@ -160,4 +160,9 @@ public class DocksController {
     public BaseResponse<DockResponse> getDocksByIdV2(@PathVariable Integer dockId){
         return docksService.getDocksByIdV2(dockId);
     }
+
+    @GetMapping(APIConstants.GET_USER)
+    public BaseResponse<List<UserResponse>> getUser(){
+        return docksService.getUsersWithIds();
+    }
 }
