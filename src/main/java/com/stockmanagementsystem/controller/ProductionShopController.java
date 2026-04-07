@@ -7,6 +7,7 @@ import com.stockmanagementsystem.request.AssemblyLineRequest;
 import com.stockmanagementsystem.request.ProductionShopRequest;
 import com.stockmanagementsystem.request.StageRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.ProductionShopResponse;
 import com.stockmanagementsystem.service.ProductionShopService;
 import com.stockmanagementsystem.utils.APIConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -38,12 +39,12 @@ public class ProductionShopController {
     }
 
     @GetMapping(APIConstants.GET_ALL_PRODUCTION_SHOPS)
-    public BaseResponse<ProductionShop> getAllProductionShops() {
+    public BaseResponse<ProductionShopResponse> getAllProductionShops() {
         return productionShopService.getAllProductionShops();
     }
 
     @GetMapping(APIConstants.GET_PRODUCTION_SHOP_BY_ID)
-    public BaseResponse<ProductionShop> getProductionShopById(@PathVariable Integer id) {
+    public BaseResponse<ProductionShopResponse> getProductionShopById(@PathVariable Integer id) {
         return productionShopService.getProductionShopById(id);
     }
 

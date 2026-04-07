@@ -7,7 +7,10 @@ import com.stockmanagementsystem.repository.ProductionShopRepository;
 import com.stockmanagementsystem.request.AssemblyLineRequest;
 import com.stockmanagementsystem.request.ProductionShopRequest;
 import com.stockmanagementsystem.request.StageRequest;
+import com.stockmanagementsystem.response.AssemblyLineResponse;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.ProductionShopResponse;
+import com.stockmanagementsystem.response.StageResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -173,20 +177,66 @@ public class ProductionShopServiceImpl implements ProductionShopService {
     }
 
     @Override
-    public BaseResponse<ProductionShop> getAllProductionShops() {
+    public BaseResponse<ProductionShopResponse> getAllProductionShops() {
         List<ProductionShop> shops = shopRepository.findByIsDeletedFalse();
-        return new BaseResponse<>(200, "Shops fetched successfully", shops, 200, loginUser.getLogId());
+        List<ProductionShopResponse> data = shops.stream()
+                .map(this::mapToProductionShopResponse)
+                .collect(Collectors.toList());
+        return new BaseResponse<>(200, "Shops fetched successfully", data, 200, loginUser.getLogId());
     }
 
     @Override
-    public BaseResponse<ProductionShop> getProductionShopById(Integer id) {
-        Optional<ProductionShop> shop = shopRepository.findById(id);
-        if (shop.isPresent() && !shop.get().getIsDeleted()) {
-            List<ProductionShop> data = new ArrayList<>();
-            data.add(shop.get());
+    public BaseResponse<ProductionShopResponse> getProductionShopById(Integer id) {
+        Optional<ProductionShop> shopOpt = shopRepository.findById(id);
+        if (shopOpt.isPresent() && !shopOpt.get().getIsDeleted()) {
+            List<ProductionShopResponse> data = new ArrayList<>();
+            data.add(mapToProductionShopResponse(shopOpt.get()));
             return new BaseResponse<>(200, "Shop fetched successfully", data, 200, loginUser.getLogId());
         }
         return new BaseResponse<>(404, "Shop not found", null, 404, loginUser.getLogId());
+    }
+
+    private ProductionShopResponse mapToProductionShopResponse(ProductionShop shop) {
+        ProductionShopResponse response = new ProductionShopResponse();
+        response.setId(shop.getId());
+        response.setErpShopCode(shop.getErpShopCode());
+        response.setShopCode(shop.getShopCode());
+        response.setShopName(shop.getShopName());
+        response.setDescription(shop.getDescription());
+        response.setShopType(shop.getShopType());
+
+        List<AssemblyLine> lines = lineRepository.findByProductionShopAndIsDeletedFalseOrderBySequenceNumberAsc(shop);
+        if (lines != null) {
+            List<AssemblyLineResponse> lineResponses = lines.stream().map(line -> {
+                AssemblyLineResponse lr = new AssemblyLineResponse();
+                lr.setId(line.getId());
+                lr.setErpLineCode(line.getErpLineCode());
+                lr.setLineCode(line.getLineCode());
+                lr.setLineName(line.getLineName());
+                lr.setLineNumber(line.getLineNumber());
+                lr.setAssemblyLineId(line.getAssemblyLineId());
+                lr.setDescription(line.getDescription());
+                lr.setSequenceNumber(line.getSequenceNumber());
+
+                List<Stage> stages = stageRepository.findByAssemblyLineAndIsDeletedFalseOrderBySequenceNumberAsc(line);
+                if (stages != null) {
+                    List<StageResponse> stageResponses = stages.stream().map(stage -> {
+                        StageResponse sr = new StageResponse();
+                        sr.setId(stage.getId());
+                        sr.setErpStageCode(stage.getErpStageCode());
+                        sr.setStageCode(stage.getStageCode());
+                        sr.setStageName(stage.getStageName());
+                        sr.setStageId(stage.getStageId());
+                        sr.setSequenceNumber(stage.getSequenceNumber());
+                        return sr;
+                    }).collect(Collectors.toList());
+                    lr.setStages(stageResponses);
+                }
+                return lr;
+            }).collect(Collectors.toList());
+            response.setAssemblyLines(lineResponses);
+        }
+        return response;
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.stockmanagementsystem.request.AssemblyLineRequest;
 import com.stockmanagementsystem.request.ProductionShopRequest;
 import com.stockmanagementsystem.request.StageRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.ProductionShopResponse;
 
 import java.util.List;
 
@@ -14,8 +15,8 @@ public interface ProductionShopService {
     BaseResponse<ProductionShop> saveProductionShop(ProductionShopRequest shop);
     BaseResponse<ProductionShop> updateProductionShop(Integer id, ProductionShopRequest shop);
     BaseResponse<ProductionShop> deleteProductionShop(Integer id);
-    BaseResponse<ProductionShop> getAllProductionShops();
-    BaseResponse<ProductionShop> getProductionShopById(Integer id);
+    BaseResponse<ProductionShopResponse> getAllProductionShops();
+    BaseResponse<ProductionShopResponse> getProductionShopById(Integer id);
 
     BaseResponse<AssemblyLine> saveProductionLine(AssemblyLineRequest line);
     BaseResponse<AssemblyLine> updateProductionLine(Integer id, AssemblyLineRequest line);
