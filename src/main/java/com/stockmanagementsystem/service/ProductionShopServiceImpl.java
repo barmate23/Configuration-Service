@@ -4,6 +4,9 @@ import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.repository.AssemblyLineRepository;
 import com.stockmanagementsystem.repository.StageRepository;
 import com.stockmanagementsystem.repository.ProductionShopRepository;
+import com.stockmanagementsystem.request.AssemblyLineRequest;
+import com.stockmanagementsystem.request.ProductionShopRequest;
+import com.stockmanagementsystem.request.StageRequest;
 import com.stockmanagementsystem.response.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,29 +52,109 @@ public class ProductionShopServiceImpl implements ProductionShopService {
     }
 
     @Override
-    public BaseResponse<ProductionShop> saveProductionShop(ProductionShop shop) {
+    public BaseResponse<ProductionShop> saveProductionShop(ProductionShopRequest shopRequest) {
+        ProductionShop shop = new ProductionShop();
+        shop.setErpShopCode(shopRequest.getErpShopCode());
+        shop.setShopCode(shopRequest.getShopCode());
+        shop.setShopName(shopRequest.getShopName());
+        shop.setDescription(shopRequest.getDescription());
+        shop.setShopType(shopRequest.getShopType());
         setAuditFields(shop, false);
         ProductionShop savedShop = shopRepository.save(shop);
+
+        if (shopRequest.getAssemblyLineRequests() != null) {
+            for (AssemblyLineRequest lineRequest : shopRequest.getAssemblyLineRequests()) {
+                AssemblyLine line = new AssemblyLine();
+                line.setErpLineCode(lineRequest.getErpLineCode());
+                line.setLineCode(lineRequest.getLineCode());
+                line.setLineName(lineRequest.getLineName());
+                line.setLineNumber(lineRequest.getLineNumber());
+                line.setAssemblyLineId(lineRequest.getAssemblyLineId());
+                line.setDescription(lineRequest.getDescription());
+                line.setSequenceNumber(lineRequest.getSequenceNumber());
+                line.setProductionShop(savedShop);
+                setAuditFields(line, false);
+                AssemblyLine savedLine = lineRepository.save(line);
+
+                if (lineRequest.getStageRequests() != null) {
+                    for (StageRequest stageRequest : lineRequest.getStageRequests()) {
+                        Stage stage = new Stage();
+                        stage.setErpStageCode(stageRequest.getErpStageCode());
+                        stage.setStageCode(stageRequest.getStageCode());
+                        stage.setStageName(stageRequest.getStageName());
+                        stage.setStageId(stageRequest.getStageId());
+                        stage.setSequenceNumber(stageRequest.getSequenceNumber());
+                        stage.setAssemblyLine(savedLine);
+                        setAuditFields(stage, false);
+                        stageRepository.save(stage);
+                    }
+                }
+            }
+        }
+
         List<ProductionShop> data = new ArrayList<>();
         data.add(savedShop);
-        return new BaseResponse<>(200, "Shop saved successfully", data, 200, loginUser.getLogId());
+        return new BaseResponse<>(200, "Shop hierarchy saved successfully", data, 200, loginUser.getLogId());
     }
 
     @Override
-    public BaseResponse<ProductionShop> updateProductionShop(Integer id, ProductionShop shop) {
+    public BaseResponse<ProductionShop> updateProductionShop(Integer id, ProductionShopRequest shopRequest) {
         Optional<ProductionShop> existing = shopRepository.findById(id);
         if (existing.isPresent()) {
             ProductionShop updated = existing.get();
-            updated.setErpShopCode(shop.getErpShopCode());
-            updated.setShopCode(shop.getShopCode());
-            updated.setShopName(shop.getShopName());
-            updated.setDescription(shop.getDescription());
-            updated.setShopType(shop.getShopType());
+            updated.setErpShopCode(shopRequest.getErpShopCode());
+            updated.setShopCode(shopRequest.getShopCode());
+            updated.setShopName(shopRequest.getShopName());
+            updated.setDescription(shopRequest.getDescription());
+            updated.setShopType(shopRequest.getShopType());
             setAuditFields(updated, true);
             shopRepository.save(updated);
+
+            if (shopRequest.getAssemblyLineRequests() != null) {
+                for (AssemblyLineRequest lineRequest : shopRequest.getAssemblyLineRequests()) {
+                    AssemblyLine line;
+                    if (lineRequest.getAssemblyLineId() != null && lineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(false, loginUser.getSubOrgId(), lineRequest.getAssemblyLineId()) != null) {
+                        line = lineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(false, loginUser.getSubOrgId(), lineRequest.getAssemblyLineId());
+                        setAuditFields(line, true);
+                    } else {
+                        line = new AssemblyLine();
+                        setAuditFields(line, false);
+                    }
+                    line.setErpLineCode(lineRequest.getErpLineCode());
+                    line.setLineCode(lineRequest.getLineCode());
+                    line.setLineName(lineRequest.getLineName());
+                    line.setLineNumber(lineRequest.getLineNumber());
+                    line.setAssemblyLineId(lineRequest.getAssemblyLineId());
+                    line.setDescription(lineRequest.getDescription());
+                    line.setSequenceNumber(lineRequest.getSequenceNumber());
+                    line.setProductionShop(updated);
+                    AssemblyLine savedLine = lineRepository.save(line);
+
+                    if (lineRequest.getStageRequests() != null) {
+                        for (StageRequest stageRequest : lineRequest.getStageRequests()) {
+                            Stage stage;
+                            if (stageRequest.getId() != null) {
+                                stage = stageRepository.findByIsDeletedAndId(false, stageRequest.getId());
+                                setAuditFields(stage, true);
+                            } else {
+                                stage = new Stage();
+                                setAuditFields(stage, false);
+                            }
+                            stage.setErpStageCode(stageRequest.getErpStageCode());
+                            stage.setStageCode(stageRequest.getStageCode());
+                            stage.setStageName(stageRequest.getStageName());
+                            stage.setStageId(stageRequest.getStageId());
+                            stage.setSequenceNumber(stageRequest.getSequenceNumber());
+                            stage.setAssemblyLine(savedLine);
+                            stageRepository.save(stage);
+                        }
+                    }
+                }
+            }
+
             List<ProductionShop> data = new ArrayList<>();
             data.add(updated);
-            return new BaseResponse<>(200, "Shop updated successfully", data, 200, loginUser.getLogId());
+            return new BaseResponse<>(200, "Shop hierarchy updated successfully", data, 200, loginUser.getLogId());
         }
         return new BaseResponse<>(404, "Shop not found", null, 404, loginUser.getLogId());
     }
@@ -107,9 +190,17 @@ public class ProductionShopServiceImpl implements ProductionShopService {
     }
 
     @Override
-    public BaseResponse<AssemblyLine> saveProductionLine(AssemblyLine line) {
-        if (line.getShopId() != null) {
-            Optional<ProductionShop> shop = shopRepository.findById(line.getShopId());
+    public BaseResponse<AssemblyLine> saveProductionLine(AssemblyLineRequest lineRequest) {
+        AssemblyLine line = new AssemblyLine();
+        line.setErpLineCode(lineRequest.getErpLineCode());
+        line.setLineCode(lineRequest.getLineCode());
+        line.setLineName(lineRequest.getLineName());
+        line.setLineNumber(lineRequest.getLineNumber());
+        line.setAssemblyLineId(lineRequest.getAssemblyLineId());
+        line.setDescription(lineRequest.getDescription());
+        line.setSequenceNumber(lineRequest.getSequenceNumber());
+        if (lineRequest.getShopId() != null) {
+            Optional<ProductionShop> shop = shopRepository.findById(lineRequest.getShopId());
             if (shop.isPresent()) {
                 line.setProductionShop(shop.get());
             }
@@ -122,16 +213,18 @@ public class ProductionShopServiceImpl implements ProductionShopService {
     }
 
     @Override
-    public BaseResponse<AssemblyLine> updateProductionLine(Integer id, AssemblyLine line) {
+    public BaseResponse<AssemblyLine> updateProductionLine(Integer id, AssemblyLineRequest lineRequest) {
         AssemblyLine updated = lineRepository.findByIsDeletedAndId(false, id);
         if (updated != null) {
-            updated.setErpLineCode(line.getErpLineCode());
-            updated.setLineCode(line.getLineCode());
-            updated.setLineName(line.getLineName());
-            updated.setDescription(line.getDescription());
-            updated.setSequenceNumber(line.getSequenceNumber());
-            if (line.getShopId() != null) {
-                Optional<ProductionShop> shop = shopRepository.findById(line.getShopId());
+            updated.setErpLineCode(lineRequest.getErpLineCode());
+            updated.setLineCode(lineRequest.getLineCode());
+            updated.setLineName(lineRequest.getLineName());
+            updated.setLineNumber(lineRequest.getLineNumber());
+            updated.setAssemblyLineId(lineRequest.getAssemblyLineId());
+            updated.setDescription(lineRequest.getDescription());
+            updated.setSequenceNumber(lineRequest.getSequenceNumber());
+            if (lineRequest.getShopId() != null) {
+                Optional<ProductionShop> shop = shopRepository.findById(lineRequest.getShopId());
                 shop.ifPresent(updated::setProductionShop);
             }
             setAuditFields(updated, true);
@@ -173,9 +266,15 @@ public class ProductionShopServiceImpl implements ProductionShopService {
     }
 
     @Override
-    public BaseResponse<Stage> saveProductionLineStage(Stage stage) {
-        if (stage.getLineId() != null) {
-            Optional<AssemblyLine> line = lineRepository.findById(stage.getLineId());
+    public BaseResponse<Stage> saveProductionLineStage(StageRequest stageRequest) {
+        Stage stage = new Stage();
+        stage.setErpStageCode(stageRequest.getErpStageCode());
+        stage.setStageCode(stageRequest.getStageCode());
+        stage.setStageName(stageRequest.getStageName());
+        stage.setStageId(stageRequest.getStageId());
+        stage.setSequenceNumber(stageRequest.getSequenceNumber());
+        if (stageRequest.getLineId() != null) {
+            Optional<AssemblyLine> line = lineRepository.findById(stageRequest.getLineId());
             if (line.isPresent()) {
                 stage.setAssemblyLine(line.get());
             }
@@ -188,15 +287,16 @@ public class ProductionShopServiceImpl implements ProductionShopService {
     }
 
     @Override
-    public BaseResponse<Stage> updateProductionLineStage(Integer id, Stage stage) {
+    public BaseResponse<Stage> updateProductionLineStage(Integer id, StageRequest stageRequest) {
         Stage updated = stageRepository.findByIsDeletedAndId(false, id);
         if (updated != null) {
-            updated.setErpStageCode(stage.getErpStageCode());
-            updated.setStageCode(stage.getStageCode());
-            updated.setStageName(stage.getStageName());
-            updated.setSequenceNumber(stage.getSequenceNumber());
-            if (stage.getLineId() != null) {
-                Optional<AssemblyLine> line = lineRepository.findById(stage.getLineId());
+            updated.setErpStageCode(stageRequest.getErpStageCode());
+            updated.setStageCode(stageRequest.getStageCode());
+            updated.setStageName(stageRequest.getStageName());
+            updated.setStageId(stageRequest.getStageId());
+            updated.setSequenceNumber(stageRequest.getSequenceNumber());
+            if (stageRequest.getLineId() != null) {
+                Optional<AssemblyLine> line = lineRepository.findById(stageRequest.getLineId());
                 line.ifPresent(updated::setAssemblyLine);
             }
             setAuditFields(updated, true);

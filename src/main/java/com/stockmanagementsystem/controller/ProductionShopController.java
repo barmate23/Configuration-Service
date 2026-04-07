@@ -3,6 +3,9 @@ package com.stockmanagementsystem.controller;
 import com.stockmanagementsystem.entity.AssemblyLine;
 import com.stockmanagementsystem.entity.Stage;
 import com.stockmanagementsystem.entity.ProductionShop;
+import com.stockmanagementsystem.request.AssemblyLineRequest;
+import com.stockmanagementsystem.request.ProductionShopRequest;
+import com.stockmanagementsystem.request.StageRequest;
 import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.service.ProductionShopService;
 import com.stockmanagementsystem.utils.APIConstants;
@@ -20,12 +23,12 @@ public class ProductionShopController {
 
     // SHOP APIS
     @PostMapping(APIConstants.SAVE_PRODUCTION_SHOP)
-    public BaseResponse<ProductionShop> saveProductionShop(@RequestBody ProductionShop shop) {
+    public BaseResponse<ProductionShop> saveProductionShop(@RequestBody ProductionShopRequest shop) {
         return productionShopService.saveProductionShop(shop);
     }
 
     @PostMapping(APIConstants.UPDATE_PRODUCTION_SHOP)
-    public BaseResponse<ProductionShop> updateProductionShop(@PathVariable Integer id, @RequestBody ProductionShop shop) {
+    public BaseResponse<ProductionShop> updateProductionShop(@PathVariable Integer id, @RequestBody ProductionShopRequest shop) {
         return productionShopService.updateProductionShop(id, shop);
     }
 
@@ -46,12 +49,12 @@ public class ProductionShopController {
 
     // LINE APIS
     @PostMapping(APIConstants.SAVE_PRODUCTION_LINE)
-    public BaseResponse<AssemblyLine> saveProductionLine(@RequestBody AssemblyLine line) {
+    public BaseResponse<AssemblyLine> saveProductionLine(@RequestBody AssemblyLineRequest line) {
         return productionShopService.saveProductionLine(line);
     }
 
     @PostMapping(APIConstants.UPDATE_PRODUCTION_LINE)
-    public BaseResponse<AssemblyLine> updateProductionLine(@PathVariable Integer id, @RequestBody AssemblyLine line) {
+    public BaseResponse<AssemblyLine> updateProductionLine(@PathVariable Integer id, @RequestBody AssemblyLineRequest line) {
         return productionShopService.updateProductionLine(id, line);
     }
 
@@ -72,12 +75,12 @@ public class ProductionShopController {
 
     // STAGE APIS
     @PostMapping(APIConstants.SAVE_PRODUCTION_LINE_STAGE)
-    public BaseResponse<Stage> saveProductionLineStage(@RequestBody Stage stage) {
+    public BaseResponse<Stage> saveProductionLineStage(@RequestBody StageRequest stage) {
         return productionShopService.saveProductionLineStage(stage);
     }
 
     @PostMapping(APIConstants.UPDATE_PRODUCTION_LINE_STAGE)
-    public BaseResponse<Stage> updateProductionLineStage(@PathVariable Integer id, @RequestBody Stage stage) {
+    public BaseResponse<Stage> updateProductionLineStage(@PathVariable Integer id, @RequestBody StageRequest stage) {
         return productionShopService.updateProductionLineStage(id, stage);
     }
 
