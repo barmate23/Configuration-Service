@@ -17,7 +17,6 @@ public class PackingProfileListDTO {
     private String supplierName;
     private String supplierCode;
 
-    private String packingLevel;   // PRIMARY / SECONDARY / TERTIARY / QUATERNARY
 
     private Boolean isActive;
 }

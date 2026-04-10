@@ -16,7 +16,6 @@ public interface PackingProfileListProjection {
 
     String getSupplierName();
 
-    String getPackingHierarchyLevelCode(); // PRIMARY / SECONDARY / TERTIARY
 
     Boolean getIsActive();
 

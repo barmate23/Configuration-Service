@@ -4,8 +4,10 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
+@Table(name = "tbl_packing_profile_config_master")
 @Data
 public class PackingProfileConfigMaster {
 
@@ -16,30 +18,16 @@ public class PackingProfileConfigMaster {
     private Integer organizationId;
     private Integer subOrganizationId;
 
+    @Column(name = "description")
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "packingHierarchyLevelId")
-    private PackingHierarchyLevel packingHierarchyLevel;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "item_id")
+    private Item item;
 
-    // ===== PACKAGING FK =====
-    @ManyToOne
-    @JoinColumn(name = "primary_packaging_id")
-    private PackagingMaster primaryPackaging;
-
-    @ManyToOne
-    @JoinColumn(name = "secondary_packaging_id")
-    private PackagingMaster secondaryPackaging;
-
-    @ManyToOne
-    @JoinColumn(name = "tertiary_packaging_id")
-    private PackagingMaster tertiaryPackaging;
-
-    private Integer primaryUnits;
-
-    private Integer secondaryUnits;
-
-    private Integer tertiaryUnits;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id")
+    private Supplier supplier;
 
     private String moqLevel;   // PRIMARY / SECONDARY / TERTIARY
     private Integer moqQty;

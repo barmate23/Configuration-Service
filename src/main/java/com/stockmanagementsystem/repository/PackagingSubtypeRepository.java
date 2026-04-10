@@ -11,6 +11,5 @@ import java.util.Optional;
 public interface PackagingSubtypeRepository extends JpaRepository<PackagingSubtype, Long> {
 
     Optional<PackagingSubtype> findBySubtypeNameAndPackagingTypeAndIsActiveTrue(
-            String subtypeName, PackagingType packagingType
-    );
+            String subtypeName, PackagingType packagingType);
 }

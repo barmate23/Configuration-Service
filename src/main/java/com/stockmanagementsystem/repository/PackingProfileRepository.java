@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PackingProfileRepository extends JpaRepository<PackingProfileConfigMaster, Integer> {
+public interface PackingProfileRepository extends JpaRepository<PackingProfileConfigMaster, Long> {
 
     List<PackingProfileConfigMaster> findByOrganizationIdAndSubOrganizationIdAndIsDeleted(Integer orgId, Integer subOrgId, boolean b);
 }
