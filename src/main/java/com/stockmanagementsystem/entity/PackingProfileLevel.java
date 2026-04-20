@@ -16,9 +16,9 @@ public class PackingProfileLevel {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "profile_id")
+    @JoinColumn(name = "supplier_item_mapper_id")
     @JsonIgnore
-    private PackingProfileConfigMaster profile;
+    private SupplierItemMapper supplierItemMapper;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hierarchy_level_id")

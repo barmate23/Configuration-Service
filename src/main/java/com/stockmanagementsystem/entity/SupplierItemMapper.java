@@ -31,6 +31,9 @@ public class SupplierItemMapper {
     @Column(name = "LeadTime")
     private Integer leadTime;
 
+    @Column(name = "moq")
+    private Integer moq;
+
     @Column(name = "IsDay")
     private Boolean isDay;
 
