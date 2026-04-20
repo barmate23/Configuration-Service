@@ -92,6 +92,21 @@ public class Validations extends ServiceConstants {
     }
 
 
+    public String getCellStringValue(Row row, int cellIndex) {
+
+        Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+        if (cell == null) return null;
+
+        DataFormatter formatter = new DataFormatter();
+        String value = formatter.formatCellValue(cell);
+
+        if (value != null) {
+            value = value.trim();
+            if (value.isEmpty()) return null;
+        }
+
+        return value;
+    }
 
     public Integer getCellIntegerValue(Row row, int cellIndex, List<ValidationResultResponse> resultResponses, String type, List<String> headerNames) {
 

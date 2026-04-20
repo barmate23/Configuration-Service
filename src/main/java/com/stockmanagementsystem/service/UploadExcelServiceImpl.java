@@ -170,6 +170,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
     @Autowired
     private AsnLineRepository asnLineRepository;
+    @Autowired
+    private ContainerHierarchyRepository containerHierarchyRepository;
+    @Autowired
+    private ContainerSerialMapperRepository containerSerialMapperRepository;
+    @Autowired
+    private PackingProfileLevelRepository packingProfileLevelRepository;
 
     @Autowired
     private CommonMasterRepository commonMasterRepository;
@@ -1927,9 +1933,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     purchaseOrderHead.setModifiedBy(loginUser.getUserId());
                     purchaseOrderHead.setModifiedOn(new Date());
                     Optional<PurchaseOrderHead> orderHeadOptional = purchaseOrderHeadRepository.findByIsDeletedAndSubOrganizationIdAndPurchaseOrderNumber(false, loginUser.getSubOrgId(), purchaseOrderNumber);
-                    PurchaseOrderHead head=null;
+                    PurchaseOrderHead head = null;
                     if (orderHeadOptional.isEmpty() && resultResponses.size() == 0) {
-                        head= purchaseOrderHeadRepository.save(purchaseOrderHead);
+                        head = purchaseOrderHeadRepository.save(purchaseOrderHead);
                     }
                     PurchaseOrderLine purchaseOrderLine = new PurchaseOrderLine();
 
@@ -2717,10 +2723,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         .findByIsDeletedAndSubOrganizationIdAndPlanOrderId(
                                 false, loginUser.getSubOrgId(), planId);
 
-                if(!existingHead.isPresent()){
+                if (!existingHead.isPresent()) {
                     Optional<PPEHead> existingPlanId =
                             ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPpeId(false, loginUser.getSubOrgId(), planId);
-                    if(existingPlanId.isPresent()){
+                    if (existingPlanId.isPresent()) {
                         errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
                                 PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
                     }
@@ -2806,7 +2812,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     for (BOMLine bomLine : bomLineList) {
                         PPELine ppeLine = null;
 
-                        if(ppeHeadOptional.isPresent()){
+                        if (ppeHeadOptional.isPresent()) {
                             ppeLine = ppeLineRepository.findByIsDeletedAndSubOrganizationIdAndItemIdAndPPEHeadId(false, loginUser.getSubOrgId(), bomLine.getItem().getId(), ppeHead.getId());
                         } else {
                             ppeLine = new PPELine();
@@ -3757,6 +3763,180 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ServiceConstants.FILE_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
         }
     }
+
+
+    @Override
+    public ResponseEntity<BaseResponse> uploadPackingListV2(MultipartFile file, String type, Integer requestId, String requestType, Boolean isFinalUpload) {
+
+        String logId = loginUser.getLogId();
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+
+            List<Map<String, String>> rows = new ArrayList<>();
+
+            // ===== READ EXCEL =====
+            for (Row row : sheet) {
+                if (row.getRowNum() <= 8) continue;
+
+                String itemCode = getCellStringValue(row, 1);
+                String serial = getCellStringValue(row, 3);
+                String primaryCode = getCellStringValue(row, 4);
+
+                if (isBlank(itemCode) || isBlank(serial) || isBlank(primaryCode)) continue;
+
+                Map<String, String> map = new HashMap<>();
+                map.put("primary", primaryCode);
+                map.put("serial", serial);
+
+                rows.add(map);
+            }
+
+            if (rows.isEmpty()) {
+                return ResponseEntity.ok(new BaseResponse<>(500, "No valid data", null, 500, logId));
+            }
+
+            // ===== FETCH ASN =====
+            ASNLine asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+            if (asnLine == null) {
+                return ResponseEntity.ok(new BaseResponse<>(500, "ASN not found", null, 500, logId));
+            }
+
+            Integer supplierId = asnLine.getAsnHeadId().getSupplier().getId();
+            Integer itemId = asnLine.getItem().getId();
+            Integer userId = loginUser.getUserId();
+            Date now = new Date();
+
+            // ===== GROUP PRIMARY → SERIAL =====
+            Map<String, List<String>> primarySerialMap = rows.stream().collect(Collectors.groupingBy(r -> r.get("primary"), Collectors.mapping(r -> r.get("serial"), Collectors.toList())));
+
+            // ===== FETCH LEVELS =====
+            List<PackingProfileLevel> levels = packingProfileLevelRepository.findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
+
+            // DESC → Tertiary → Secondary → Primary
+            levels.sort((a, b) -> b.getLevelOrder().compareTo(a.getLevelOrder()));
+
+            PackingProfileLevel primaryLevel = levels.get(levels.size() - 1);
+
+            // ===== STEP 1: CREATE PRIMARY =====
+            Map<String, ContainerHierarchy> primaryMap = new LinkedHashMap<>();
+            List<ContainerHierarchy> primaryList = new ArrayList<>();
+
+            for (String primaryCode : primarySerialMap.keySet()) {
+
+                ContainerHierarchy c = new ContainerHierarchy();
+                c.setContainerCode(primaryCode);
+                c.setPackingLevel(primaryLevel);
+                c.setAsnLine(asnLine);
+
+                c.setIsDeleted(false);
+                c.setCreatedBy(userId);
+                c.setCreatedOn(now);
+
+                primaryMap.put(primaryCode, c);
+                primaryList.add(c);
+            }
+
+            containerHierarchyRepository.saveAll(primaryList);
+
+            // ===== STEP 2: BUILD HIERARCHY (BOTTOM-UP) =====
+            List<ContainerHierarchy> childLevel = new ArrayList<>(primaryList);
+
+            for (int i = levels.size() - 2; i >= 0; i--) {
+
+                PackingProfileLevel level = levels.get(i);
+                int units = level.getUnitsPerParent();
+
+                // 🔥 SAFETY CHECK (optional but recommended)
+                if (childLevel.size() % units != 0) {
+                    throw new RuntimeException("Invalid hierarchy: not perfectly divisible at level " + level.getHierarchyLevel().getLevelCode());
+                }
+
+                List<ContainerHierarchy> parentLevel = new ArrayList<>();
+
+                int count = 1;
+
+                for (int j = 0; j < childLevel.size(); j += units) {
+
+                    String parentCode = level.getHierarchyLevel().getLevelCode().substring(0, 1).toUpperCase() + "-" + String.format("%03d", count++);
+
+                    ContainerHierarchy parent = new ContainerHierarchy();
+                    parent.setContainerCode(parentCode);
+                    parent.setPackingLevel(level);
+                    parent.setAsnLine(asnLine);
+
+                    parent.setIsDeleted(false);
+                    parent.setCreatedBy(userId);
+                    parent.setCreatedOn(now);
+
+                    parentLevel.add(parent);
+
+                    // assign children
+                    for (int k = j; k < j + units; k++) {
+                        childLevel.get(k).setParentContainerHierarchy(parent);
+                    }
+                }
+
+                containerHierarchyRepository.saveAll(parentLevel);
+
+                childLevel = parentLevel;
+            }
+
+            // ===== STEP 3: SAVE SERIALS =====
+            List<SerialBatchNumber> serialList = new ArrayList<>();
+
+            for (Map.Entry<String, List<String>> entry : primarySerialMap.entrySet()) {
+
+                for (String serial : entry.getValue()) {
+
+                    SerialBatchNumber s = new SerialBatchNumber();
+                    s.setSerialBatchNumber(serial);
+                    s.setAsnLine(asnLine);
+
+                    s.setIsDeleted(false);
+                    s.setCreatedBy(userId);
+                    s.setCreatedOn(now);
+
+                    serialList.add(s);
+                }
+            }
+
+            serialBatchNumberRepository.saveAll(serialList);
+
+            // ===== STEP 4: MAP SERIAL → PRIMARY =====
+            List<ContainerSerialMapper> mapperList = new ArrayList<>();
+
+            int index = 0;
+
+            for (Map.Entry<String, List<String>> entry : primarySerialMap.entrySet()) {
+
+                ContainerHierarchy primaryContainer = primaryMap.get(entry.getKey());
+
+                for (int i = 0; i < entry.getValue().size(); i++) {
+
+                    ContainerSerialMapper mapper = new ContainerSerialMapper();
+                    mapper.setContainerHierarchy(primaryContainer);
+                    mapper.setSerialBatchNumber(serialList.get(index++));
+
+                    mapper.setIsDeleted(false);
+                    mapper.setCreatedBy(userId);
+                    mapper.setCreatedOn(now);
+
+                    mapperList.add(mapper);
+                }
+            }
+
+            containerSerialMapperRepository.saveAll(mapperList);
+
+            return ResponseEntity.ok(new BaseResponse<>(200, "Packing uploaded successfully with hierarchy ", null, 200, logId));
+
+        } catch (Exception e) {
+            log.error("{} Error in uploadPackingListV2", logId, e);
+            return ResponseEntity.ok(new BaseResponse<>(500, "Upload failed", null, 500, logId));
+        }
+    }
+
 
     // 🔹 Utility method
     private boolean isBlank(String s) {

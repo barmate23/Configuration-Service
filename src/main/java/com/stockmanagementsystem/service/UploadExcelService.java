@@ -51,5 +51,7 @@ public interface UploadExcelService {
 
     ResponseEntity<BaseResponse> uploadPackingList(MultipartFile file, String type,Integer requestId,String requestType,Boolean isFinalUpload);
 
+    ResponseEntity<BaseResponse> uploadPackingListV2(MultipartFile file, String type, Integer requestId, String requestType, Boolean isFinalUpload);
+
 //    ResponseEntity<BaseResponse> uploadPurchaseOrders(MultipartFile file, String type) throw,s IOException;
 }

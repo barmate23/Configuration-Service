@@ -192,6 +192,10 @@ public class FileController {
             case ServiceConstants.PACKINGLIST:
                 stringResponseEntity =this.uploadExcelService.uploadPackingList(file,type,requestId,requestType,isFinalUpload);
                 break;
+            case ServiceConstants.PACKINGLISTV2:
+                stringResponseEntity = this.uploadExcelService.uploadPackingListV2(file, type, requestId, requestType, isFinalUpload);
+                break;
+
         }
 
         log.info("FileController----uploadExcelFile Method Executed");
