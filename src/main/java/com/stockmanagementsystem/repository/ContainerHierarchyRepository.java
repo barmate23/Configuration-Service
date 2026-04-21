@@ -12,4 +12,5 @@ public interface ContainerHierarchyRepository extends JpaRepository<ContainerHie
 
 
     List<ContainerHierarchy> findByAsnLineIdAndIsDeletedFalse(Integer id);
+
 }

@@ -3809,7 +3809,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             // ===== FETCH LEVELS =====
             List<PackingProfileLevel> levels =
-                    packingProfileLevelRepository.findLevels(supplierId, itemId);
+                    packingProfileLevelRepository.findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
 
             levels.sort((a, b) -> b.getLevelOrder().compareTo(a.getLevelOrder()));
 
@@ -3827,10 +3827,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             int primaryCount = (int) Math.ceil((double) totalSerials / primaryCapacity);
             int secondaryCount = (int) Math.ceil((double) primaryCount / secCapacity);
             int tertiaryCount = (int) Math.ceil((double) secondaryCount / terCapacity);
-
-            // ===== CLEAN OLD DATA (IMPORTANT) =====
-            containerSerialMapperRepository.deleteByAsnLineId(asnLine.getId());
-            containerHierarchyRepository.deleteByAsnLineId(asnLine.getId());
 
             // ===== STEP 1: CREATE TERTIARY =====
             List<ContainerHierarchy> tertiaryList = new ArrayList<>();

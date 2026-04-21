@@ -12,5 +12,6 @@ public interface ContainerSerialMapperRepository extends JpaRepository<Container
 
 
     List<ContainerSerialMapper> findByIsDeletedFalse();
+
 }
 
