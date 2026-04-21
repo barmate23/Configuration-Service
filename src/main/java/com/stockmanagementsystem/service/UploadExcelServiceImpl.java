@@ -3833,12 +3833,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             int primaryCount = primaryCodes.size();
 
-            int secCapacity = secondaryLevel.getUnitsPerParent();
-            int terCapacity = tertiaryLevel.getUnitsPerParent();
-
-            // 🔥 CORRECT CALCULATION
-            int secondaryCount = (int) Math.ceil((double) primaryCount / secCapacity);
-            int tertiaryCount = (int) Math.ceil((double) secondaryCount / terCapacity);
+            int secondaryCount = secondaryLevel.getUnitsPerParent();
+            int tertiaryCount = tertiaryLevel.getUnitsPerParent();
 
             // ===== STEP 1: CREATE TERTIARY =====
             List<ContainerHierarchy> tertiaryList = new ArrayList<>();
@@ -3864,7 +3860,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             for (int i = 0; i < secondaryCount; i++) {
 
-                ContainerHierarchy parentTertiary = tertiaryList.get(i / terCapacity);
+                ContainerHierarchy parentTertiary = tertiaryList.get(i / tertiaryCount);
 
                 ContainerHierarchy s = new ContainerHierarchy();
                 s.setContainerCode("S-" + String.format("%03d", i + 1));
@@ -3886,7 +3882,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             for (int i = 0; i < primaryCount; i++) {
 
-                ContainerHierarchy parentSecondary = secondaryList.get(i / secCapacity);
+                ContainerHierarchy parentSecondary = secondaryList.get(i / secondaryCount);
 
                 String code = primaryCodes.get(i);
 
