@@ -20,6 +20,7 @@ public class SupplierItemMapper {
 
     @Column(name = "subOrganizationId")
     private Integer subOrganizationId;
+
     @ManyToOne
     @JoinColumn(name = "supplierId")
     private Supplier supplier;

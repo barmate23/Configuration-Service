@@ -3766,14 +3766,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
 
     @Override
-    public ResponseEntity<BaseResponse> uploadPackingListV2(MultipartFile file, String type, Integer requestId, String requestType, Boolean isFinalUpload) {
+    public ResponseEntity<BaseResponse> uploadPackingListV2(
+            MultipartFile file, String type, Integer requestId,
+            String requestType, Boolean isFinalUpload) {
 
         String logId = loginUser.getLogId();
 
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
 
             Sheet sheet = workbook.getSheetAt(0);
-
             List<Map<String, String>> rows = new ArrayList<>();
 
             // ===== READ EXCEL =====
@@ -3789,7 +3790,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 Map<String, String> map = new HashMap<>();
                 map.put("primary", primaryCode);
                 map.put("serial", serial);
-
                 rows.add(map);
             }
 
@@ -3805,85 +3805,107 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             Integer supplierId = asnLine.getAsnHeadId().getSupplier().getId();
             Integer itemId = asnLine.getItem().getId();
+
             Integer userId = loginUser.getUserId();
+            Integer orgId = loginUser.getOrgId();
+            Integer subOrgId = loginUser.getSubOrgId();
+
             Date now = new Date();
 
             // ===== GROUP PRIMARY → SERIAL =====
-            Map<String, List<String>> primarySerialMap = rows.stream().collect(Collectors.groupingBy(r -> r.get("primary"), Collectors.mapping(r -> r.get("serial"), Collectors.toList())));
+            Map<String, List<String>> primarySerialMap =
+                    rows.stream().collect(Collectors.groupingBy(
+                            r -> r.get("primary"),
+                            Collectors.mapping(r -> r.get("serial"), Collectors.toList())
+                    ));
+
+            List<String> primaryCodes = new ArrayList<>(primarySerialMap.keySet());
 
             // ===== FETCH LEVELS =====
-            List<PackingProfileLevel> levels = packingProfileLevelRepository.findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
+            List<PackingProfileLevel> levels =
+                    packingProfileLevelRepository.findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
 
-            // DESC → Tertiary → Secondary → Primary
             levels.sort((a, b) -> b.getLevelOrder().compareTo(a.getLevelOrder()));
 
-            PackingProfileLevel primaryLevel = levels.get(levels.size() - 1);
+            PackingProfileLevel tertiaryLevel = levels.get(0);
+            PackingProfileLevel secondaryLevel = levels.get(1);
+            PackingProfileLevel primaryLevel = levels.get(2);
 
-            // ===== STEP 1: CREATE PRIMARY =====
-            Map<String, ContainerHierarchy> primaryMap = new LinkedHashMap<>();
-            List<ContainerHierarchy> primaryList = new ArrayList<>();
+            int primaryCount = primaryCodes.size();
 
-            for (String primaryCode : primarySerialMap.keySet()) {
+            int secCapacity = secondaryLevel.getUnitsPerParent();
+            int terCapacity = tertiaryLevel.getUnitsPerParent();
 
-                ContainerHierarchy c = new ContainerHierarchy();
-                c.setContainerCode(primaryCode);
-                c.setPackingLevel(primaryLevel);
-                c.setAsnLine(asnLine);
+            // 🔥 CORRECT CALCULATION
+            int secondaryCount = (int) Math.ceil((double) primaryCount / secCapacity);
+            int tertiaryCount = (int) Math.ceil((double) secondaryCount / terCapacity);
 
-                c.setIsDeleted(false);
-                c.setCreatedBy(userId);
-                c.setCreatedOn(now);
+            // ===== STEP 1: CREATE TERTIARY =====
+            List<ContainerHierarchy> tertiaryList = new ArrayList<>();
 
-                primaryMap.put(primaryCode, c);
-                primaryList.add(c);
+            for (int i = 1; i <= tertiaryCount; i++) {
+
+                ContainerHierarchy t = new ContainerHierarchy();
+                t.setContainerCode("T-" + String.format("%03d", i));
+                t.setPackingLevel(tertiaryLevel);
+                t.setAsnLine(asnLine);
+
+                t.setIsDeleted(false);
+                t.setCreatedBy(userId);
+                t.setCreatedOn(now);
+
+                tertiaryList.add(t);
             }
 
-            containerHierarchyRepository.saveAll(primaryList);
+            containerHierarchyRepository.saveAll(tertiaryList);
 
-            // ===== STEP 2: BUILD HIERARCHY (BOTTOM-UP) =====
-            List<ContainerHierarchy> childLevel = new ArrayList<>(primaryList);
+            // ===== STEP 2: CREATE SECONDARY =====
+            List<ContainerHierarchy> secondaryList = new ArrayList<>();
 
-            for (int i = levels.size() - 2; i >= 0; i--) {
+            for (int i = 0; i < secondaryCount; i++) {
 
-                PackingProfileLevel level = levels.get(i);
-                int units = level.getUnitsPerParent();
+                ContainerHierarchy parentTertiary = tertiaryList.get(i / terCapacity);
 
-                // 🔥 SAFETY CHECK (optional but recommended)
-                if (childLevel.size() % units != 0) {
-                    throw new RuntimeException("Invalid hierarchy: not perfectly divisible at level " + level.getHierarchyLevel().getLevelCode());
-                }
+                ContainerHierarchy s = new ContainerHierarchy();
+                s.setContainerCode("S-" + String.format("%03d", i + 1));
+                s.setPackingLevel(secondaryLevel);
+                s.setAsnLine(asnLine);
+                s.setParentContainerHierarchy(parentTertiary);
 
-                List<ContainerHierarchy> parentLevel = new ArrayList<>();
+                s.setIsDeleted(false);
+                s.setCreatedBy(userId);
+                s.setCreatedOn(now);
 
-                int count = 1;
-
-                for (int j = 0; j < childLevel.size(); j += units) {
-
-                    String parentCode = level.getHierarchyLevel().getLevelCode().substring(0, 1).toUpperCase() + "-" + String.format("%03d", count++);
-
-                    ContainerHierarchy parent = new ContainerHierarchy();
-                    parent.setContainerCode(parentCode);
-                    parent.setPackingLevel(level);
-                    parent.setAsnLine(asnLine);
-
-                    parent.setIsDeleted(false);
-                    parent.setCreatedBy(userId);
-                    parent.setCreatedOn(now);
-
-                    parentLevel.add(parent);
-
-                    // assign children
-                    for (int k = j; k < j + units; k++) {
-                        childLevel.get(k).setParentContainerHierarchy(parent);
-                    }
-                }
-
-                containerHierarchyRepository.saveAll(parentLevel);
-
-                childLevel = parentLevel;
+                secondaryList.add(s);
             }
 
-            // ===== STEP 3: SAVE SERIALS =====
+            containerHierarchyRepository.saveAll(secondaryList);
+
+            // ===== STEP 3: CREATE PRIMARY =====
+            Map<String, ContainerHierarchy> primaryMap = new HashMap<>();
+
+            for (int i = 0; i < primaryCount; i++) {
+
+                ContainerHierarchy parentSecondary = secondaryList.get(i / secCapacity);
+
+                String code = primaryCodes.get(i);
+
+                ContainerHierarchy p = new ContainerHierarchy();
+                p.setContainerCode(code);
+                p.setPackingLevel(primaryLevel);
+                p.setAsnLine(asnLine);
+                p.setParentContainerHierarchy(parentSecondary);
+
+                p.setIsDeleted(false);
+                p.setCreatedBy(userId);
+                p.setCreatedOn(now);
+
+                primaryMap.put(code, p);
+            }
+
+            containerHierarchyRepository.saveAll(primaryMap.values());
+
+            // ===== STEP 4: SAVE SERIALS =====
             List<SerialBatchNumber> serialList = new ArrayList<>();
 
             for (Map.Entry<String, List<String>> entry : primarySerialMap.entrySet()) {
@@ -3893,6 +3915,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     SerialBatchNumber s = new SerialBatchNumber();
                     s.setSerialBatchNumber(serial);
                     s.setAsnLine(asnLine);
+
+                    // 🔥 FIXED
+                    s.setOrganizationId(orgId);
+                    s.setSubOrganizationId(subOrgId);
 
                     s.setIsDeleted(false);
                     s.setCreatedBy(userId);
@@ -3904,7 +3930,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             serialBatchNumberRepository.saveAll(serialList);
 
-            // ===== STEP 4: MAP SERIAL → PRIMARY =====
+            // ===== STEP 5: MAP SERIAL → PRIMARY =====
             List<ContainerSerialMapper> mapperList = new ArrayList<>();
 
             int index = 0;
@@ -3929,14 +3955,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             containerSerialMapperRepository.saveAll(mapperList);
 
-            return ResponseEntity.ok(new BaseResponse<>(200, "Packing uploaded successfully with hierarchy ", null, 200, logId));
+            return ResponseEntity.ok(new BaseResponse<>(200,
+                    "Hierarchy created correctly (Top-Down Fixed)", null, 200, logId));
 
         } catch (Exception e) {
             log.error("{} Error in uploadPackingListV2", logId, e);
-            return ResponseEntity.ok(new BaseResponse<>(500, "Upload failed", null, 500, logId));
+            return ResponseEntity.ok(new BaseResponse<>(500,
+                    "Upload failed", null, 500, logId));
         }
     }
-
 
     // 🔹 Utility method
     private boolean isBlank(String s) {
