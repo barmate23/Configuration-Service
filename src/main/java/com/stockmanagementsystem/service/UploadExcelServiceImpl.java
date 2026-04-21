@@ -3775,26 +3775,21 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            List<Map<String, String>> rows = new ArrayList<>();
+            List<String> allSerials = new ArrayList<>();
 
-            // ===== READ EXCEL =====
+            // ===== READ EXCEL (ONLY SERIALS) =====
             for (Row row : sheet) {
                 if (row.getRowNum() <= 8) continue;
 
-                String itemCode = getCellStringValue(row, 1);
                 String serial = getCellStringValue(row, 3);
-                String primaryCode = getCellStringValue(row, 4);
 
-                if (isBlank(itemCode) || isBlank(serial) || isBlank(primaryCode)) continue;
-
-                Map<String, String> map = new HashMap<>();
-                map.put("primary", primaryCode);
-                map.put("serial", serial);
-                rows.add(map);
+                if (serial != null && !serial.trim().isEmpty()) {
+                    allSerials.add(serial.trim());
+                }
             }
 
-            if (rows.isEmpty()) {
-                return ResponseEntity.ok(new BaseResponse<>(500, "No valid data", null, 500, logId));
+            if (allSerials.isEmpty()) {
+                return ResponseEntity.ok(new BaseResponse<>(500, "No serials found", null, 500, logId));
             }
 
             // ===== FETCH ASN =====
@@ -3812,18 +3807,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             Date now = new Date();
 
-            // ===== GROUP PRIMARY → SERIAL =====
-            Map<String, List<String>> primarySerialMap =
-                    rows.stream().collect(Collectors.groupingBy(
-                            r -> r.get("primary"),
-                            Collectors.mapping(r -> r.get("serial"), Collectors.toList())
-                    ));
-
-            List<String> primaryCodes = new ArrayList<>(primarySerialMap.keySet());
-
             // ===== FETCH LEVELS =====
             List<PackingProfileLevel> levels =
-                    packingProfileLevelRepository.findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
+                    packingProfileLevelRepository.findLevels(supplierId, itemId);
 
             levels.sort((a, b) -> b.getLevelOrder().compareTo(a.getLevelOrder()));
 
@@ -3831,18 +3817,28 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             PackingProfileLevel secondaryLevel = levels.get(1);
             PackingProfileLevel primaryLevel = levels.get(2);
 
-            int primaryCount = primaryCodes.size();
+            int primaryCapacity = primaryLevel.getUnitsPerParent();
+            int secCapacity = secondaryLevel.getUnitsPerParent();
+            int terCapacity = tertiaryLevel.getUnitsPerParent();
 
-            int secondaryCount = secondaryLevel.getUnitsPerParent();
-            int tertiaryCount = tertiaryLevel.getUnitsPerParent();
+            int totalSerials = allSerials.size();
+
+            // ===== CALCULATE COUNTS =====
+            int primaryCount = (int) Math.ceil((double) totalSerials / primaryCapacity);
+            int secondaryCount = (int) Math.ceil((double) primaryCount / secCapacity);
+            int tertiaryCount = (int) Math.ceil((double) secondaryCount / terCapacity);
+
+            // ===== CLEAN OLD DATA (IMPORTANT) =====
+            containerSerialMapperRepository.deleteByAsnLineId(asnLine.getId());
+            containerHierarchyRepository.deleteByAsnLineId(asnLine.getId());
 
             // ===== STEP 1: CREATE TERTIARY =====
             List<ContainerHierarchy> tertiaryList = new ArrayList<>();
 
-            for (int i = 1; i <= tertiaryCount; i++) {
+            for (int i = 0; i < tertiaryCount; i++) {
 
                 ContainerHierarchy t = new ContainerHierarchy();
-                t.setContainerCode("T-" + String.format("%03d", i));
+                t.setContainerCode("T-" + String.format("%03d", i + 1));
                 t.setPackingLevel(tertiaryLevel);
                 t.setAsnLine(asnLine);
 
@@ -3860,7 +3856,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             for (int i = 0; i < secondaryCount; i++) {
 
-                ContainerHierarchy parentTertiary = tertiaryList.get(i / tertiaryCount);
+                ContainerHierarchy parentTertiary = tertiaryList.get(i / terCapacity);
 
                 ContainerHierarchy s = new ContainerHierarchy();
                 s.setContainerCode("S-" + String.format("%03d", i + 1));
@@ -3878,16 +3874,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             containerHierarchyRepository.saveAll(secondaryList);
 
             // ===== STEP 3: CREATE PRIMARY =====
-            Map<String, ContainerHierarchy> primaryMap = new HashMap<>();
+            List<ContainerHierarchy> primaryList = new ArrayList<>();
 
             for (int i = 0; i < primaryCount; i++) {
 
-                ContainerHierarchy parentSecondary = secondaryList.get(i / secondaryCount);
-
-                String code = primaryCodes.get(i);
+                ContainerHierarchy parentSecondary = secondaryList.get(i / secCapacity);
 
                 ContainerHierarchy p = new ContainerHierarchy();
-                p.setContainerCode(code);
+                p.setContainerCode("P-" + String.format("%03d", i + 1));
                 p.setPackingLevel(primaryLevel);
                 p.setAsnLine(asnLine);
                 p.setParentContainerHierarchy(parentSecondary);
@@ -3896,23 +3890,26 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 p.setCreatedBy(userId);
                 p.setCreatedOn(now);
 
-                primaryMap.put(code, p);
+                primaryList.add(p);
             }
 
-            containerHierarchyRepository.saveAll(primaryMap.values());
+            containerHierarchyRepository.saveAll(primaryList);
 
-            // ===== STEP 4: SAVE SERIALS =====
-            List<SerialBatchNumber> serialList = new ArrayList<>();
+            // ===== STEP 4: SAVE SERIALS + MAP =====
+            List<ContainerSerialMapper> mapperList = new ArrayList<>();
 
-            for (Map.Entry<String, List<String>> entry : primarySerialMap.entrySet()) {
+            int serialIndex = 0;
 
-                for (String serial : entry.getValue()) {
+            for (int i = 0; i < primaryList.size(); i++) {
+
+                ContainerHierarchy primary = primaryList.get(i);
+
+                for (int j = 0; j < primaryCapacity && serialIndex < totalSerials; j++) {
 
                     SerialBatchNumber s = new SerialBatchNumber();
-                    s.setSerialBatchNumber(serial);
+                    s.setSerialBatchNumber(allSerials.get(serialIndex++));
                     s.setAsnLine(asnLine);
 
-                    // 🔥 FIXED
                     s.setOrganizationId(orgId);
                     s.setSubOrganizationId(subOrgId);
 
@@ -3920,26 +3917,11 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     s.setCreatedBy(userId);
                     s.setCreatedOn(now);
 
-                    serialList.add(s);
-                }
-            }
-
-            serialBatchNumberRepository.saveAll(serialList);
-
-            // ===== STEP 5: MAP SERIAL → PRIMARY =====
-            List<ContainerSerialMapper> mapperList = new ArrayList<>();
-
-            int index = 0;
-
-            for (Map.Entry<String, List<String>> entry : primarySerialMap.entrySet()) {
-
-                ContainerHierarchy primaryContainer = primaryMap.get(entry.getKey());
-
-                for (int i = 0; i < entry.getValue().size(); i++) {
+                    serialBatchNumberRepository.save(s);
 
                     ContainerSerialMapper mapper = new ContainerSerialMapper();
-                    mapper.setContainerHierarchy(primaryContainer);
-                    mapper.setSerialBatchNumber(serialList.get(index++));
+                    mapper.setContainerHierarchy(primary);
+                    mapper.setSerialBatchNumber(s);
 
                     mapper.setIsDeleted(false);
                     mapper.setCreatedBy(userId);
@@ -3952,7 +3934,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             containerSerialMapperRepository.saveAll(mapperList);
 
             return ResponseEntity.ok(new BaseResponse<>(200,
-                    "Hierarchy created correctly (Top-Down Fixed)", null, 200, logId));
+                    "Hierarchy created successfully", null, 200, logId));
 
         } catch (Exception e) {
             log.error("{} Error in uploadPackingListV2", logId, e);
