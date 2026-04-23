@@ -18,13 +18,12 @@ public class ContainerHierarchy {
     @Column(name = "ContainerCode")
     private String containerCode;
 
+    @Column(name = "packingSlipNumber")
+    private String packingSlipNumber;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PackingLevelId")
     private PackingProfileLevel packingLevel;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "SerialBatchNumberId")
-    private SerialBatchNumber serialBatchNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ContainerHierarchyId")

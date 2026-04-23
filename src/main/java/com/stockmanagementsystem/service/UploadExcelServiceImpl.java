@@ -27,6 +27,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -3831,10 +3832,13 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             // ===== STEP 1: CREATE TERTIARY =====
             List<ContainerHierarchy> tertiaryList = new ArrayList<>();
 
+            long count = containerHierarchyRepository.count() + 1;
+
             for (int i = 0; i < tertiaryCount; i++) {
 
                 ContainerHierarchy t = new ContainerHierarchy();
-                t.setContainerCode("T-" + String.format("%03d", i + 1));
+                t.setContainerCode(generateContainerCode("TERT", count));
+                t.setPackingSlipNumber(createPackingSlip(count));
                 t.setPackingLevel(tertiaryLevel);
                 t.setAsnLine(asnLine);
 
@@ -3842,6 +3846,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 t.setCreatedBy(userId);
                 t.setCreatedOn(now);
 
+                count++;
                 tertiaryList.add(t);
             }
 
@@ -3855,7 +3860,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 ContainerHierarchy parentTertiary = tertiaryList.get(i / terCapacity);
 
                 ContainerHierarchy s = new ContainerHierarchy();
-                s.setContainerCode("S-" + String.format("%03d", i + 1));
+                s.setContainerCode(generateContainerCode("SECO", count));
+                s.setPackingSlipNumber(createPackingSlip(count));
                 s.setPackingLevel(secondaryLevel);
                 s.setAsnLine(asnLine);
                 s.setParentContainerHierarchy(parentTertiary);
@@ -3864,6 +3870,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 s.setCreatedBy(userId);
                 s.setCreatedOn(now);
 
+                count++;
                 secondaryList.add(s);
             }
 
@@ -3877,7 +3884,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 ContainerHierarchy parentSecondary = secondaryList.get(i / secCapacity);
 
                 ContainerHierarchy p = new ContainerHierarchy();
-                p.setContainerCode("P-" + String.format("%03d", i + 1));
+                p.setContainerCode(generateContainerCode("PRIM", count));
+                p.setPackingSlipNumber(createPackingSlip( count));
                 p.setPackingLevel(primaryLevel);
                 p.setAsnLine(asnLine);
                 p.setParentContainerHierarchy(parentSecondary);
@@ -3885,7 +3893,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 p.setIsDeleted(false);
                 p.setCreatedBy(userId);
                 p.setCreatedOn(now);
-
+                count++;
                 primaryList.add(p);
             }
 
@@ -3939,6 +3947,21 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         }
     }
 
+    private String createPackingSlip(Long count) {
+
+        // Step 1: Prefix
+        String prefix = "PS";
+
+        // Step 2: Current Date in YYYYMMDD
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+
+        // Step 4: Format count to 4 digits (0001, 0002...)
+        String sequence = String.format("%04d", count);
+
+        // Step 5: Combine all
+        return prefix + "-" + date + "-" + sequence;
+    }
     // 🔹 Utility method
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
@@ -3964,5 +3987,23 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         return String.format("%s%d", prefix, nextSequence);
     }
 
+    private String generateContainerCode(String prefixCode, long count) {
+
+        String[] monthLetters = {"A","B","C","D","E","F","G","H","I","J","K","L"};
+
+        LocalDate today = LocalDate.now();
+        String year = String.valueOf(today.getYear());
+        String monthLetter = monthLetters[today.getMonthValue() - 1];
+        String day = String.format("%02d", today.getDayOfMonth());
+
+        // Example: CNT-2025A23-
+        String prefix = String.format("%s-%s%s%s-", prefixCode, year, monthLetter, day);
+
+
+        // Zero padded (001, 002...)
+        String sequence = String.format("%03d", count);
+
+        return prefix + sequence;
+    }
 
 }
