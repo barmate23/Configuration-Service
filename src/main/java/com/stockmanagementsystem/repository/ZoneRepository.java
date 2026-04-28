@@ -50,6 +50,7 @@ public interface ZoneRepository extends JpaRepository<Zone,Integer> {
     Optional<Zone> findByIsDeletedAndIdAndSubOrganizationId(boolean b, Integer zoneId, Integer subOrgId);
 
     List<Zone> findByIsDeletedAndSubOrganizationIdAndAreaIdIn(boolean b, Integer subOrgId, List<Integer> areaId);
+    Page<Zone> findByIsDeletedAndSubOrganizationIdAndAreaIdIn(boolean b, Integer subOrgId, List<Integer> areaId, Pageable pageable);
 
     Page<Zone> findByIsDeletedAndSubOrganizationIdAndAreaStoreIdInAndIdInAndAreaIdIn(boolean b, Integer subOrgId, List<Integer> storeId, List<Integer> zoneId, List<Integer> areaId, Pageable pageable);
 

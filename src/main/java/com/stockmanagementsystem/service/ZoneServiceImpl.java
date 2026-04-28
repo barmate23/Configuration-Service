@@ -327,7 +327,7 @@ public class ZoneServiceImpl implements ZoneService{
         BaseResponse<com.stockmanagementsystem.response.ZoneResponse> baseResponse = new BaseResponse<>();
         try {
             Pageable pageable = PageRequest.of(pageNo, pageSize);
-            Page<Zone> pageResult = zoneRepository.findByIsDeletedAndSubOrganizationIdOrderByIdAsc(false, loginUser.getSubOrgId(), pageable);
+            Page<Zone> pageResult = zoneRepository.findByIsDeletedAndSubOrganizationIdAndAreaIdIn(false, loginUser.getSubOrgId(), areaId, pageable);
             List<com.stockmanagementsystem.response.ZoneResponse> zones = pageResult.getContent().stream().map(z -> {
                 com.stockmanagementsystem.response.ZoneResponse dto = new com.stockmanagementsystem.response.ZoneResponse();
                 dto.setId(z.getId());
