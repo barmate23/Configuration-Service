@@ -13,6 +13,7 @@ import com.stockmanagementsystem.validation.Validations;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.xpath.operations.Bool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -3773,34 +3774,76 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
         String logId = loginUser.getLogId();
 
+        // ===== FETCH ASN =====
+        ASNLine asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+        if (asnLine == null) {
+            return ResponseEntity.ok(new BaseResponse<>(500, "ASN not found", null, 500, logId));
+        }
+
+        Integer supplierId = asnLine.getAsnHeadId().getSupplier().getId();
+        Integer itemId = asnLine.getItem().getId();
+
+        boolean isBatch = asnLine.getItem().getTypeSerialBatchNone() != null &&
+                asnLine.getItem().getTypeSerialBatchNone().equalsIgnoreCase("batch");
+
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
 
             Sheet sheet = workbook.getSheetAt(0);
-            List<String> allSerials = new ArrayList<>();
 
-            // ===== READ EXCEL (ONLY SERIALS) =====
+            List<BatchData> batchDataList = new ArrayList<>();
+
+            // ===== READ EXCEL =====
             for (Row row : sheet) {
+
                 if (row.getRowNum() <= 8) continue;
 
                 String serial = getCellStringValue(row, 3);
+                if (serial == null || serial.trim().isEmpty()) continue;
 
-                if (serial != null && !serial.trim().isEmpty()) {
-                    allSerials.add(serial.trim());
+                BatchData data = new BatchData();
+                data.setSerialOrBatch(serial.trim());
+
+                if (isBatch) {
+
+                    Cell mfgCell = row.getCell(4);
+                    Cell expCell = row.getCell(5);
+
+                    // ---- MFG DATE ----
+                    if (mfgCell != null) {
+                        if (mfgCell.getCellType() == CellType.NUMERIC) {
+                            data.setMfgDate(mfgCell.getDateCellValue());
+                        } else if (mfgCell.getCellType() == CellType.STRING) {
+                            data.setMfgDate(parseDate(mfgCell.getStringCellValue()));
+                        }
+                    }
+
+                    // ---- EXP DATE ----
+                    if (expCell != null) {
+                        if (expCell.getCellType() == CellType.NUMERIC) {
+                            data.setExpDate(expCell.getDateCellValue());
+                        } else if (expCell.getCellType() == CellType.STRING) {
+                            data.setExpDate(parseDate(expCell.getStringCellValue()));
+                        }
+                    }
+
+                    // ---- VALIDATION ----
+                    if (data.getMfgDate() == null || data.getExpDate() == null) {
+                        throw new RuntimeException("MFG/Expiry date missing at row: " + (row.getRowNum() + 1));
+                    }
+
+                    if (data.getExpDate().before(data.getMfgDate())) {
+                        throw new RuntimeException("Expiry date cannot be before MFG date at row: " + (row.getRowNum() + 1));
+                    }
                 }
+
+                batchDataList.add(data);
             }
 
-            if (allSerials.isEmpty()) {
-                return ResponseEntity.ok(new BaseResponse<>(500, "No serials found", null, 500, logId));
+            if (batchDataList.isEmpty()) {
+                return ResponseEntity.ok(new BaseResponse<>(500, "No data found", null, 500, logId));
             }
 
-            // ===== FETCH ASN =====
-            ASNLine asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
-            if (asnLine == null) {
-                return ResponseEntity.ok(new BaseResponse<>(500, "ASN not found", null, 500, logId));
-            }
-
-            Integer supplierId = asnLine.getAsnHeadId().getSupplier().getId();
-            Integer itemId = asnLine.getItem().getId();
+            int totalSerials = batchDataList.size();
 
             Integer userId = loginUser.getUserId();
             Integer orgId = loginUser.getOrgId();
@@ -3810,7 +3853,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             // ===== FETCH LEVELS =====
             List<PackingProfileLevel> levels =
-                    packingProfileLevelRepository.findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
+                    packingProfileLevelRepository
+                            .findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
 
             levels.sort((a, b) -> b.getLevelOrder().compareTo(a.getLevelOrder()));
 
@@ -3822,8 +3866,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             int secCapacity = secondaryLevel.getUnitsPerParent();
             int terCapacity = tertiaryLevel.getUnitsPerParent();
 
-            int totalSerials = allSerials.size();
-
             // ===== CALCULATE COUNTS =====
             int primaryCount = (int) Math.ceil((double) totalSerials / primaryCapacity);
             int secondaryCount = (int) Math.ceil((double) primaryCount / secCapacity);
@@ -3831,7 +3873,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             // ===== STEP 1: CREATE TERTIARY =====
             List<ContainerHierarchy> tertiaryList = new ArrayList<>();
-
             long count = containerHierarchyRepository.count() + 1;
 
             for (int i = 0; i < tertiaryCount; i++) {
@@ -3852,7 +3893,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             containerHierarchyRepository.saveAll(tertiaryList);
 
-            // ===== STEP 2: CREATE SECONDARY =====
+            // ===== STEP 2: SECONDARY =====
             List<ContainerHierarchy> secondaryList = new ArrayList<>();
 
             for (int i = 0; i < secondaryCount; i++) {
@@ -3876,7 +3917,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             containerHierarchyRepository.saveAll(secondaryList);
 
-            // ===== STEP 3: CREATE PRIMARY =====
+            // ===== STEP 3: PRIMARY =====
             List<ContainerHierarchy> primaryList = new ArrayList<>();
 
             for (int i = 0; i < primaryCount; i++) {
@@ -3885,7 +3926,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                 ContainerHierarchy p = new ContainerHierarchy();
                 p.setContainerCode(generateContainerCode("PRIM", count));
-                p.setPackingSlipNumber(createPackingSlip( count));
+                p.setPackingSlipNumber(createPackingSlip(count));
                 p.setPackingLevel(primaryLevel);
                 p.setAsnLine(asnLine);
                 p.setParentContainerHierarchy(parentSecondary);
@@ -3893,39 +3934,57 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 p.setIsDeleted(false);
                 p.setCreatedBy(userId);
                 p.setCreatedOn(now);
+
                 count++;
                 primaryList.add(p);
             }
 
             containerHierarchyRepository.saveAll(primaryList);
 
-            // ===== STEP 4: SAVE SERIALS + MAP =====
+            // ===== STEP 4: SAVE SERIAL/BATCH =====
             List<ContainerSerialMapper> mapperList = new ArrayList<>();
+            List<SerialBatchNumber> serialEntities = new ArrayList<>();
 
             int serialIndex = 0;
 
-            for (int i = 0; i < primaryList.size(); i++) {
-
-                ContainerHierarchy primary = primaryList.get(i);
+            for (ContainerHierarchy primary : primaryList) {
 
                 for (int j = 0; j < primaryCapacity && serialIndex < totalSerials; j++) {
 
+                    BatchData data = batchDataList.get(serialIndex++);
+
                     SerialBatchNumber s = new SerialBatchNumber();
-                    s.setSerialBatchNumber(allSerials.get(serialIndex++));
+                    s.setSerialBatchNumber(data.getSerialOrBatch());
                     s.setAsnLine(asnLine);
+
+                    if (isBatch) {
+                        s.setManufacturingDate(data.getMfgDate());
+                        s.setExpiryDate(data.getExpDate());
+                    }
 
                     s.setOrganizationId(orgId);
                     s.setSubOrganizationId(subOrgId);
-
                     s.setIsDeleted(false);
                     s.setCreatedBy(userId);
                     s.setCreatedOn(now);
 
-                    serialBatchNumberRepository.save(s);
+                    serialEntities.add(s);
+                }
+            }
+
+            // 🔥 BULK SAVE (performance fix)
+            serialBatchNumberRepository.saveAll(serialEntities);
+
+            // ===== MAP AFTER SAVE =====
+            int idx = 0;
+
+            for (ContainerHierarchy primary : primaryList) {
+
+                for (int j = 0; j < primaryCapacity && idx < serialEntities.size(); j++) {
 
                     ContainerSerialMapper mapper = new ContainerSerialMapper();
                     mapper.setContainerHierarchy(primary);
-                    mapper.setSerialBatchNumber(s);
+                    mapper.setSerialBatchNumber(serialEntities.get(idx++));
 
                     mapper.setIsDeleted(false);
                     mapper.setCreatedBy(userId);
@@ -3943,7 +4002,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         } catch (Exception e) {
             log.error("{} Error in uploadPackingListV2", logId, e);
             return ResponseEntity.ok(new BaseResponse<>(500,
-                    "Upload failed", null, 500, logId));
+                    "Upload failed: " + e.getMessage(), null, 500, logId));
         }
     }
 
@@ -4004,6 +4063,37 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         String sequence = String.format("%03d", count);
 
         return prefix + sequence;
+    }
+
+    private Date parseDate(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        value = value.trim();
+
+        // Supported formats
+        String[] formats = {
+                "yyyy-MM-dd",
+                "dd-MM-yyyy",
+                "dd/MM/yyyy",
+                "MM/dd/yyyy",
+                "yyyy/MM/dd",
+                "dd-MMM-yyyy",   // 01-Jan-2026
+                "dd MMM yyyy"    // 01 Jan 2026
+        };
+
+        for (String format : formats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(format);
+                sdf.setLenient(false); // strict parsing
+                return sdf.parse(value);
+            } catch (Exception ignored) {
+            }
+        }
+
+        throw new RuntimeException("Invalid date format: " + value +
+                ". Supported formats: yyyy-MM-dd, dd-MM-yyyy, dd/MM/yyyy, etc.");
     }
 
 }

@@ -21,4 +21,6 @@ public interface SupplierItemMapperRepository extends JpaRepository<SupplierItem
     SupplierItemMapper findByIsDeletedAndSubOrganizationIdAndSupplierItemId(boolean b, Integer subOrgId, Integer id);
 
     List<SupplierItemMapper> findByItemIdInAndIsDeleted(List<Integer> itemIds, boolean b);
+
+    SupplierItemMapper findByIsDeletedFalseAndSupplierSupplierNameAndItemName(String supplierName, String itemName);
 }
