@@ -3978,7 +3978,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         );
 
                 levelContainerCountMap.put(
-                        level.getId(),
+                        level.getId().intValue(),
                         requiredContainers
                 );
 
@@ -4058,8 +4058,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         );
                     }
 
-                    hierarchy.setOrganizationId(orgId);
-                    hierarchy.setSubOrganizationId(subOrgId);
 
                     hierarchy.setCreatedBy(userId);
                     hierarchy.setCreatedOn(now);
@@ -4076,7 +4074,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 );
 
                 levelWiseContainers.put(
-                        currentLevel.getId(),
+                        currentLevel.getId().intValue(),
                         currentLevelContainers
                 );
 
