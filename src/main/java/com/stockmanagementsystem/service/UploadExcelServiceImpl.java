@@ -3769,70 +3769,133 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
     @Override
     public ResponseEntity<BaseResponse> uploadPackingListV2(
-            MultipartFile file, String type, Integer requestId,
-            String requestType, Boolean isFinalUpload) {
+            MultipartFile file,
+            String type,
+            Integer requestId,
+            String requestType,
+            Boolean isFinalUpload) {
 
         String logId = loginUser.getLogId();
 
         // ===== FETCH ASN =====
         ASNLine asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+
         if (asnLine == null) {
-            return ResponseEntity.ok(new BaseResponse<>(500, "ASN not found", null, 500, logId));
+            return ResponseEntity.ok(
+                    new BaseResponse<>(500,
+                            "ASN not found",
+                            null,
+                            500,
+                            logId)
+            );
         }
 
-        Integer supplierId = asnLine.getAsnHeadId().getSupplier().getId();
-        Integer itemId = asnLine.getItem().getId();
+        Integer supplierId =
+                asnLine.getAsnHeadId()
+                        .getSupplier()
+                        .getId();
 
-        boolean isBatch = asnLine.getItem().getTypeSerialBatchNone() != null &&
-                asnLine.getItem().getTypeSerialBatchNone().equalsIgnoreCase("batch");
+        Integer itemId =
+                asnLine.getItem()
+                        .getId();
 
-        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+        boolean isBatch =
+                asnLine.getItem()
+                        .getTypeSerialBatchNone() != null
+                        &&
+                        asnLine.getItem()
+                                .getTypeSerialBatchNone()
+                                .equalsIgnoreCase("batch");
+
+        try (Workbook workbook =
+                     WorkbookFactory.create(file.getInputStream())) {
 
             Sheet sheet = workbook.getSheetAt(0);
 
-            List<BatchData> batchDataList = new ArrayList<>();
+            List<BatchData> batchDataList =
+                    new ArrayList<>();
 
-            // ===== READ EXCEL =====
+            // =====================================================
+            // READ EXCEL
+            // =====================================================
             for (Row row : sheet) {
 
-                if (row.getRowNum() <= 8) continue;
+                if (row.getRowNum() <= 8) {
+                    continue;
+                }
 
-                String serial = getCellStringValue(row, 3);
-                if (serial == null || serial.trim().isEmpty()) continue;
+                String serial =
+                        getCellStringValue(row, 3);
+
+                if (serial == null || serial.trim().isEmpty()) {
+                    continue;
+                }
 
                 BatchData data = new BatchData();
+
                 data.setSerialOrBatch(serial.trim());
 
+                // ===== BATCH LOGIC =====
                 if (isBatch) {
 
                     Cell mfgCell = row.getCell(4);
                     Cell expCell = row.getCell(5);
 
-                    // ---- MFG DATE ----
+                    // ===== MFG DATE =====
                     if (mfgCell != null) {
+
                         if (mfgCell.getCellType() == CellType.NUMERIC) {
-                            data.setMfgDate(mfgCell.getDateCellValue());
+
+                            data.setMfgDate(
+                                    mfgCell.getDateCellValue()
+                            );
+
                         } else if (mfgCell.getCellType() == CellType.STRING) {
-                            data.setMfgDate(parseDate(mfgCell.getStringCellValue()));
+
+                            data.setMfgDate(
+                                    parseDate(
+                                            mfgCell.getStringCellValue()
+                                    )
+                            );
                         }
                     }
 
-                    // ---- EXP DATE ----
+                    // ===== EXP DATE =====
                     if (expCell != null) {
+
                         if (expCell.getCellType() == CellType.NUMERIC) {
-                            data.setExpDate(expCell.getDateCellValue());
+
+                            data.setExpDate(
+                                    expCell.getDateCellValue()
+                            );
+
                         } else if (expCell.getCellType() == CellType.STRING) {
-                            data.setExpDate(parseDate(expCell.getStringCellValue()));
+
+                            data.setExpDate(
+                                    parseDate(
+                                            expCell.getStringCellValue()
+                                    )
+                            );
                         }
                     }
 
-                    // ---- VALIDATION ----
-                    if (data.getMfgDate() == null || data.getExpDate() == null) {
-                        throw new RuntimeException("MFG/Expiry date missing at row: " + (row.getRowNum() + 1));
+                    // ===== VALIDATION =====
+                    if (data.getMfgDate() == null
+                            || data.getExpDate() == null) {
+
+                        throw new RuntimeException(
+                                "MFG/Expiry date missing at row: "
+                                        + (row.getRowNum() + 1)
+                        );
                     }
 
-                    if (data.getExpDate().before(data.getMfgDate())) {
-                        throw new RuntimeException("Expiry date cannot be before MFG date at row: " + (row.getRowNum() + 1));
+                    if (data.getExpDate()
+                            .before(data.getMfgDate())) {
+
+                        throw new RuntimeException(
+                                "Expiry date cannot be before MFG date at row: "
+                                        + (row.getRowNum() + 1)
+                        );
                     }
                 }
 
@@ -3840,7 +3903,16 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             }
 
             if (batchDataList.isEmpty()) {
-                return ResponseEntity.ok(new BaseResponse<>(500, "No data found", null, 500, logId));
+
+                return ResponseEntity.ok(
+                        new BaseResponse<>(
+                                500,
+                                "No data found",
+                                null,
+                                500,
+                                logId
+                        )
+                );
             }
 
             int totalSerials = batchDataList.size();
@@ -3851,158 +3923,317 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             Date now = new Date();
 
-            // ===== FETCH LEVELS =====
+            // =====================================================
+            // FETCH DYNAMIC LEVELS
+            // =====================================================
             List<PackingProfileLevel> levels =
                     packingProfileLevelRepository
-                            .findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
+                            .findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(
+                                    supplierId,
+                                    itemId
+                            );
 
-            levels.sort((a, b) -> b.getLevelOrder().compareTo(a.getLevelOrder()));
+            if (levels == null || levels.isEmpty()) {
 
-            PackingProfileLevel tertiaryLevel = levels.get(0);
-            PackingProfileLevel secondaryLevel = levels.get(1);
-            PackingProfileLevel primaryLevel = levels.get(2);
-
-            int primaryCapacity = primaryLevel.getUnitsPerParent();
-            int secCapacity = secondaryLevel.getUnitsPerParent();
-            int terCapacity = tertiaryLevel.getUnitsPerParent();
-
-            // ===== CALCULATE COUNTS =====
-            int primaryCount = (int) Math.ceil((double) totalSerials / primaryCapacity);
-            int secondaryCount = (int) Math.ceil((double) primaryCount / secCapacity);
-            int tertiaryCount = (int) Math.ceil((double) secondaryCount / terCapacity);
-
-            // ===== STEP 1: CREATE TERTIARY =====
-            List<ContainerHierarchy> tertiaryList = new ArrayList<>();
-            long count = containerHierarchyRepository.count() + 1;
-
-            for (int i = 0; i < tertiaryCount; i++) {
-
-                ContainerHierarchy t = new ContainerHierarchy();
-                t.setContainerCode(generateContainerCode("TERT", count));
-                t.setPackingSlipNumber(createPackingSlip(count));
-                t.setPackingLevel(tertiaryLevel);
-                t.setAsnLine(asnLine);
-
-                t.setIsDeleted(false);
-                t.setCreatedBy(userId);
-                t.setCreatedOn(now);
-
-                count++;
-                tertiaryList.add(t);
+                throw new RuntimeException(
+                        "Packing levels not configured"
+                );
             }
 
-            containerHierarchyRepository.saveAll(tertiaryList);
+            // SORT HIGHEST -> LOWEST
+            levels.sort(
+                    (a, b) ->
+                            b.getLevelOrder()
+                                    .compareTo(a.getLevelOrder())
+            );
 
-            // ===== STEP 2: SECONDARY =====
-            List<ContainerHierarchy> secondaryList = new ArrayList<>();
+            long runningCount =
+                    containerHierarchyRepository.count() + 1;
 
-            for (int i = 0; i < secondaryCount; i++) {
+            // =====================================================
+            // CALCULATE CONTAINER COUNT
+            // =====================================================
+            Map<Integer, Integer> levelContainerCountMap =
+                    new LinkedHashMap<>();
 
-                ContainerHierarchy parentTertiary = tertiaryList.get(i / terCapacity);
+            int previousRequired = totalSerials;
 
-                ContainerHierarchy s = new ContainerHierarchy();
-                s.setContainerCode(generateContainerCode("SECO", count));
-                s.setPackingSlipNumber(createPackingSlip(count));
-                s.setPackingLevel(secondaryLevel);
-                s.setAsnLine(asnLine);
-                s.setParentContainerHierarchy(parentTertiary);
+            for (int i = levels.size() - 1; i >= 0; i--) {
 
-                s.setIsDeleted(false);
-                s.setCreatedBy(userId);
-                s.setCreatedOn(now);
+                PackingProfileLevel level = levels.get(i);
 
-                count++;
-                secondaryList.add(s);
+                Integer unitsPerParent =
+                        level.getUnitsPerParent();
+
+                if (unitsPerParent == null
+                        || unitsPerParent <= 0) {
+
+                    unitsPerParent = 1;
+                }
+
+                int requiredContainers =
+                        (int) Math.ceil(
+                                (double) previousRequired
+                                        / unitsPerParent
+                        );
+
+                levelContainerCountMap.put(
+                        level.getId(),
+                        requiredContainers
+                );
+
+                previousRequired = requiredContainers;
             }
 
-            containerHierarchyRepository.saveAll(secondaryList);
+            // =====================================================
+            // CREATE HIERARCHY DYNAMICALLY
+            // =====================================================
+            Map<Integer, List<ContainerHierarchy>>
+                    levelWiseContainers =
+                    new LinkedHashMap<>();
 
-            // ===== STEP 3: PRIMARY =====
-            List<ContainerHierarchy> primaryList = new ArrayList<>();
+            List<ContainerHierarchy>
+                    previousLevelContainers = null;
 
-            for (int i = 0; i < primaryCount; i++) {
+            for (int levelIndex = 0;
+                 levelIndex < levels.size();
+                 levelIndex++) {
 
-                ContainerHierarchy parentSecondary = secondaryList.get(i / secCapacity);
+                PackingProfileLevel currentLevel =
+                        levels.get(levelIndex);
 
-                ContainerHierarchy p = new ContainerHierarchy();
-                p.setContainerCode(generateContainerCode("PRIM", count));
-                p.setPackingSlipNumber(createPackingSlip(count));
-                p.setPackingLevel(primaryLevel);
-                p.setAsnLine(asnLine);
-                p.setParentContainerHierarchy(parentSecondary);
+                int currentLevelCount =
+                        levelContainerCountMap.get(
+                                currentLevel.getId()
+                        );
 
-                p.setIsDeleted(false);
-                p.setCreatedBy(userId);
-                p.setCreatedOn(now);
+                List<ContainerHierarchy>
+                        currentLevelContainers =
+                        new ArrayList<>();
 
-                count++;
-                primaryList.add(p);
+                Integer parentCapacity =
+                        currentLevel.getUnitsPerParent();
+
+                if (parentCapacity == null
+                        || parentCapacity <= 0) {
+
+                    parentCapacity = 1;
+                }
+
+                for (int i = 0;
+                     i < currentLevelCount;
+                     i++) {
+
+                    ContainerHierarchy hierarchy =
+                            new ContainerHierarchy();
+
+                    hierarchy.setContainerCode(
+                            generateContainerCode(
+                                    "LVL"
+                                            + currentLevel.getLevelOrder(),
+                                    runningCount
+                            )
+                    );
+
+                    hierarchy.setPackingSlipNumber(
+                            createPackingSlip(runningCount)
+                    );
+
+                    hierarchy.setPackingLevel(currentLevel);
+
+                    hierarchy.setAsnLine(asnLine);
+
+                    // ===== PARENT LINKING =====
+                    if (previousLevelContainers != null
+                            &&
+                            !previousLevelContainers.isEmpty()) {
+
+                        ContainerHierarchy parent =
+                                previousLevelContainers.get(
+                                        i / parentCapacity
+                                );
+
+                        hierarchy.setParentContainerHierarchy(
+                                parent
+                        );
+                    }
+
+                    hierarchy.setOrganizationId(orgId);
+                    hierarchy.setSubOrganizationId(subOrgId);
+
+                    hierarchy.setCreatedBy(userId);
+                    hierarchy.setCreatedOn(now);
+
+                    hierarchy.setIsDeleted(false);
+
+                    currentLevelContainers.add(hierarchy);
+
+                    runningCount++;
+                }
+
+                containerHierarchyRepository.saveAll(
+                        currentLevelContainers
+                );
+
+                levelWiseContainers.put(
+                        currentLevel.getId(),
+                        currentLevelContainers
+                );
+
+                previousLevelContainers =
+                        currentLevelContainers;
             }
 
-            containerHierarchyRepository.saveAll(primaryList);
+            // =====================================================
+            // LOWEST LEVEL
+            // =====================================================
+            PackingProfileLevel lowestLevel =
+                    levels.get(levels.size() - 1);
 
-            // ===== STEP 4: SAVE SERIAL/BATCH =====
-            List<StockMovement> mapperList = new ArrayList<>();
-            List<SerialBatchNumber> serialEntities = new ArrayList<>();
+            List<ContainerHierarchy>
+                    lowestLevelContainers =
+                    levelWiseContainers.get(
+                            lowestLevel.getId()
+                    );
+
+            Integer lowestCapacity =
+                    lowestLevel.getUnitsPerParent();
+
+            if (lowestCapacity == null
+                    || lowestCapacity <= 0) {
+
+                lowestCapacity = 1;
+            }
+
+            // =====================================================
+            // SAVE SERIAL/BATCH
+            // =====================================================
+            List<SerialBatchNumber> serialEntities =
+                    new ArrayList<>();
+
+            List<StockMovement> mapperList =
+                    new ArrayList<>();
 
             int serialIndex = 0;
 
-            for (ContainerHierarchy primary : primaryList) {
+            for (ContainerHierarchy lowestContainer
+                    : lowestLevelContainers) {
 
-                for (int j = 0; j < primaryCapacity && serialIndex < totalSerials; j++) {
+                for (int j = 0;
+                     j < lowestCapacity
+                             && serialIndex < totalSerials;
+                     j++) {
 
-                    BatchData data = batchDataList.get(serialIndex++);
+                    BatchData data =
+                            batchDataList.get(serialIndex++);
 
-                    SerialBatchNumber s = new SerialBatchNumber();
-                    s.setSerialBatchNumber(data.getSerialOrBatch());
-                    s.setAsnLine(asnLine);
+                    SerialBatchNumber serialEntity =
+                            new SerialBatchNumber();
 
+                    serialEntity.setSerialBatchNumber(
+                            data.getSerialOrBatch()
+                    );
+
+                    serialEntity.setAsnLine(asnLine);
+
+                    // ===== BATCH DATES =====
                     if (isBatch) {
-                        s.setManufacturingDate(data.getMfgDate());
-                        s.setExpiryDate(data.getExpDate());
+
+                        serialEntity.setManufacturingDate(
+                                data.getMfgDate()
+                        );
+
+                        serialEntity.setExpiryDate(
+                                data.getExpDate()
+                        );
                     }
 
-                    s.setOrganizationId(orgId);
-                    s.setSubOrganizationId(subOrgId);
-                    s.setIsDeleted(false);
-                    s.setCreatedBy(userId);
-                    s.setCreatedOn(now);
+                    serialEntity.setOrganizationId(orgId);
+                    serialEntity.setSubOrganizationId(subOrgId);
 
-                    serialEntities.add(s);
+                    serialEntity.setCreatedBy(userId);
+                    serialEntity.setCreatedOn(now);
+
+                    serialEntity.setIsDeleted(false);
+
+                    serialEntities.add(serialEntity);
                 }
             }
 
-            // 🔥 BULK SAVE (performance fix)
-            serialBatchNumberRepository.saveAll(serialEntities);
+            // ===== SAVE SERIALS =====
+            serialBatchNumberRepository.saveAll(
+                    serialEntities
+            );
 
-            // ===== MAP AFTER SAVE =====
-            int idx = 0;
+            // =====================================================
+            // CREATE STOCK MOVEMENTS
+            // =====================================================
+            int movementIndex = 0;
 
-            for (ContainerHierarchy primary : primaryList) {
+            for (ContainerHierarchy lowestContainer
+                    : lowestLevelContainers) {
 
-                for (int j = 0; j < primaryCapacity && idx < serialEntities.size(); j++) {
-                    StockMovement sm = new StockMovement();
-                    sm.setOrganizationId(orgId);
-                    sm.setSubOrganizationId(subOrgId);
-                    sm.setSerialBatchNumbers(serialEntities.get(idx++));
-                    sm.setContainerHierarchy(primary);
-                    sm.setItem(asnLine.getItem());
-                    sm.setIsDeleted(false);
-                    sm.setCreatedBy(userId);
-                    sm.setCreatedOn(now);
-                    mapperList.add(sm);
+                for (int j = 0;
+                     j < lowestCapacity
+                             &&
+                             movementIndex < serialEntities.size();
+                     j++) {
+
+                    StockMovement movement =
+                            new StockMovement();
+
+                    movement.setOrganizationId(orgId);
+                    movement.setSubOrganizationId(subOrgId);
+
+                    movement.setSerialBatchNumbers(
+                            serialEntities.get(movementIndex++)
+                    );
+
+                    movement.setContainerHierarchy(
+                            lowestContainer
+                    );
+
+                    movement.setItem(asnLine.getItem());
+
+                    movement.setCreatedBy(userId);
+                    movement.setCreatedOn(now);
+
+                    movement.setIsDeleted(false);
+
+                    mapperList.add(movement);
                 }
             }
 
-            this.stockMovementRepository.saveAll(mapperList);
+            // ===== SAVE STOCK MOVEMENTS =====
+            stockMovementRepository.saveAll(mapperList);
 
-            return ResponseEntity.ok(new BaseResponse<>(200,
-                    "Hierarchy created successfully", null, 200, logId));
+            return ResponseEntity.ok(
+                    new BaseResponse<>(
+                            200,
+                            "Hierarchy created successfully",
+                            null,
+                            200,
+                            logId
+                    )
+            );
 
         } catch (Exception e) {
-            log.error("{} Error in uploadPackingListV2", logId, e);
-            return ResponseEntity.ok(new BaseResponse<>(500,
-                    "Upload failed: " + e.getMessage(), null, 500, logId));
+
+            log.error(
+                    "{} Error in uploadPackingListV2",
+                    logId,
+                    e
+            );
+
+            return ResponseEntity.ok(
+                    new BaseResponse<>(
+                            500,
+                            "Upload failed: " + e.getMessage(),
+                            null,
+                            500,
+                            logId
+                    )
+            );
         }
     }
 
@@ -4021,6 +4252,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         // Step 5: Combine all
         return prefix + "-" + date + "-" + sequence;
     }
+
     // 🔹 Utility method
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
@@ -4048,7 +4280,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
     private String generateContainerCode(String prefixCode, long count) {
 
-        String[] monthLetters = {"A","B","C","D","E","F","G","H","I","J","K","L"};
+        String[] monthLetters = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"};
 
         LocalDate today = LocalDate.now();
         String year = String.valueOf(today.getYear());
