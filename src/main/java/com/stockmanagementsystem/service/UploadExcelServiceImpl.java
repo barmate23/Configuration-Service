@@ -3942,7 +3942,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             containerHierarchyRepository.saveAll(primaryList);
 
             // ===== STEP 4: SAVE SERIAL/BATCH =====
-            List<ContainerSerialMapper> mapperList = new ArrayList<>();
+            List<StockMovement> mapperList = new ArrayList<>();
             List<SerialBatchNumber> serialEntities = new ArrayList<>();
 
             int serialIndex = 0;
@@ -3981,20 +3981,20 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             for (ContainerHierarchy primary : primaryList) {
 
                 for (int j = 0; j < primaryCapacity && idx < serialEntities.size(); j++) {
-
-                    ContainerSerialMapper mapper = new ContainerSerialMapper();
-                    mapper.setContainerHierarchy(primary);
-                    mapper.setSerialBatchNumber(serialEntities.get(idx++));
-
-                    mapper.setIsDeleted(false);
-                    mapper.setCreatedBy(userId);
-                    mapper.setCreatedOn(now);
-
-                    mapperList.add(mapper);
+                    StockMovement sm = new StockMovement();
+                    sm.setOrganizationId(orgId);
+                    sm.setSubOrganizationId(subOrgId);
+                    sm.setSerialBatchNumbers(serialEntities.get(idx++));
+                    sm.setContainerHierarchy(primary);
+                    sm.setItem(asnLine.getItem());
+                    sm.setIsDeleted(false);
+                    sm.setCreatedBy(userId);
+                    sm.setCreatedOn(now);
+                    mapperList.add(sm);
                 }
             }
 
-            containerSerialMapperRepository.saveAll(mapperList);
+            this.stockMovementRepository.saveAll(mapperList);
 
             return ResponseEntity.ok(new BaseResponse<>(200,
                     "Hierarchy created successfully", null, 200, logId));

@@ -39,6 +39,10 @@ public class StockMovement {
     @JoinColumn(name = "serialBatchNumberId")
     private SerialBatchNumber serialBatchNumbers;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ContainerHierarchyId")
+    private ContainerHierarchy containerHierarchy;
+
 //    @ManyToOne
 //    @JoinColumn(name = "serialBatchNumberId")
 //    private SerialBatchNumber serialBatchNumbers;
