@@ -3777,16 +3777,22 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
         String logId = loginUser.getLogId();
 
-        // ===== FETCH ASN =====
-        ASNLine asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
+        // =====================================================
+        // FETCH ASN
+        // =====================================================
+        ASNLine asnLine =
+                asnLineRepository.findByIsDeletedFalseAndId(requestId);
 
         if (asnLine == null) {
+
             return ResponseEntity.ok(
-                    new BaseResponse<>(500,
+                    new BaseResponse<>(
+                            500,
                             "ASN not found",
                             null,
                             500,
-                            logId)
+                            logId
+                    )
             );
         }
 
@@ -3827,15 +3833,20 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 String serial =
                         getCellStringValue(row, 3);
 
-                if (serial == null || serial.trim().isEmpty()) {
+                if (serial == null
+                        || serial.trim().isEmpty()) {
+
                     continue;
                 }
 
-                BatchData data = new BatchData();
+                BatchData data =
+                        new BatchData();
 
                 data.setSerialOrBatch(serial.trim());
 
-                // ===== BATCH LOGIC =====
+                // =================================================
+                // BATCH DATE LOGIC
+                // =================================================
                 if (isBatch) {
 
                     Cell mfgCell = row.getCell(4);
@@ -3844,13 +3855,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     // ===== MFG DATE =====
                     if (mfgCell != null) {
 
-                        if (mfgCell.getCellType() == CellType.NUMERIC) {
+                        if (mfgCell.getCellType()
+                                == CellType.NUMERIC) {
 
                             data.setMfgDate(
                                     mfgCell.getDateCellValue()
                             );
 
-                        } else if (mfgCell.getCellType() == CellType.STRING) {
+                        } else if (mfgCell.getCellType()
+                                == CellType.STRING) {
 
                             data.setMfgDate(
                                     parseDate(
@@ -3863,13 +3876,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     // ===== EXP DATE =====
                     if (expCell != null) {
 
-                        if (expCell.getCellType() == CellType.NUMERIC) {
+                        if (expCell.getCellType()
+                                == CellType.NUMERIC) {
 
                             data.setExpDate(
                                     expCell.getDateCellValue()
                             );
 
-                        } else if (expCell.getCellType() == CellType.STRING) {
+                        } else if (expCell.getCellType()
+                                == CellType.STRING) {
 
                             data.setExpDate(
                                     parseDate(
@@ -3902,6 +3917,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 batchDataList.add(data);
             }
 
+            // =====================================================
+            // NO DATA
+            // =====================================================
             if (batchDataList.isEmpty()) {
 
                 return ResponseEntity.ok(
@@ -3915,16 +3933,23 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 );
             }
 
-            int totalSerials = batchDataList.size();
+            int totalSerials =
+                    batchDataList.size();
 
-            Integer userId = loginUser.getUserId();
-            Integer orgId = loginUser.getOrgId();
-            Integer subOrgId = loginUser.getSubOrgId();
+            Integer userId =
+                    loginUser.getUserId();
 
-            Date now = new Date();
+            Integer orgId =
+                    loginUser.getOrgId();
+
+            Integer subOrgId =
+                    loginUser.getSubOrgId();
+
+            Date now =
+                    new Date();
 
             // =====================================================
-            // FETCH DYNAMIC LEVELS
+            // FETCH PACKING LEVELS
             // =====================================================
             List<PackingProfileLevel> levels =
                     packingProfileLevelRepository
@@ -3933,14 +3958,18 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                     itemId
                             );
 
-            if (levels == null || levels.isEmpty()) {
+            if (levels == null
+                    || levels.isEmpty()) {
 
                 throw new RuntimeException(
                         "Packing levels not configured"
                 );
             }
 
-            // SORT HIGHEST -> LOWEST
+            // =====================================================
+            // SORT LEVELS
+            // HIGHEST -> LOWEST
+            // =====================================================
             levels.sort(
                     (a, b) ->
                             b.getLevelOrder()
@@ -3956,11 +3985,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Map<Integer, Integer> levelContainerCountMap =
                     new LinkedHashMap<>();
 
-            int previousRequired = totalSerials;
+            int previousRequired =
+                    totalSerials;
 
-            for (int i = levels.size() - 1; i >= 0; i--) {
+            for (int i = levels.size() - 1;
+                 i >= 0;
+                 i--) {
 
-                PackingProfileLevel level = levels.get(i);
+                PackingProfileLevel level =
+                        levels.get(i);
 
                 Integer unitsPerParent =
                         level.getUnitsPerParent();
@@ -3977,16 +4010,18 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                                         / unitsPerParent
                         );
 
+                // USE INDEX AS KEY
                 levelContainerCountMap.put(
-                        level.getId().intValue(),
+                        i,
                         requiredContainers
                 );
 
-                previousRequired = requiredContainers;
+                previousRequired =
+                        requiredContainers;
             }
 
             // =====================================================
-            // CREATE HIERARCHY DYNAMICALLY
+            // CREATE DYNAMIC HIERARCHY
             // =====================================================
             Map<Integer, List<ContainerHierarchy>>
                     levelWiseContainers =
@@ -4003,9 +4038,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         levels.get(levelIndex);
 
                 int currentLevelCount =
-                        levelContainerCountMap.get(
-                                currentLevel.getId()
-                        );
+                        levelContainerCountMap.get(levelIndex);
 
                 List<ContainerHierarchy>
                         currentLevelContainers =
@@ -4043,7 +4076,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     hierarchy.setAsnLine(asnLine);
 
-                    // ===== PARENT LINKING =====
+                    // =============================================
+                    // PARENT LINKING
+                    // =============================================
                     if (previousLevelContainers != null
                             &&
                             !previousLevelContainers.isEmpty()) {
@@ -4058,8 +4093,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         );
                     }
 
-
+                   
                     hierarchy.setCreatedBy(userId);
+
                     hierarchy.setCreatedOn(now);
 
                     hierarchy.setIsDeleted(false);
@@ -4074,7 +4110,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 );
 
                 levelWiseContainers.put(
-                        currentLevel.getId().intValue(),
+                        levelIndex,
                         currentLevelContainers
                 );
 
@@ -4083,7 +4119,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             }
 
             // =====================================================
-            // LOWEST LEVEL
+            // LOWEST LEVEL CONTAINERS
             // =====================================================
             PackingProfileLevel lowestLevel =
                     levels.get(levels.size() - 1);
@@ -4091,7 +4127,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             List<ContainerHierarchy>
                     lowestLevelContainers =
                     levelWiseContainers.get(
-                            lowestLevel.getId()
+                            levels.size() - 1
                     );
 
             Integer lowestCapacity =
@@ -4104,12 +4140,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             }
 
             // =====================================================
-            // SAVE SERIAL/BATCH
+            // CREATE SERIAL/BATCH ENTRIES
             // =====================================================
-            List<SerialBatchNumber> serialEntities =
-                    new ArrayList<>();
-
-            List<StockMovement> mapperList =
+            List<SerialBatchNumber>
+                    serialEntities =
                     new ArrayList<>();
 
             int serialIndex = 0;
@@ -4119,7 +4153,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                 for (int j = 0;
                      j < lowestCapacity
-                             && serialIndex < totalSerials;
+                             &&
+                             serialIndex < totalSerials;
                      j++) {
 
                     BatchData data =
@@ -4134,7 +4169,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                     serialEntity.setAsnLine(asnLine);
 
-                    // ===== BATCH DATES =====
                     if (isBatch) {
 
                         serialEntity.setManufacturingDate(
@@ -4147,9 +4181,11 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     }
 
                     serialEntity.setOrganizationId(orgId);
+
                     serialEntity.setSubOrganizationId(subOrgId);
 
                     serialEntity.setCreatedBy(userId);
+
                     serialEntity.setCreatedOn(now);
 
                     serialEntity.setIsDeleted(false);
@@ -4158,7 +4194,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 }
             }
 
-            // ===== SAVE SERIALS =====
+            // =====================================================
+            // SAVE SERIALS
+            // =====================================================
             serialBatchNumberRepository.saveAll(
                     serialEntities
             );
@@ -4166,6 +4204,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             // =====================================================
             // CREATE STOCK MOVEMENTS
             // =====================================================
+            List<StockMovement> mapperList =
+                    new ArrayList<>();
+
             int movementIndex = 0;
 
             for (ContainerHierarchy lowestContainer
@@ -4181,6 +4222,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             new StockMovement();
 
                     movement.setOrganizationId(orgId);
+
                     movement.setSubOrganizationId(subOrgId);
 
                     movement.setSerialBatchNumbers(
@@ -4191,9 +4233,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                             lowestContainer
                     );
 
-                    movement.setItem(asnLine.getItem());
+                    movement.setItem(
+                            asnLine.getItem()
+                    );
 
                     movement.setCreatedBy(userId);
+
                     movement.setCreatedOn(now);
 
                     movement.setIsDeleted(false);
@@ -4202,8 +4247,12 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 }
             }
 
-            // ===== SAVE STOCK MOVEMENTS =====
-            stockMovementRepository.saveAll(mapperList);
+            // =====================================================
+            // SAVE MOVEMENTS
+            // =====================================================
+            stockMovementRepository.saveAll(
+                    mapperList
+            );
 
             return ResponseEntity.ok(
                     new BaseResponse<>(
@@ -4234,7 +4283,6 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             );
         }
     }
-
     private String createPackingSlip(Long count) {
 
         // Step 1: Prefix
