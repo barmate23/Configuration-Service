@@ -14,4 +14,6 @@ public interface ReasonCategoryMasterRepository extends JpaRepository<ReasonCate
     ReasonCategoryMaster findByIsDeletedAndReasonCategoryName(boolean b, String reasonCategory);
 
     List<ReasonCategoryMaster> findByIsDeleted(boolean b);
+
+    ReasonCategoryMaster findByIsDeletedAndReasonCategoryCode(boolean b, String reasonCategory);
 }

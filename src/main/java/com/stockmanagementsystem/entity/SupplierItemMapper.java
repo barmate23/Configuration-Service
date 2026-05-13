@@ -20,6 +20,7 @@ public class SupplierItemMapper {
 
     @Column(name = "subOrganizationId")
     private Integer subOrganizationId;
+
     @ManyToOne
     @JoinColumn(name = "supplierId")
     private Supplier supplier;
@@ -30,6 +31,9 @@ public class SupplierItemMapper {
 
     @Column(name = "LeadTime")
     private Integer leadTime;
+
+    @Column(name = "moq")
+    private Integer moq;
 
     @Column(name = "IsDay")
     private Boolean isDay;

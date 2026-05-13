@@ -6,6 +6,7 @@ import com.stockmanagementsystem.request.AlternativeItemMapperRepository;
 import com.stockmanagementsystem.request.ContainerRequest;
 import com.stockmanagementsystem.request.ItemRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.ItemResponseV2;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import com.stockmanagementsystem.validation.Validations;
 import lombok.extern.slf4j.Slf4j;
@@ -602,6 +603,235 @@ public class ItemServicesImpl implements ItemService {
         }
 
         return itemId;
+    }
+
+    @Override
+    public BaseResponse<ItemResponseV2> getAllItemWithPaginationV2(Integer pageNo, Integer pageSize) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getAllItemWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ITEMS LIST FETCHED V2 START");
+        BaseResponse<ItemResponseV2> baseResponse = new BaseResponse<>();
+        try {
+            final Pageable pageable = PageRequest.of(pageNo, pageSize);
+            Page<Item> pageResult = this.itemRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+
+            List<ItemResponseV2> itemResponseV2List = pageResult.getContent().stream()
+                    .map(this::mapToItemResponseV2)
+                    .collect(Collectors.toList());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10025S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(itemResponseV2List);
+            baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            baseResponse.setTotalPageCount(pageResult.getTotalPages());
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - ItemServicesImpl - getAllItemWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+            return baseResponse;
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10024F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ItemServicesImpl - getAllItemWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getAllItemWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ITEMS LIST FETCHED V2 TIME" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<ItemResponseV2> getItemByIdV2(Integer itemId) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getItemByIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ITEM FETCHED V2 START");
+        BaseResponse<ItemResponseV2> baseResponse = new BaseResponse<>();
+        try {
+            Optional<Item> optionalItem = itemRepository.findByIsDeletedAndSubOrganizationIdAndId(false, loginUser.getSubOrgId(), itemId);
+
+            if (optionalItem.isPresent()) {
+                ItemResponseV2 itemResponseV2 = mapToItemResponseV2(optionalItem.get());
+                baseResponse.setData(Collections.singletonList(itemResponseV2));
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10028S);
+                baseResponse.setCode(responseMessage.getCode());
+                baseResponse.setStatus(responseMessage.getStatus());
+                baseResponse.setMessage(responseMessage.getMessage());
+                baseResponse.setLogId(loginUser.getLogId());
+                log.info("LogId:{} - ItemServicesImpl - getItemByIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+            } else {
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10016E);
+                baseResponse.setCode(responseMessage.getCode());
+                baseResponse.setStatus(responseMessage.getStatus());
+                baseResponse.setMessage(responseMessage.getMessage());
+                baseResponse.setLogId(loginUser.getLogId());
+                return baseResponse;
+            }
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10027F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ItemServicesImpl - getItemByIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getItemByIdV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ITEM FETCHED V2 TIME" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<ItemResponseV2> getAllItemV2() {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getAllItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ITEM LIST FETCHED V2 START");
+        BaseResponse<ItemResponseV2> baseResponse = new BaseResponse<>();
+        try {
+            List<Item> itemList = itemRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
+            List<ItemResponseV2> itemResponseV2List = itemList.stream()
+                    .map(this::mapToItemResponseV2)
+                    .collect(Collectors.toList());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10030S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(itemResponseV2List);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - ItemServicesImpl - getAllItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10029F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ItemServicesImpl - getAllItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getAllItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ITEM LIST FETCHED V2 TIME" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<ItemResponseV2> getAllAlternativeItemV2() {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getAllAlternativeItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ALTERNATIVE ITEM LIST FETCHED V2 START");
+        BaseResponse<ItemResponseV2> baseResponse = new BaseResponse<>();
+        try {
+            List<Item> itemList = itemRepository.findByIsDeletedAndSubOrganizationIdAndAlternativeItem(false, loginUser.getSubOrgId(), false);
+            List<ItemResponseV2> itemResponseV2List = itemList.stream()
+                    .map(this::mapToItemResponseV2)
+                    .collect(Collectors.toList());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10031S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(itemResponseV2List);
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - ItemServicesImpl - getAllAlternativeItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10030F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ItemServicesImpl - getAllAlternativeItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - getAllAlternativeItemV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ALTERNATIVE ITEM LIST FETCED V2 TIME" + (endTime - startTime));
+        return baseResponse;
+    }
+
+    @Override
+    public BaseResponse<ItemResponseV2> searchItemsV2(Integer pageNumber, Integer pageSize, List<String> name, List<String> itemGroup, List<String> itemCategory, List<String> issueType, List<String> classABC, Date startDate, Date endDate) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - searchItemsV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " SEARCH ITEM V2 START");
+        BaseResponse<ItemResponseV2> response = new BaseResponse<>();
+
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            Specification<Item> specification = ItemSpecifications.withFilters(loginUser.getSubOrgId(), name, itemGroup, itemCategory, issueType, classABC, true, false);
+
+            Page<Item> itemPage = itemRepository.findAll(specification, pageable);
+
+            List<ItemResponseV2> itemResponseV2List = itemPage.getContent().stream()
+                    .map(this::mapToItemResponseV2)
+                    .collect(Collectors.toList());
+
+            response.setData(itemResponseV2List);
+            response.setTotalRecordCount(itemPage.getTotalElements());
+            response.setTotalPageCount(itemPage.getTotalPages());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10032S);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            response.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - ItemServicesImpl - searchItemsV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+
+        } catch (Exception e) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10031F);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            response.setData(Collections.emptyList());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ItemServicesImpl - searchItemsV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
+            response.setLogId(loginUser.getLogId());
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - ItemServicesImpl - searchItemsV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), "  SEARCH ITEM V2 TIME" + (endTime - startTime));
+        return response;
+    }
+
+    private ItemResponseV2 mapToItemResponseV2(Item item) {
+        ItemResponseV2 response = new ItemResponseV2();
+        response.setId(item.getId());
+        response.setItemId(item.getItemId());
+        response.setItemCode(item.getItemCode());
+        response.setErpItemId(item.getErpItemId());
+        response.setName(item.getName());
+        response.setDescription(item.getDescription());
+        response.setItemGroup(item.getItemGroup());
+        response.setItemCategory(item.getItemCategory());
+        response.setItemSubcategory(item.getItemSubcategory());
+        response.setTypeDirectIndirect(item.getTypeDirectIndirect());
+        response.setTypeSerialBatchNone(item.getTypeSerialBatchNone());
+        response.setIssueType(item.getIssueType());
+        response.setClassABC(item.getClassABC());
+        response.setAttribute(item.getAttribute());
+        response.setSource(item.getSource());
+        response.setUom(item.getUom());
+        response.setPurchaseUom(item.getPurchaseUom());
+        response.setItemUnitWeight(item.getItemUnitWeight());
+        response.setPhysicalForm(item.getPhysicalForm());
+        response.setItemUnitRate(item.getItemUnitRate());
+        response.setCurrency(item.getCurrency());
+        response.setOptimumLevel(item.getOptimumLevel());
+        response.setReorderLevel(item.getReorderLevel());
+        response.setSafetyStockLevel(item.getSafetyStockLevel());
+        response.setCriticalLevel(item.getCriticalLevel());
+        response.setAlternativeItem(item.getAlternativeItem());
+        response.setQcRequired(item.getQcRequired());
+        response.setInspection(item.getInspection());
+        response.setIsActive(item.getIsActive());
+
+        if (item.getDockId() != null) {
+            response.setDockId(item.getDockId().getId());
+            response.setDockName(item.getDockId().getDockName());
+            response.setDockCode(item.getDockId().getDockId());
+        }
+
+        AlternateItemMapper alternateItemMapper = alternativeItemMapperRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), item.getId());
+        if (alternateItemMapper != null) {
+            response.setAlternativeItemId(alternateItemMapper.getAlternateItemId().getId());
+            response.setAlternativeItemName(alternateItemMapper.getAlternateItemId().getName());
+        }
+
+        return response;
     }
 
 }

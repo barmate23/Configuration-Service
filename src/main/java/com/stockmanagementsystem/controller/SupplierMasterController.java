@@ -27,6 +27,17 @@ public class SupplierMasterController {
         return supplierService.saveSupplier(supplierRequest);
     }
 
+    @GetMapping("/v2/getAllSuppliersWithPagination")
+    public BaseResponse<SupplierResonseDto> getAllSuppliersWithPaginationV2(
+            @RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
+            @RequestParam(required = false) List<String> supplierName,
+            @RequestParam(required = false) List<String> supplierCategory,
+            @RequestParam(required = false) List<String> supplierGroup
+    ) {
+        return supplierService.getAllSuppliersWithPaginationV2(pageNumber, pageSize, supplierName, supplierCategory, supplierGroup);
+    }
+
     @DeleteMapping(APIConstants.DELETE_SUPPLIER)
     public BaseResponse<Supplier> deleteSupplierById(@PathVariable Integer id){
         return supplierService.deleteBySupplierId(id);

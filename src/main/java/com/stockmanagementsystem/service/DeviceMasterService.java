@@ -4,6 +4,7 @@ import com.stockmanagementsystem.entity.DeviceMaster;
 import com.stockmanagementsystem.entity.SubModule;
 import com.stockmanagementsystem.request.DeviceMasterRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.DeviceMasterResponseV2;
 import com.stockmanagementsystem.response.ReasonResponse;
 
 import java.util.Date;
@@ -27,4 +28,6 @@ public interface DeviceMasterService {
     BaseResponse<DeviceMaster> activeDeviceMasterById(Integer deviceId, Boolean status);
 
     BaseResponse<SubModule> getAllSubModule();
+
+    BaseResponse<DeviceMasterResponseV2> searchDeviceMasterV2(Integer pageNumber, Integer pageSize, List<String> deviceIp, List<String> deviceName, List<String> deviceBrandName);
 }

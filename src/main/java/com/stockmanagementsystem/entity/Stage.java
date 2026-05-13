@@ -30,10 +30,19 @@ public class Stage {
     @Column(name = "StageName")
     private String stageName;
 
+    @Column(name = "erpStageCode")
+    private String erpStageCode;
+
     @ManyToOne
     @JoinColumn(name = "assembly_line_id")
     @JsonIgnore
     private AssemblyLine assemblyLine;
+
+    @Column(name = "sequenceNumber")
+    private Integer sequenceNumber;
+
+    @Transient
+    private Integer lineId;
 
 
     @Column(name = "IsDeleted")

@@ -123,6 +123,28 @@ public class APIConstants {
     public static final String GET_STAGING_AREA_BY_DOCK = "/getAllStagingArea";
     public static final String GET_WEEKLY_OFF = "/getWeeklyOff";
     public static final String SAVE_WEEKLY_OFF = "/saveWeeklyOff";
+    public static final String PACKING_TEMPLATE_DOWNLOAD = "/packingTemplateDownload";
+    public static final String SAVE_OTHER_REASON = "/saveOtherReason";
+
+    // PRODUCTION SHOP, LINE, STAGE
+    public static final String PRODUCTION_SHOP_CONTROLLER = "/productionShop";
+    public static final String SAVE_PRODUCTION_SHOP = "/saveProductionShop";
+    public static final String UPDATE_PRODUCTION_SHOP = "/updateProductionShop/{id}";
+    public static final String DELETE_PRODUCTION_SHOP = "/deleteProductionShop/{id}";
+    public static final String GET_ALL_PRODUCTION_SHOPS = "/getAllProductionShops";
+    public static final String GET_PRODUCTION_SHOP_BY_ID = "/getProductionShopById/{id}";
+
+    public static final String SAVE_PRODUCTION_LINE = "/saveProductionLine";
+    public static final String UPDATE_PRODUCTION_LINE = "/updateProductionLine/{id}";
+    public static final String DELETE_PRODUCTION_LINE = "/deleteProductionLine/{id}";
+    public static final String GET_ALL_PRODUCTION_LINES = "/getAllProductionLines";
+    public static final String GET_PRODUCTION_LINES_BY_SHOP_ID = "/getProductionLinesByShopId/{shopId}";
+
+    public static final String SAVE_PRODUCTION_LINE_STAGE = "/saveProductionLineStage";
+    public static final String UPDATE_PRODUCTION_LINE_STAGE = "/updateProductionLineStage/{id}";
+    public static final String DELETE_PRODUCTION_LINE_STAGE = "/deleteProductionLineStage/{id}";
+    public static final String GET_ALL_PRODUCTION_LINE_STAGES = "/getAllProductionLineStages";
+    public static final String GET_STAGES_BY_LINE_ID = "/getStagesByLineId/{lineId}";
 }
 
 

@@ -20,7 +20,7 @@ public class SubModule {
     private Modules module;
 
     @Column(name = "SubModuleCode")
-        private String subModuleCode;
+    private String subModuleCode;
 
     @Column(name = "SubModuleName")
     private String subModuleName;

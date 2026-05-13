@@ -4,10 +4,7 @@ import com.stockmanagementsystem.entity.Supplier;
 import com.stockmanagementsystem.entity.SupplierItemMapper;
 import com.stockmanagementsystem.request.ItemSupplierMapperRequest;
 import com.stockmanagementsystem.request.SupplierRequest;
-import com.stockmanagementsystem.response.BaseResponse;
-import com.stockmanagementsystem.response.ItemNameResponse;
-import com.stockmanagementsystem.response.SupplierNameResponse;
-import com.stockmanagementsystem.response.SupplierResponse;
+import com.stockmanagementsystem.response.*;
 
 import java.util.Date;
 import java.util.List;
@@ -16,6 +13,8 @@ public interface SupplierService {
     BaseResponse<Supplier> saveSupplier(SupplierRequest supplierRequest );
 
     String generateSupplierId(Integer count);
+
+    BaseResponse<SupplierResonseDto> getAllSuppliersWithPaginationV2(Integer pageNumber, Integer pageSize, List<String> supplierName, List<String> supplierCategory, List<String> supplierGroup);
 
     BaseResponse deleteBySupplierId(Integer id);
 

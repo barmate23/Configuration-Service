@@ -3,7 +3,9 @@ package com.stockmanagementsystem.service;
 import com.stockmanagementsystem.entity.BOMLine;
 import com.stockmanagementsystem.entity.BoMHead;
 import com.stockmanagementsystem.request.BOMHeadRequest;
+import com.stockmanagementsystem.response.BOMLineResponseV2;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.BoMHeadResponseV2;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -26,4 +28,8 @@ public interface BOMService {
     BaseResponse<BOMLine> deleteBomLineById(Integer id);
 
     BaseResponse<BoMHead> getAllBoMHead();
+
+    BaseResponse<BoMHeadResponseV2> getAllBomHeadWithPaginationV2(Integer pageNo, Integer pageSize, List<String> bomERPCode, List<String> varient, List<String> model, Date date);
+
+    BaseResponse<BOMLineResponseV2> getAllBomLineByBomIdV2(Integer id);
 }

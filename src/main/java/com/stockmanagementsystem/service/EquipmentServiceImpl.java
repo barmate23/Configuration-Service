@@ -7,7 +7,9 @@ import com.stockmanagementsystem.repository.EquipmentRepository;
 import com.stockmanagementsystem.repository.StoreRepository;
 import com.stockmanagementsystem.request.EquipmentRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.EquipmentResponseV2;
 import com.stockmanagementsystem.utils.BarcodeGenerator;
+import java.util.stream.Collectors;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import com.stockmanagementsystem.validation.Validations;
 import lombok.extern.slf4j.Slf4j;
@@ -317,5 +319,67 @@ public class EquipmentServiceImpl implements EquipmentService {
             equipmentId = String.format("%s-EQ%03d", loginUser.getSubOrganizationCode(), count);
         }
         return equipmentId;
+    }
+
+    @Override
+    public BaseResponse<EquipmentResponseV2> getAllEquipmentWithPaginationV2(Integer pageNo, Integer pageSize, List<Integer> storeId, List<String> trolleyType) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - EquipmentServiceImpl - getAllEquipmentWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL EQUIPMENT WITH PAGINATION V2 START");
+
+        BaseResponse<EquipmentResponseV2> baseResponse = new BaseResponse<>();
+        Page<Equipment> pageResult = null;
+        try {
+            final Pageable pageable = PageRequest.of(pageNo, pageSize);
+            if (storeId == null && trolleyType == null) {
+                pageResult = equipmentRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+            } else if (storeId != null && trolleyType != null) {
+                pageResult = equipmentRepository.findByIsDeletedAndSubOrganizationIdAndTrolleyTypeInAndStoreIdIn(false, loginUser.getSubOrgId(), trolleyType, storeId, pageable);
+            } else if (storeId != null) {
+                pageResult = equipmentRepository.findByIsDeletedAndSubOrganizationIdAndStoreIdIn(false, loginUser.getSubOrgId(), storeId, pageable);
+            } else {
+                pageResult = equipmentRepository.findByIsDeletedAndSubOrganizationIdAndTrolleyTypeIn(false, loginUser.getSubOrgId(), trolleyType, pageable);
+            }
+
+            List<EquipmentResponseV2> equipmentResponseV2List = pageResult.getContent().stream()
+                    .map(this::mapToEquipmentResponseV2)
+                    .collect(Collectors.toList());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10082S);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setData(equipmentResponseV2List);
+            baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            baseResponse.setTotalPageCount(pageResult.getTotalPages());
+            baseResponse.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - EquipmentServiceImpl - getAllEquipmentWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+            return baseResponse;
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10081F);
+            baseResponse.setCode(responseMessage.getCode());
+            baseResponse.setStatus(responseMessage.getStatus());
+            baseResponse.setMessage(responseMessage.getMessage());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - EquipmentServiceImpl - getAllEquipmentWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - EquipmentServiceImpl - getAllEquipmentWithPaginationV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL EQUIPMENT WITH PAGINATION V2 TIME " + (endTime - startTime));
+        return baseResponse;
+    }
+
+    private EquipmentResponseV2 mapToEquipmentResponseV2(Equipment equipment) {
+        EquipmentResponseV2 response = new EquipmentResponseV2();
+        response.setId(equipment.getId());
+        response.setTrolleyId(equipment.getTrolleyId());
+        response.setEquipmentName(equipment.getEquipmentName());
+        response.setAssetId(equipment.getAssetId());
+        response.setTrolleyType(equipment.getTrolleyType());
+        if (equipment.getStore() != null) {
+            response.setStoreId(equipment.getStore().getId());
+            response.setStoreName(equipment.getStore().getStoreName());
+            response.setStoreCode(equipment.getStore().getStoreId());
+        }
+        return response;
     }
 }

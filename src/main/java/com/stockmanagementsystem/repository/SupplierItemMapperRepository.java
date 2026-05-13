@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SupplierItemMapperRepository extends JpaRepository<SupplierItemMapper,Integer> {
-    SupplierItemMapper findByIsDeletedAndSupplier_Id(boolean isDeleted, Integer supplierId);
 
     List<SupplierItemMapper> findAllByIsDeletedAndSupplier_Id(boolean b, Integer id);
 
@@ -19,9 +18,9 @@ public interface SupplierItemMapperRepository extends JpaRepository<SupplierItem
 
     SupplierItemMapper findByIsDeletedAndSupplier_IdAndSubOrganizationId(boolean b, Integer id, Integer subOrgId);
 
-    List<SupplierItemMapper> findAllByIsDeletedAndSupplier_IdAndSubOrganizationId(boolean b, Integer id, Integer subOrgId);
-
     SupplierItemMapper findByIsDeletedAndSubOrganizationIdAndSupplierItemId(boolean b, Integer subOrgId, Integer id);
 
-    Optional<SupplierItemMapper> findByIsDeletedAndSubOrganizationIdAndItemItemIdAndSupplierSupplierId(boolean b, Integer subOrgId, String itemId, String supplierId);
+    List<SupplierItemMapper> findByItemIdInAndIsDeleted(List<Integer> itemIds, boolean b);
+
+    SupplierItemMapper findByIsDeletedFalseAndSupplierSupplierNameAndItemName(String supplierName, String itemName);
 }

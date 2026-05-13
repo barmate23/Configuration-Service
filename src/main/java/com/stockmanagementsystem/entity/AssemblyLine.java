@@ -1,5 +1,6 @@
 package com.stockmanagementsystem.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -21,6 +22,32 @@ public class AssemblyLine {
     @Column(name = "SubOrganizationId")
     private Integer subOrganizationId;
 
+    @Column(name = "erpLineCode")
+    private String erpLineCode;
+
+    @Column(name = "lineCode")
+    private String lineCode;
+
+    @Column(name = "lineName")
+    private String lineName;
+
+    @ManyToOne
+    @JoinColumn(name = "shopId")
+    @JsonIgnore
+    private ProductionShop productionShop;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "sequenceNumber")
+    private Integer sequenceNumber;
+
+    @OneToMany(mappedBy = "assemblyLine", cascade = CascadeType.ALL)
+    private List<Stage> stages;
+
+    @Transient
+    private Integer shopId;
+
     @Column(name = "AssemblyLineId")
     private String assemblyLineId;
 
@@ -41,9 +68,5 @@ public class AssemblyLine {
 
     @Column(name = "ModifiedOn")
     private Date modifiedOn;
-
-    @Transient
-//    @OneToMany(mappedBy = "assemblyLine", fetch = FetchType.EAGER)
-    private List<Stage> stages;
 
 }

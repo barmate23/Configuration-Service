@@ -26,7 +26,7 @@ public class DockRequest {
     @NotNull(message = "Store ID cannot be null")
     private List<Integer> store;
 
-    @NotNull(message = "Dock Supervisor ID cannot be null")
-    private Integer dockSupervisor;
+    @NotNull(message = "Dock Supervisor ID(s) cannot be null")
+    private List<Integer> dockSupervisors;
 
 }

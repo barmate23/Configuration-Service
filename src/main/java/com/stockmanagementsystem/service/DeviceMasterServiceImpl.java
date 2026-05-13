@@ -2,11 +2,12 @@ package com.stockmanagementsystem.service;
 import com.stockmanagementsystem.entity.*;
 import com.stockmanagementsystem.repository.DeviceMasterRepository;
 import com.stockmanagementsystem.repository.SubModuleRepository;
-import com.stockmanagementsystem.request.DeviceMasterRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.DeviceMasterResponseV2;
 import com.stockmanagementsystem.utils.ResponseKeyConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -469,4 +470,61 @@ public class DeviceMasterServiceImpl implements DeviceMasterService {
         return baseResponse;
     }
 
+    @Override
+    public BaseResponse<DeviceMasterResponseV2> searchDeviceMasterV2(Integer pageNumber, Integer pageSize, List<String> deviceIp, List<String> deviceName, List<String> deviceBrandName) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - DeviceMasterServiceImpl - searchDeviceMasterV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " SEARCH DEVICE MASTER V2 START");
+        BaseResponse<DeviceMasterResponseV2> response = new BaseResponse<>();
+
+        try {
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            Specification<DeviceMaster> specification = DeviceMasterSpecifications.withFilters(deviceIp, deviceName, deviceBrandName, true, loginUser.getSubOrgId());
+
+            Page<DeviceMaster> deviceMasterPage = deviceMasterRepository.findAll(specification, pageable);
+
+            List<DeviceMasterResponseV2> deviceMasterListV2 = deviceMasterPage.getContent().stream()
+                    .map(this::mapToDeviceMasterResponseV2)
+                    .collect(Collectors.toList());
+
+            response.setData(deviceMasterListV2);
+            response.setTotalRecordCount(deviceMasterPage.getTotalElements());
+            response.setTotalPageCount(deviceMasterPage.getTotalPages());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10106S);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            response.setLogId(loginUser.getLogId());
+            log.info("LogId:{} - DeviceMasterServiceImpl - searchDeviceMasterV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
+
+        } catch (Exception e) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10130F);
+            response.setCode(responseMessage.getCode());
+            response.setStatus(responseMessage.getStatus());
+            response.setMessage(responseMessage.getMessage());
+            response.setData(Collections.emptyList());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - DeviceMasterServiceImpl - searchDeviceMasterV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
+            response.setLogId(loginUser.getLogId());
+        }
+        long endTime = System.currentTimeMillis();
+        log.info("LogId:{} - DeviceMasterServiceImpl - searchDeviceMasterV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), "  SEARCH DEVICE MASTER V2 TIME" + (endTime - startTime));
+        return response;
+    }
+
+    private DeviceMasterResponseV2 mapToDeviceMasterResponseV2(DeviceMaster device) {
+        DeviceMasterResponseV2 response = new DeviceMasterResponseV2();
+        response.setId(device.getId());
+        response.setDeviceIp(device.getDeviceIp());
+        response.setDeviceName(device.getDeviceName());
+        response.setDeviceBrandName(device.getDeviceBrandName());
+        if (device.getRole() != null) {
+            response.setRoleId(device.getRole().getId());
+            response.setRoleCode(device.getRole().getSubModuleCode());
+            response.setRoleName(device.getRole().getSubModuleName());
+        }
+        response.setDevicePort(device.getDevicePort());
+        response.setIsActive(device.getIsActive());
+        return response;
+    }
 }

@@ -33,4 +33,6 @@ public interface LocationService {
     ResponseEntity<byte[]> downloadExcelLocationFile(Integer zoneId);
 
     ResponseEntity<BaseResponse> uploadLocationDetail(MultipartFile file, Integer zoneId) throws IOException;
+
+    BaseResponse<com.stockmanagementsystem.response.LocationResponse> getLocationWithFilterV2(List<Integer> storeId, List<Integer> areaId, List<Integer> zoneId, List<Integer> locationId, List<Integer> itemId, Integer pageNo, Integer pageSize);
 }

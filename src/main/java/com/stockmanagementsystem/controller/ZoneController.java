@@ -6,6 +6,7 @@ import com.stockmanagementsystem.entity.LoginUser;
 import com.stockmanagementsystem.entity.Zone;
 import com.stockmanagementsystem.repository.ZoneRepository;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.ZoneResponse;
 import com.stockmanagementsystem.service.ZoneService;
 import com.stockmanagementsystem.utils.APIConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -78,5 +79,14 @@ public class ZoneController {
         }
     }
 
-
+    @GetMapping("/v2/getAllZoneWithPagination")
+    public BaseResponse<ZoneResponse> getAllZoneWithPaginationV2(@RequestParam(defaultValue = "0") Integer pageNo,
+                                                       @RequestParam(defaultValue = "10") Integer pageSize,
+                                                       @RequestParam(required = false) List<Integer> storeId,
+                                                       @RequestParam(required = false) List<Integer> areaId,
+                                                       @RequestParam(required = false) List<Integer> zoneId,
+                                                       @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy/MM/dd") Date startDate,
+                                                       @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy/MM/dd") Date endDate){
+        return zoneService.getAllZonesWithPaginationV2(pageNo, pageSize, storeId, areaId, zoneId, startDate, endDate);
+    }
 }

@@ -4,6 +4,8 @@ import com.stockmanagementsystem.entity.PurchaseOrderHead;
 import com.stockmanagementsystem.entity.PurchaseOrderLine;
 import com.stockmanagementsystem.request.PurchaseOrderHeadRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.PurchaseOrderHeadResponseV2;
+import com.stockmanagementsystem.response.PurchaseOrderLineResponseV2;
 import com.stockmanagementsystem.service.PurchaseOrderService;
 import com.stockmanagementsystem.utils.APIConstants;
 import com.stockmanagementsystem.utils.ServiceConstants;
@@ -60,5 +62,21 @@ public class PurchaseOrderController {
     @GetMapping("/getAllPurchaseOrderHead")
     public BaseResponse<PurchaseOrderHead> getAllPurchaseOrderHead(){
         return purchaseOrderService.getAllPurchaseOrderHead();
+    }
+
+    @GetMapping("/v2/getAllPurchaseOrderHeadWithPagination")
+    public BaseResponse<PurchaseOrderHeadResponseV2> getAllPurchaseOrderHeadWithPaginationV2(
+            @RequestParam(required = false) List<String> orderNumber,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd")Date orderDate,
+            @RequestParam(required = false)List<Integer> supplier,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd")Date deliveryDate,
+            @RequestParam(defaultValue = "0") Integer pageNo,
+            @RequestParam(defaultValue = "10") Integer pageSize){
+        return purchaseOrderService.getAllPurchaseOrderHeadWithPaginationV2(orderNumber,orderDate,supplier,deliveryDate,pageNo,pageSize);
+    }
+
+    @GetMapping("/v2/getPurchaseOrderLineByPoId/{id}")
+    public BaseResponse<PurchaseOrderLineResponseV2> getPurchaseOrderLineByPoIdV2(@PathVariable Integer id){
+        return purchaseOrderService.getPurchaseOrderLineByPoIdV2(id);
     }
 }

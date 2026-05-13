@@ -285,6 +285,7 @@ public class ServiceConstants {
     public static final String USRLST = "USRLST";
     public static final String USERLIST = "userList";
     public static final String PACKINGLIST = "PackingList";
+    public static final String PACKINGLISTV2 = "PackingListV2";
 
     protected static final String ERP_SUPPLIER_ID = "ERP Supplier Code";
     public static final String SUPPLIER_NAME = "Supplier Name";

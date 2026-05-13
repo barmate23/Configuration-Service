@@ -24,8 +24,6 @@ public interface StoreService {
 
     BaseResponse<Store> getAllStores();
 
-//    BaseResponse<Store> getAllStoresAcceptItemAssignInLocation();
-
     BaseResponse<StoreName> getAllStoresName();
 
     BaseResponse<Store> deleteStoreById(Integer storeId);
@@ -37,4 +35,6 @@ public interface StoreService {
     BaseResponse getAreaLicense();
 
     BaseResponse<CreateYearResponse> getAllYears(String type);
+
+    BaseResponse<com.stockmanagementsystem.response.StoreResponseDto> getStoresWithPaginationV2(Integer pageNo, Integer pageSize);
 }

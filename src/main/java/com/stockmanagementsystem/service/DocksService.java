@@ -4,8 +4,6 @@ import com.stockmanagementsystem.entity.AcceptedRejectedStagingArea;
 import com.stockmanagementsystem.entity.Dock;
 import com.stockmanagementsystem.request.*;
 import com.stockmanagementsystem.response.*;
-import java.io.ByteArrayOutputStream;
-
 import java.util.List;
 
 public interface DocksService {
@@ -22,8 +20,10 @@ public interface DocksService {
     BaseResponse<List<AttributeResponse>> getAttributesWithIds();
 
     BaseResponse<Dock> getAllDocks(int page, int pageSize);
+    BaseResponse<DockResponse> getAllDocksV2(int page, int pageSize);
 
     BaseResponse<Dock> getDocksById(Integer dockId);
+    BaseResponse<DockResponse> getDocksByIdV2(Integer dockId);
 
     byte[] generateExcelContentById(Integer id);
     BaseResponse<Dock> searchDocks(

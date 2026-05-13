@@ -893,4 +893,65 @@ public class LocationServiceImpl extends Validations implements LocationService{
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, ServiceConstants.LOCATION_DATA_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
             }
         }
+
+    @Override
+    public BaseResponse<com.stockmanagementsystem.response.LocationResponse> getLocationWithFilterV2(List<Integer> storeId, List<Integer> areaId, List<Integer> zoneId, List<Integer> locationId, List<Integer> itemId, Integer pageNo, Integer pageSize) {
+        BaseResponse<com.stockmanagementsystem.response.LocationResponse> baseResponse = new BaseResponse<>();
+        try {
+            Pageable pageable = PageRequest.of(pageNo, pageSize);
+            Page<Location> pageResult = locationRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
+            List<com.stockmanagementsystem.response.LocationResponse> locations = pageResult.getContent().stream().map(l -> {
+                com.stockmanagementsystem.response.LocationResponse dto = new com.stockmanagementsystem.response.LocationResponse();
+                dto.setId(l.getId());
+                if (l.getItem() != null) {
+                    dto.setItemName(l.getItem().getName());
+                    dto.setItemCode(l.getItem().getItemCode());
+                }
+                if (l.getZone() != null) {
+                    dto.setZoneId(l.getZone().getZoneId());
+                    dto.setZoneName(l.getZone().getZoneName());
+                    dto.setZoneCode(l.getZone().getZoneId());
+                    if (l.getZone().getArea() != null) {
+                        dto.setAreaId(l.getZone().getArea().getAreaId());
+                        dto.setAreaName(l.getZone().getArea().getAreaName());
+                        dto.setAreaCode(l.getZone().getArea().getAreaId());
+                        if (l.getZone().getArea().getStore() != null) {
+                            dto.setStoreId(String.valueOf(l.getZone().getArea().getStore().getId()));
+                            dto.setStoreName(l.getZone().getArea().getStore().getStoreName());
+                            dto.setStoreCode(l.getZone().getArea().getStore().getStoreId());
+                        }
+                    }
+                }
+                dto.setItemQty(l.getItemQty());
+                dto.setLevel(l.getLevel());
+                dto.setRow(l.getRow());
+                dto.setRackFloor(l.getRackFloor());
+                dto.setRackNo(l.getRackNo());
+                dto.setShelfNo(l.getShelfNo());
+                dto.setErpLocationId(l.getErpLocationId());
+                dto.setLocationId(l.getLocationId());
+                dto.setLocationType(l.getLocationType());
+                dto.setLength(l.getLength());
+                dto.setWidth(l.getWidth());
+                dto.setHeight(l.getHeight());
+                dto.setAreaSqCm(l.getAreaSqCm());
+                dto.setVolumeCuCm(l.getVolumeCuCm());
+                dto.setCarryingCapacity(l.getCarryingCapacity());
+                dto.setRemainingItemQty(l.getRemainingItemQty());
+                return dto;
+            }).collect(java.util.stream.Collectors.toList());
+            baseResponse.setCode(1);
+            baseResponse.setStatus(200);
+            baseResponse.setTotalPageCount(pageResult.getTotalPages());
+            baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            baseResponse.setData(locations);
+            baseResponse.setLogId(loginUser.getLogId());
+        } catch (Exception ex) {
+            baseResponse.setCode(0);
+            baseResponse.setStatus(500);
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+        }
+        return baseResponse;
+    }
 }

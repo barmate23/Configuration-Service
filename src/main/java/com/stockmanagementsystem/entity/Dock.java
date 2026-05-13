@@ -28,15 +28,19 @@ public class Dock {
     @Column(name = "DockName")
     private String dockName;
 
+    @ManyToOne
+    @JoinColumn(name = "DockSupervisorId")
+    private Users dockSupervisor;
+
     @Column(name = "Attribute")
     private String attribute;
 
     @Transient
     private List<Store> store;
 
-    @ManyToOne
-    @JoinColumn(name = "DockSupervisorId")
-    private Users dockSupervisor;
+    @Transient
+    private List<Users> supervisors;
+
 
     @Column(name = "IsOccupied")
     private Boolean isOccupied;

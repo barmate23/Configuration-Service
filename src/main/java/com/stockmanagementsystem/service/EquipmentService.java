@@ -3,6 +3,7 @@ package com.stockmanagementsystem.service;
 import com.stockmanagementsystem.entity.Equipment;
 import com.stockmanagementsystem.request.EquipmentRequest;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.EquipmentResponseV2;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -25,4 +26,6 @@ public interface EquipmentService {
     ByteArrayOutputStream generateBarcodePDF();
 
     String equipmentGenerator(Integer count);
+
+    BaseResponse<EquipmentResponseV2> getAllEquipmentWithPaginationV2(Integer pageNo, Integer pageSize, List<Integer> storeId, List<String> trolleyType);
 }

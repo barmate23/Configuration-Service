@@ -24,6 +24,9 @@ public class BoMHead {
     @Column(name = "Model", length = 255)
     private String model;
 
+    @Column(name = "Brand", length = 255)
+    private String brand;
+
     @Column(name = "Product", length = 255)
     private String product;
 

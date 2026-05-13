@@ -4,7 +4,9 @@ import com.stockmanagementsystem.entity.BOMLine;
 import com.stockmanagementsystem.entity.BoMHead;
 import com.stockmanagementsystem.entity.Stage;
 import com.stockmanagementsystem.request.BOMHeadRequest;
+import com.stockmanagementsystem.response.BOMLineResponseV2;
 import com.stockmanagementsystem.response.BaseResponse;
+import com.stockmanagementsystem.response.BoMHeadResponseV2;
 import com.stockmanagementsystem.service.BOMService;
 import com.stockmanagementsystem.utils.APIConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +68,23 @@ public class BOMController {
     @GetMapping("/getAllBoMHead")
     public BaseResponse<BoMHead> getAllBoMHead(){
         return bomService.getAllBoMHead();
+    }
+
+    @GetMapping("/v2/getAllBOMHeadsWithPagination")
+    public BaseResponse<BoMHeadResponseV2> getAllBOMHeadsWithPaginationV2(
+            @RequestParam(defaultValue = "0") Integer pageNo,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) List<String> bomERPCode,
+            @RequestParam(required = false) List<String> varient,
+            @RequestParam(required = false) List<String> model,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date date){
+        return bomService.getAllBomHeadWithPaginationV2(pageNo,pageSize,bomERPCode,varient,model,date);
+    }
+
+    @GetMapping("/v2/getAllBomLineByBomId/{id}")
+    public BaseResponse<BOMLineResponseV2> getAllBomLineByBomIdV2(
+            @PathVariable Integer id){
+        return bomService.getAllBomLineByBomIdV2(id);
     }
 
 }

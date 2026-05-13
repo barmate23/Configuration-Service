@@ -24,4 +24,6 @@ public interface AreaServices {
     BaseResponse<Area> deleteAreaById(Integer areaId);
 
     BaseResponse<AddressResponse> getAddressByPincodes(Integer pincode);
+
+    BaseResponse<com.stockmanagementsystem.response.AreaResponseDto> getALlAreasWithPaginationV2(Integer pageNo, Integer pageSize, List<Integer> storeId, List<Integer> areaId);
 }

@@ -321,4 +321,47 @@ public class ZoneServiceImpl implements ZoneService{
             return null;
         }
     }
+
+    @Override
+    public BaseResponse<com.stockmanagementsystem.response.ZoneResponse> getAllZonesWithPaginationV2(Integer pageNo, Integer pageSize, List<Integer> storeId, List<Integer> areaId, List<Integer> zoneId, Date startDate, Date endDate) {
+        BaseResponse<com.stockmanagementsystem.response.ZoneResponse> baseResponse = new BaseResponse<>();
+        try {
+            Pageable pageable = PageRequest.of(pageNo, pageSize);
+            Page<Zone> pageResult = zoneRepository.findByIsDeletedAndSubOrganizationIdAndAreaIdIn(false, loginUser.getSubOrgId(), areaId, pageable);
+            List<com.stockmanagementsystem.response.ZoneResponse> zones = pageResult.getContent().stream().map(z -> {
+                com.stockmanagementsystem.response.ZoneResponse dto = new com.stockmanagementsystem.response.ZoneResponse();
+                dto.setId(z.getId());
+                if (z.getArea() != null) {
+                    dto.setAreaId(z.getArea().getId());
+                    dto.setAreaName(z.getArea().getAreaName());
+                    dto.setAreaCode(z.getArea().getAreaId());
+                    if (z.getArea().getStore() != null) {
+                        dto.setStoreId(String.valueOf(z.getArea().getStore().getId()));
+                        dto.setStoreName(z.getArea().getStore().getStoreName());
+                        dto.setStoreCode(z.getArea().getStore().getStoreId());
+                    }
+                }
+                dto.setErpZoneId(z.getErpZoneId());
+                dto.setZoneId(z.getZoneId());
+                dto.setZoneName(z.getZoneName());
+                if (z.getZoneCategory() != null) {
+                    dto.setZoneCategoryId(z.getZoneCategory().getId());
+                    dto.setZoneCategoryName(z.getZoneCategory().getMasterValue());
+                }
+                return dto;
+            }).collect(java.util.stream.Collectors.toList());
+            baseResponse.setCode(1);
+            baseResponse.setStatus(200);
+            baseResponse.setTotalPageCount(pageResult.getTotalPages());
+            baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            baseResponse.setData(zones);
+            baseResponse.setLogId(loginUser.getLogId());
+        } catch (Exception ex) {
+            baseResponse.setCode(0);
+            baseResponse.setStatus(500);
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+        }
+        return baseResponse;
+    }
 }

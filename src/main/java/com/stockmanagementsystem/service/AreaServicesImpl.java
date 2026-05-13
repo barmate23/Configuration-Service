@@ -413,4 +413,47 @@ public class AreaServicesImpl implements AreaServices {
         log.info("LogId:{} - AreaServicesImpl - getAddressByPincodes - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET ADDRESS BY PINCODE METHOD EXECUTED TIME :" + (endTime - startTime));
         return baseResponse;
     }
+
+    @Override
+    public BaseResponse<com.stockmanagementsystem.response.AreaResponseDto> getALlAreasWithPaginationV2(Integer pageNo, Integer pageSize, List<Integer> storeId, List<Integer> areaId) {
+        BaseResponse<com.stockmanagementsystem.response.AreaResponseDto> baseResponse = new BaseResponse<>();
+        try {
+            Pageable pageable = PageRequest.of(pageNo, pageSize);
+            Page<Area> pageResult;
+            if (storeId == null && areaId == null) {
+                pageResult = areaRepository.findByIsDeletedAndSubOrganizationIdOrderById(false, loginUser.getSubOrgId(), pageable);
+            } else if (storeId != null && areaId != null) {
+                pageResult = areaRepository.findByIsDeletedAndStoreIdInAndIdInOrderById(false, pageable, storeId, areaId);
+            } else if (storeId != null) {
+                pageResult = areaRepository.findByIsDeletedAndSubOrganizationIdAndStoreIdInOrderById(false, loginUser.getSubOrgId(), storeId, pageable);
+            } else {
+                pageResult = areaRepository.findByIsDeletedAndSubOrganizationIdAndIdInOrderById(false, loginUser.getSubOrgId(), areaId, pageable);
+            }
+            List<com.stockmanagementsystem.response.AreaResponseDto> areas = pageResult.getContent().stream().map(a -> {
+                com.stockmanagementsystem.response.AreaResponseDto dto = new com.stockmanagementsystem.response.AreaResponseDto();
+                dto.setId(a.getId());
+                if (a.getStore() != null) {
+                    dto.setStoreId(a.getStore().getId());
+                    dto.setStoreName(a.getStore().getStoreName());
+                    dto.setStoreCode(a.getStore().getStoreId());
+                }
+                dto.setErpAreaId(a.getErpAreaId());
+                dto.setAreaId(a.getAreaId());
+                dto.setAreaName(a.getAreaName());
+                return dto;
+            }).collect(java.util.stream.Collectors.toList());
+            baseResponse.setCode(1);
+            baseResponse.setStatus(200);
+            baseResponse.setTotalPageCount(pageResult.getTotalPages());
+            baseResponse.setTotalRecordCount(pageResult.getTotalElements());
+            baseResponse.setData(areas);
+            baseResponse.setLogId(loginUser.getLogId());
+        } catch (Exception ex) {
+            baseResponse.setCode(0);
+            baseResponse.setStatus(500);
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+        }
+        return baseResponse;
+    }
 }

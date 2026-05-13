@@ -8,6 +8,7 @@ import com.stockmanagementsystem.response.BaseResponse;
 import com.stockmanagementsystem.response.ItemNameResponse;
 import com.stockmanagementsystem.response.ReasonCategoryResponse;
 import com.stockmanagementsystem.response.ReasonResponse;
+import com.stockmanagementsystem.response.ReasonResponseV2;
 import com.stockmanagementsystem.service.ReasonService;
 import com.stockmanagementsystem.utils.APIConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +28,13 @@ public class ReasonController {
     ReasonService reasonService;
 
     @PostMapping(APIConstants.SAVE_REASON)
-    public BaseResponse saveReason(@RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId){
-        return reasonService.saveReason(rejectedReason,reasonCategoryId);
+    public BaseResponse saveReason(@RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId,@RequestParam(required = false) Boolean isConfigurationRequest){
+        return reasonService.saveReason(rejectedReason,reasonCategoryId,isConfigurationRequest);
+    }
+
+    @PostMapping(APIConstants.SAVE_OTHER_REASON)
+    public BaseResponse saveOtherReason(@RequestParam String rejectedReason,@RequestParam String reasonCategory){
+        return reasonService.saveOtherReason(rejectedReason,reasonCategory);
     }
 
     @DeleteMapping(APIConstants.DELETE_REASON)
@@ -37,8 +43,8 @@ public class ReasonController {
     }
 
     @PutMapping(APIConstants.UPDATE_REASON)
-    public ResponseEntity<BaseResponse> updateReason(@RequestParam Integer id, @RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId) {
-        BaseResponse baseResponse = reasonService.updateReason(id, rejectedReason,reasonCategoryId);
+    public ResponseEntity<BaseResponse> updateReason(@RequestParam Integer id, @RequestParam String rejectedReason,@RequestParam Integer reasonCategoryId,@RequestParam(required = false) Boolean isApproved) {
+        BaseResponse baseResponse = reasonService.updateReason(id, rejectedReason,reasonCategoryId,isApproved);
         return new ResponseEntity<>(baseResponse, HttpStatus.valueOf(baseResponse.getStatus()));
     }
 
@@ -111,5 +117,46 @@ public class ReasonController {
         return reasonService.getAllReasonByCategory(categoryCode);
     }
 
+
+    @GetMapping("/getApprovalPendingReasons")
+    public BaseResponse<Reason> getApprovalPendingReasons(
+            @RequestParam(required = false) String categoryCode) {
+        return reasonService.getApprovalPendingReasons(categoryCode);
+    }
+
+
+    @GetMapping("/v2/getAllReasonsWithoutPagination")
+    public BaseResponse<ReasonResponseV2> getAllReasonsWithoutPaginationV2() {
+        return reasonService.getAllReasonsWithoutPaginationV2();
+    }
+
+    @GetMapping("/v2/getReasonByCategoryCode/{categoryCode}")
+    public BaseResponse<ReasonResponseV2> getAllReasonByCategoryV2(@PathVariable String categoryCode) {
+        return reasonService.getAllReasonByCategoryV2(categoryCode);
+    }
+
+    @GetMapping("/v2/getApprovalPendingReasons")
+    public BaseResponse<ReasonResponseV2> getApprovalPendingReasonsV2(@RequestParam(required = false) String categoryCode) {
+        return reasonService.getApprovalPendingReasonsV2(categoryCode);
+    }
+
+    @GetMapping("/v2/searchReasons")
+    public BaseResponse<ReasonResponseV2> searchReasonsV2(
+            @RequestParam(value = "pageNumber", defaultValue = "0", required = false) Integer pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize,
+            @RequestParam(required = false) List<String> reasonId,
+            @RequestParam(required = false) String reasonCategory,
+            @RequestParam(required = false) List<String> itemName,
+            @RequestParam(required = false) Boolean userCreatedReason
+    ) {
+        return reasonService.searchReasonsV2(pageNumber, pageSize, reasonId, reasonCategory, itemName, userCreatedReason);
+    }
+
+    @GetMapping("/v2/getAllReasons")
+    public BaseResponse<ReasonResponseV2> getAllReasonsV2(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+        return reasonService.getAllReasonsV2(page, pageSize);
+    }
 }
 
