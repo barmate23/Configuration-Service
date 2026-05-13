@@ -3551,11 +3551,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 throw new RuntimeException("Packing levels not configured");
             }
 
-            // =====================================================
-            // SORT LEVELS
-            // TOP -> BOTTOM
-            // =====================================================
-            levels.sort(Comparator.comparing(PackingProfileLevel::getLevelOrder));
+            levels.sort(
+                    Comparator.comparing(PackingProfileLevel::getLevelOrder)
+                            .reversed()
+            );
 
             // =====================================================
             // MOQ CALCULATION
