@@ -205,15 +205,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Set<String> itemCodeSet = new HashSet<>();
             Set<String> erpItemIdSet = new HashSet<>();
 
-            List<String> expectedColumns = new ArrayList<>(Arrays.asList(
-                    ITEM_CODES, NAME, ITEM_DESCRIPTION,
-                    ITEM_GROUP,
-                    ITEM_CATEGORY,
-                    ITEM_SUB_CATEGORY,
-                    TYPE, TYPE_SERIAL, QC_REQUIRED, ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, PHYSICAL_FORM, CONTAINER_CAPACITY_UOM, CONTAINER_CAPACITY, CODE, TYPES,
-                    DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, MINIMUM_ORDER_QTY,
-                    OPTIMUM_LEVEL, REORDER_LEVEL, SAFETY_LEVEL, CRITICAL_LEVEL, DOCK, DOCKS_NAME
-            ));
+            List<String> expectedColumns = new ArrayList<>(Arrays.asList(ITEM_CODES, NAME, ITEM_DESCRIPTION, ITEM_GROUP, ITEM_CATEGORY, ITEM_SUB_CATEGORY, TYPE, TYPE_SERIAL, QC_REQUIRED, ISSUE_TYPE, CLASS, ATTRIBUTE, SOURCE, UOM, ITEM_UNIT_WEIGHT, PHYSICAL_FORM, CONTAINER_CAPACITY_UOM, CONTAINER_CAPACITY, CODE, TYPES, DIMENSION_UOM, ITEM_WIDTH, ITEM_HEIGHT, ITEM_LENGTH, CIRCUMFERENCE, WEIGHT, MINIMUM_ORDER_QTY, OPTIMUM_LEVEL, REORDER_LEVEL, SAFETY_LEVEL, CRITICAL_LEVEL, DOCK, DOCKS_NAME));
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.INTERNAL_SERVER_ERROR, excellHeaderValidatorResponse.get(0).getErrorMessage(), excellHeaderValidatorResponse, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
@@ -265,11 +257,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         String physicalForm = getCellStringValue(data, ServiceConstants.CELL_INDEX_15, resultResponses, type, headerNames);
 
-                        String containerCapacityUom = getCellStringValue(
-                                data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
+                        String containerCapacityUom = getCellStringValue(data, ServiceConstants.CELL_INDEX_16, resultResponses, type, headerNames);
 
-                        Float containerCapacity = getCellFloatValue(
-                                data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
+                        Float containerCapacity = getCellFloatValue(data, ServiceConstants.CELL_INDEX_17, resultResponses, type, headerNames);
 
                         String code = getCellStringValue(data, ServiceConstants.CELL_INDEX_18, resultResponses, type, headerNames);
                         String types = getCellStringValue(data, ServiceConstants.CELL_INDEX_19, resultResponses, type, headerNames);
@@ -383,11 +373,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         }
 
                         if (uom == null || uom.isEmpty()) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
-                                    ServiceConstants.UOM, ServiceConstants.UOM_MANDATORY));
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.UOM, ServiceConstants.UOM_MANDATORY));
                         } else if (!validateRegex(uom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1),
-                                    ServiceConstants.UOM, ServiceConstants.INVALID_UOM_FORMAT));
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.UOM, ServiceConstants.INVALID_UOM_FORMAT));
                         }
                         item.setUom(uom);
 
@@ -423,19 +411,9 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         List<String> allowedPhysicalForms = Arrays.asList("SOLID", "LIQUID", "GAS");
 
                         if (physicalForm == null || physicalForm.isEmpty()) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Physical Form",
-                                    "Physical Form is mandatory (SOLID / LIQUID / GAS)."
-                            ));
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), "Physical Form", "Physical Form is mandatory (SOLID / LIQUID / GAS)."));
                         } else if (allowedPhysicalForms.stream().noneMatch(f -> f.equalsIgnoreCase(physicalForm))) {
-                            resultResponses.add(new ValidationResultResponse(
-                                    type,
-                                    (data.getRowNum() + 1),
-                                    "Physical Form",
-                                    "Physical Form must be SOLID, LIQUID or GAS."
-                            ));
+                            resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), "Physical Form", "Physical Form must be SOLID, LIQUID or GAS."));
                         }
                         item.setPhysicalForm(physicalForm);
 
@@ -525,30 +503,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                             // Container Capacity UOM: e.g. LTR, KG, NOS
                             if (containerCapacityUom == null || containerCapacityUom.isEmpty()) {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        "Container Capacity UOM",
-                                        "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."
-                                ));
+                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), "Container Capacity UOM", "Container Capacity UOM is mandatory (e.g. LTR, KG, NOS)."));
                             } else if (!validateRegex(containerCapacityUom, ServiceConstants.NOT_ALLOW_SPECIAL_CHAR_REGEX)) {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        "Container Capacity UOM",
-                                        "Invalid Container Capacity UOM format."
-                                ));
+                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), "Container Capacity UOM", "Invalid Container Capacity UOM format."));
                             }
 
                             container.setContainerCapacityUom(containerCapacityUom);
                             // Container Capacity: > 0
                             if (containerCapacity == null || containerCapacity <= 0) {
-                                resultResponses.add(new ValidationResultResponse(
-                                        type,
-                                        (data.getRowNum() + 1),
-                                        "Container Capacity",
-                                        "Container Capacity is mandatory and must be greater than 0."
-                                ));
+                                resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), "Container Capacity", "Container Capacity is mandatory and must be greater than 0."));
                             }
                             container.setContainerCapacity(containerCapacity);
 
@@ -658,31 +621,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             List<String> headerNames = new ArrayList<>();
             Integer count = 0;
 
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.STORE_ID,
-                    ServiceConstants.STORE_NAME,
-                    ServiceConstants.ERP_AREA_ID,
-                    ServiceConstants.AREA_ID,
-                    ServiceConstants.AREA_NAME,
-                    ServiceConstants.ERP_ZONE_ID,
-                    ServiceConstants.Zone_ID,
-                    ServiceConstants.Zone_NAME,
-                    ServiceConstants.ERP_LOCATION_ID,
-                    ServiceConstants.LOCATION_ID,
-                    ServiceConstants.ITEM_ID,
-                    ServiceConstants.ITEM_NAME,
-                    ServiceConstants.LOCATION_TYPE,
-                    ServiceConstants.ROW,
-                    ServiceConstants.RACK_FLOOR,
-                    ServiceConstants.RACK_NO,
-                    ServiceConstants.SHELF_NO,
-                    ServiceConstants.LENGTH,
-                    ServiceConstants.WIDTH,
-                    ServiceConstants.HEIGHT,
-                    ServiceConstants.AREA_SQ_CM,
-                    ServiceConstants.VOLUME_CU_CM,
-                    ServiceConstants.CARRYING_CAPACITY
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.STORE_ID, ServiceConstants.STORE_NAME, ServiceConstants.ERP_AREA_ID, ServiceConstants.AREA_ID, ServiceConstants.AREA_NAME, ServiceConstants.ERP_ZONE_ID, ServiceConstants.Zone_ID, ServiceConstants.Zone_NAME, ServiceConstants.ERP_LOCATION_ID, ServiceConstants.LOCATION_ID, ServiceConstants.ITEM_ID, ServiceConstants.ITEM_NAME, ServiceConstants.LOCATION_TYPE, ServiceConstants.ROW, ServiceConstants.RACK_FLOOR, ServiceConstants.RACK_NO, ServiceConstants.SHELF_NO, ServiceConstants.LENGTH, ServiceConstants.WIDTH, ServiceConstants.HEIGHT, ServiceConstants.AREA_SQ_CM, ServiceConstants.VOLUME_CU_CM, ServiceConstants.CARRYING_CAPACITY);
 
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
@@ -856,52 +795,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Set<String> emailSet = new HashSet<>();
             Set<String> phoneSet = new HashSet<>();
 
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.ERP_SUPPLIER_ID,
-                    ServiceConstants.SUPPLIER_NAME,
-                    ServiceConstants.DATE_OF_REGISTRATION,
-                    ServiceConstants.SUPPLIER_CATEGORY,
-                    ServiceConstants.SUPPLIER_GROUP,
-                    ServiceConstants.SUPPLIER_GST_REGISTRATION_NUMBER,
-                    ServiceConstants.SUPPLIER_PAN_CARD_NUMBER,
-                    ServiceConstants.SUPPLIER_TAN_NUMBER,
-                    ServiceConstants.SUPPLIER_PAYMENT_TERMS,
-                    ServiceConstants.SUPPLIER_PAYMENT_METHOD,
-                    ServiceConstants.SUPPLIER_CREDIT_LIMIT_RS,
-                    ServiceConstants.SUPPLIER_CREDIT_LIMIT_DAYS,
-                    ServiceConstants.SUPPLIER_PRIMARY_BANKER,
-                    ServiceConstants.FULL_BRANCH_ADDRESS,
-                    ServiceConstants.MICR_CODE,
-                    ServiceConstants.IFSC_CODE,
-                    ServiceConstants.COUNTRY,
-                    ServiceConstants.COUNTRY_CODE,
-                    ServiceConstants.POST_CODE,
-                    ServiceConstants.STATE,
-                    ServiceConstants.DISTRICT,
-                    ServiceConstants.TALUKA,
-                    ServiceConstants.CITY,
-                    ServiceConstants.TOWN,
-                    ServiceConstants.VILLAGE,
-                    ServiceConstants.ADDRESS_1,
-                    ServiceConstants.ADDRESS_2,
-                    ServiceConstants.BUILDING,
-                    ServiceConstants.STREET,
-                    ServiceConstants.LANDMARK,
-                    ServiceConstants.SUB_LOCALITY,
-                    ServiceConstants.LOCALITY,
-                    ServiceConstants.AREA_CODE,
-                    ServiceConstants.LATITUDE,
-                    ServiceConstants.LONGITUDE,
-                    ServiceConstants.OFFICE_PRIMARY_PHONE,
-                    ServiceConstants.OFFICE_ALTERNATE_PHONE,
-                    ServiceConstants.CONTACT_PERSON_NAME,
-                    ServiceConstants.DESIGNATION,
-                    ServiceConstants.DEPARTMENT,
-                    ServiceConstants.PRIMARY_PHONE,
-                    ServiceConstants.ALTERNATE_PHONE,
-                    ServiceConstants.PRIMARY_EMAIL,
-                    ServiceConstants.ALTERNATE_EMAIL
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.ERP_SUPPLIER_ID, ServiceConstants.SUPPLIER_NAME, ServiceConstants.DATE_OF_REGISTRATION, ServiceConstants.SUPPLIER_CATEGORY, ServiceConstants.SUPPLIER_GROUP, ServiceConstants.SUPPLIER_GST_REGISTRATION_NUMBER, ServiceConstants.SUPPLIER_PAN_CARD_NUMBER, ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.SUPPLIER_PAYMENT_TERMS, ServiceConstants.SUPPLIER_PAYMENT_METHOD, ServiceConstants.SUPPLIER_CREDIT_LIMIT_RS, ServiceConstants.SUPPLIER_CREDIT_LIMIT_DAYS, ServiceConstants.SUPPLIER_PRIMARY_BANKER, ServiceConstants.FULL_BRANCH_ADDRESS, ServiceConstants.MICR_CODE, ServiceConstants.IFSC_CODE, ServiceConstants.COUNTRY, ServiceConstants.COUNTRY_CODE, ServiceConstants.POST_CODE, ServiceConstants.STATE, ServiceConstants.DISTRICT, ServiceConstants.TALUKA, ServiceConstants.CITY, ServiceConstants.TOWN, ServiceConstants.VILLAGE, ServiceConstants.ADDRESS_1, ServiceConstants.ADDRESS_2, ServiceConstants.BUILDING, ServiceConstants.STREET, ServiceConstants.LANDMARK, ServiceConstants.SUB_LOCALITY, ServiceConstants.LOCALITY, ServiceConstants.AREA_CODE, ServiceConstants.LATITUDE, ServiceConstants.LONGITUDE, ServiceConstants.OFFICE_PRIMARY_PHONE, ServiceConstants.OFFICE_ALTERNATE_PHONE, ServiceConstants.CONTACT_PERSON_NAME, ServiceConstants.DESIGNATION, ServiceConstants.DEPARTMENT, ServiceConstants.PRIMARY_PHONE, ServiceConstants.ALTERNATE_PHONE, ServiceConstants.PRIMARY_EMAIL, ServiceConstants.ALTERNATE_EMAIL);
             System.out.println(expectedColumns.get(0));
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
@@ -1036,8 +930,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 //                    else if (!validateRegex(supplierName, ServiceConstants.NAME_REGEX)) {
 //                        resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_NAME, ServiceConstants.INVALID_SUPPLIER_NAME_FORMAT));
 //                    }
-                    Supplier supplierName1 = this.supplierRepository.findByIsDeletedAndSupplierNameAndSubOrganizationId
-                            (false, supplierName, loginUser.getOrgId());
+                    Supplier supplierName1 = this.supplierRepository.findByIsDeletedAndSupplierNameAndSubOrganizationId(false, supplierName, loginUser.getOrgId());
                     if (supplierName1 == null) {
                         if (supplierNameSet.contains(supplierName)) {
                             resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_NAME, ServiceConstants.DUPLICATE_SUPPLIER_NAME_FOUND));
@@ -1288,8 +1181,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (tanSet.contains(supplierTanNumber)) {
                         resultResponses.add(new ValidationResultResponse(type, (data.getRowNum() + 1), ServiceConstants.SUPPLIER_TAN_NUMBER, ServiceConstants.DUPLICATE_TAN_ERROR_MESSAGE));
                     } else {
-                        if (supplierTanNumber != null)
-                            tanSet.add(supplierTanNumber);
+                        if (supplierTanNumber != null) tanSet.add(supplierTanNumber);
                     }
                     supplier.setSupplierTANNumber(supplierTanNumber);
 
@@ -1466,12 +1358,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             List<ValidationResultResponse> resultResponses = new ArrayList<>();
             List<String> headerNames = new ArrayList<>();
             Integer count = 0;
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.STORE_ID,
-                    ServiceConstants.ERP_STORE_ID,
-                    ServiceConstants.STORE_NAME,
-                    ServiceConstants.STORE_MANAGER_NAME
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.STORE_ID, ServiceConstants.ERP_STORE_ID, ServiceConstants.STORE_NAME, ServiceConstants.STORE_MANAGER_NAME);
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.INTERNAL_SERVER_ERROR, excellHeaderValidatorResponse.get(0).getErrorMessage(), excellHeaderValidatorResponse, ServiceConstants.ERROR_CODE, logId));
@@ -1605,14 +1492,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Set<String> validateDockName = docksRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId()).stream().map(k -> k.getDockName()).collect(Collectors.toSet());
             Integer count = 0;
             boolean hasDataRows = false; // Flag to track if there are data rows
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.DOCKS_NAME,
-                    ServiceConstants.ATTRIBUTES,
-                    ServiceConstants.DOCKS_SUPERVISOR,
-                    ServiceConstants.DOCKS_SUPERVISOR_NAME,
-                    ServiceConstants.STORE_ERP_CODE,
-                    ServiceConstants.STORES_NAME
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.DOCKS_NAME, ServiceConstants.ATTRIBUTES, ServiceConstants.DOCKS_SUPERVISOR, ServiceConstants.DOCKS_SUPERVISOR_NAME, ServiceConstants.STORE_ERP_CODE, ServiceConstants.STORES_NAME);
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
 
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
@@ -1783,30 +1663,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Integer count = 0;
             boolean hasDataRows = false; // Flag to track if there are data rows
 
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.PURCHASE_ORDER_NUMBER,
-                    ServiceConstants.PURCHASE_ORDER_DATE,
-                    ServiceConstants.LINE_NUMBER,
-                    ServiceConstants.P_ITEM_CODE,
-                    ServiceConstants.P_ITEM_NAME,
-                    ServiceConstants.P_UOM,
-                    ServiceConstants.UNIT_PRICE,
-                    ServiceConstants.P_LEAD_TIME,
-                    ServiceConstants.P_LEAD_TIME_HRS,
-                    ServiceConstants.PURCHASE_ORDER_QUANTITY,
-                    ServiceConstants.SUB_TOTAL,
-                    ServiceConstants.STATE_GST_PERCENTAGE,
-                    ServiceConstants.STATE_GST,
-                    ServiceConstants.CENTRAL_GST_PERCENTAGE,
-                    ServiceConstants.CENTRAL_GST,
-                    ServiceConstants.INTERSTATE_GST_PERCENTAGE,
-                    ServiceConstants.INTERSTATE_GST,
-                    ServiceConstants.TOTAL_AMOUNT,
-                    ServiceConstants.DELIVER_TYPE,
-                    ServiceConstants.DELIVER_BY_DATE,
-                    ServiceConstants.P_SUPPLIER_ID,
-                    ServiceConstants.P_SUPPLIER_NAME
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.PURCHASE_ORDER_NUMBER, ServiceConstants.PURCHASE_ORDER_DATE, ServiceConstants.LINE_NUMBER, ServiceConstants.P_ITEM_CODE, ServiceConstants.P_ITEM_NAME, ServiceConstants.P_UOM, ServiceConstants.UNIT_PRICE, ServiceConstants.P_LEAD_TIME, ServiceConstants.P_LEAD_TIME_HRS, ServiceConstants.PURCHASE_ORDER_QUANTITY, ServiceConstants.SUB_TOTAL, ServiceConstants.STATE_GST_PERCENTAGE, ServiceConstants.STATE_GST, ServiceConstants.CENTRAL_GST_PERCENTAGE, ServiceConstants.CENTRAL_GST, ServiceConstants.INTERSTATE_GST_PERCENTAGE, ServiceConstants.INTERSTATE_GST, ServiceConstants.TOTAL_AMOUNT, ServiceConstants.DELIVER_TYPE, ServiceConstants.DELIVER_BY_DATE, ServiceConstants.P_SUPPLIER_ID, ServiceConstants.P_SUPPLIER_NAME);
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.INTERNAL_SERVER_ERROR, excellHeaderValidatorResponse.get(0).getErrorMessage(), excellHeaderValidatorResponse, ServiceConstants.ERROR_CODE, logId));
@@ -2123,10 +1980,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Integer count = 0;
             Set<String> itemCodeSet = new HashSet<>();
             boolean hasDataRows = false; // Flag to track if there are data rows
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.REJECTION_REASON,
-                    ServiceConstants.REASON_CATEGORY
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.REJECTION_REASON, ServiceConstants.REASON_CATEGORY);
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.INTERNAL_SERVER_ERROR, excellHeaderValidatorResponse.get(0).getErrorMessage(), excellHeaderValidatorResponse, ServiceConstants.ERROR_CODE, logId));
@@ -2244,19 +2098,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             List<ValidationResultResponse> resultResponses = new ArrayList<>();
             List<String> headerNames = new ArrayList<>();
             Integer count = 0;
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.LEVELS,
-                    ServiceConstants.BOM_ITEM_CODES,
-                    ServiceConstants.BOM_ITEM_NAME,
-                    ServiceConstants.QUANTITY,
-                    ServiceConstants.UNIT_OF_MEASURE,
-                    ServiceConstants.CLASSABC,
-                    ServiceConstants.STAGE,
-                    ServiceConstants.BOM_ISSUE_TYPE,
-                    ServiceConstants.DEPENDENCY,
-                    ServiceConstants.REFERENCE_DESIGNATORS,
-                    ServiceConstants.BOM_NOTES
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.LEVELS, ServiceConstants.BOM_ITEM_CODES, ServiceConstants.BOM_ITEM_NAME, ServiceConstants.QUANTITY, ServiceConstants.UNIT_OF_MEASURE, ServiceConstants.CLASSABC, ServiceConstants.STAGE, ServiceConstants.BOM_ISSUE_TYPE, ServiceConstants.DEPENDENCY, ServiceConstants.REFERENCE_DESIGNATORS, ServiceConstants.BOM_NOTES);
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateBomExcelHeader(sheet, expectedColumns);
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.INTERNAL_SERVER_ERROR, excellHeaderValidatorResponse.get(0).getErrorMessage(), excellHeaderValidatorResponse, ServiceConstants.ERROR_CODE, logId));
@@ -2269,17 +2111,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     headerNames.add(headerName);
                 }
             }
-            List<String> bomHeaderExpected = Arrays.asList(
-                    ServiceConstants.PRODUCT,
-                    ServiceConstants.MODEL,
-                    ServiceConstants.VARIANT,
-                    ServiceConstants.COLOUR,
-                    ServiceConstants.BOM_IDS,
-                    ServiceConstants.DATE,
-                    ServiceConstants.VERSION,
-                    ServiceConstants.ASSEMBLY_LINE,
-                    ServiceConstants.LIFECYCLE_PHASE
-            );
+            List<String> bomHeaderExpected = Arrays.asList(ServiceConstants.PRODUCT, ServiceConstants.MODEL, ServiceConstants.VARIANT, ServiceConstants.COLOUR, ServiceConstants.BOM_IDS, ServiceConstants.DATE, ServiceConstants.VERSION, ServiceConstants.ASSEMBLY_LINE, ServiceConstants.LIFECYCLE_PHASE);
             Cell productH = sheet.getRow(0).getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
             Cell modelH = sheet.getRow(1).getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
             Cell variantH = sheet.getRow(2).getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
@@ -2289,20 +2121,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Cell versionH = sheet.getRow(6).getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
             Cell assemblyLine = sheet.getRow(7).getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
             Cell lifecyclePhaseH = sheet.getRow(8).getCell(0, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-            List<String> bomHeaderActual = Arrays.asList(
-                    productH.getStringCellValue(),
-                    modelH.getStringCellValue(),
-                    variantH.getStringCellValue(),
-                    colourH.getStringCellValue(),
-                    boMIdH.getStringCellValue(),
-                    dateH.getStringCellValue(),
-                    versionH.getStringCellValue(),
-                    assemblyLine.getStringCellValue(),
-                    lifecyclePhaseH.getStringCellValue()
-            );
-            boolean isColumnsMatching = bomHeaderActual.size() == bomHeaderExpected.size() &&
-                    IntStream.range(0, bomHeaderActual.size())
-                            .allMatch(i -> bomHeaderActual.get(i).equalsIgnoreCase(bomHeaderExpected.get(i)));
+            List<String> bomHeaderActual = Arrays.asList(productH.getStringCellValue(), modelH.getStringCellValue(), variantH.getStringCellValue(), colourH.getStringCellValue(), boMIdH.getStringCellValue(), dateH.getStringCellValue(), versionH.getStringCellValue(), assemblyLine.getStringCellValue(), lifecyclePhaseH.getStringCellValue());
+            boolean isColumnsMatching = bomHeaderActual.size() == bomHeaderExpected.size() && IntStream.range(0, bomHeaderActual.size()).allMatch(i -> bomHeaderActual.get(i).equalsIgnoreCase(bomHeaderExpected.get(i)));
             // Set validation result based on missing and extra columns
             List<ExcellHeaderValidatorResponse> validationResultList = new ArrayList<>();
             ExcellHeaderValidatorResponse validationResult = new ExcellHeaderValidatorResponse();
@@ -2462,13 +2282,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             boolean hasDataRows = false; // Flag to track if there are data rows
 
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.EQUP_ASSET_ID,
-                    ServiceConstants.EQUP_TROLLEY_TYPE,
-                    ServiceConstants.EQUIPMENT_NAME,
-                    ServiceConstants.EQUP_STORE_ID,
-                    ServiceConstants.STORE_NAME
-            );
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.EQUP_ASSET_ID, ServiceConstants.EQUP_TROLLEY_TYPE, ServiceConstants.EQUIPMENT_NAME, ServiceConstants.EQUP_STORE_ID, ServiceConstants.STORE_NAME);
             List<ExcellHeaderValidatorResponse> excellHeaderValidatorResponse = validateExcelHeader(sheet, expectedColumns);
             if (!excellHeaderValidatorResponse.get(0).getIsValid()) {
                 return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.INTERNAL_SERVER_ERROR, excellHeaderValidatorResponse.get(0).getErrorMessage(), excellHeaderValidatorResponse, ServiceConstants.ERROR_CODE, logId));
@@ -2604,12 +2418,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
     //Added BY Kamlesh
     @Override
-    public ResponseEntity<BaseResponse> uploadPpeDetails(MultipartFile file, String type)
-            throws IOException, ValidationFailureException {
+    public ResponseEntity<BaseResponse> uploadPpeDetails(MultipartFile file, String type) throws IOException, ValidationFailureException {
 
         long startTimeMillis = System.currentTimeMillis();
-        log.info("LogId:{} - uploadPpeDetails started - UserId:{}",
-                loginUser.getLogId(), loginUser.getUserId());
+        log.info("LogId:{} - uploadPpeDetails started - UserId:{}", loginUser.getLogId(), loginUser.getUserId());
 
         List<PPEHead> ppePlans = new ArrayList<>();
         List<PPELine> ppeLineList = new ArrayList<>();
@@ -2620,30 +2432,16 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Sheet sheet = workbook.getSheetAt(ServiceConstants.SHEET_INDEX);
 
             /* ================= HEADER VALIDATION ================= */
-            List<String> expectedColumns = Arrays.asList(
-                    PPE_PLAN_ID, ERP_ID, BOM_ID, PRODUCT_NAME,
-                    UOM1, PLAN_QUANTITY, PRODUCTION_SHOP, SHOP_ID,
-                    LINE, LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME
-            );
+            List<String> expectedColumns = Arrays.asList(PPE_PLAN_ID, ERP_ID, BOM_ID, PRODUCT_NAME, UOM1, PLAN_QUANTITY, PRODUCTION_SHOP, SHOP_ID, LINE, LINE_ID, START_DATE, START_TIME, END_DATE, END_TIME);
 
-            List<ExcellHeaderValidatorResponse> headerValidation =
-                    validateExcelHeader(sheet, expectedColumns);
+            List<ExcellHeaderValidatorResponse> headerValidation = validateExcelHeader(sheet, expectedColumns);
 
             if (!headerValidation.get(0).getIsValid()) {
-                return ResponseEntity.ok(new BaseResponse<>(
-                        500,
-                        headerValidation.get(0).getErrorMessage(),
-                        headerValidation,
-                        ServiceConstants.ERROR_CODE,
-                        loginUser.getLogId()));
+                return ResponseEntity.ok(new BaseResponse<>(500, headerValidation.get(0).getErrorMessage(), headerValidation, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
             }
 
             /* ================= LAST PPE ID ================= */
-            String lastPpeId = ppeHeadRepository
-                    .findByIsDeletedAndSubOrganizationIdOrderByIdAsc(false, loginUser.getSubOrgId())
-                    .stream().reduce((a, b) -> b)
-                    .map(PPEHead::getPpeId)
-                    .orElse(null);
+            String lastPpeId = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdOrderByIdAsc(false, loginUser.getSubOrgId()).stream().reduce((a, b) -> b).map(PPEHead::getPpeId).orElse(null);
 
             /* ================= ITERATE ROWS ================= */
             for (Row row : sheet) {
@@ -2669,68 +2467,48 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                 /* ================= BASIC VALIDATIONS ================= */
                 if (StringUtils.isEmpty(planId)) {
-                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                            PPE_PLAN_ID, "PLAN ID CANNOT BE NULL"));
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, PPE_PLAN_ID, "PLAN ID CANNOT BE NULL"));
                 }
 
 
                 if (StringUtils.isEmpty(bomCode)) {
-                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                            BOM_ID, "BOM ID CANNOT BE NULL"));
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, BOM_ID, "BOM ID CANNOT BE NULL"));
                 }
 
-                Optional<BoMHead> bomHeadOpt =
-                        bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomERPCode(
-                                false, loginUser.getSubOrgId(), bomCode);
+                Optional<BoMHead> bomHeadOpt = bomHeadRepository.findByIsDeletedAndSubOrganizationIdAndBomERPCode(false, loginUser.getSubOrgId(), bomCode);
 
                 if (bomHeadOpt.isEmpty()) {
-                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                            BOM_ID, "BOM NOT FOUND"));
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, BOM_ID, "BOM NOT FOUND"));
                 }
 
                 if (planQuantity == null) {
-                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                            PLAN_QUANTITY, "PLAN QUANTITY CANNOT BE NULL"));
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, PLAN_QUANTITY, "PLAN QUANTITY CANNOT BE NULL"));
                 }
 
                 if (!isFutureStartDate(startDate, startTime)) {
-                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                            START_DATE, "START DATE & TIME MUST BE IN FUTURE"));
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, START_DATE, "START DATE & TIME MUST BE IN FUTURE"));
                 }
 
                 if (isStartAfterEnd(startDate, startTime, endDate, endTime)) {
-                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                            END_DATE, "START DATE & TIME CANNOT BE AFTER END DATE & TIME"));
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, END_DATE, "START DATE & TIME CANNOT BE AFTER END DATE & TIME"));
                 }
 
-                AssemblyLine assemblyLine =
-                        assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(
-                                false, loginUser.getSubOrgId(), lineId);
+                AssemblyLine assemblyLine = assemblyLineRepository.findByIsDeletedAndSubOrganizationIdAndAssemblyLineId(false, loginUser.getSubOrgId(), lineId);
 
                 if (assemblyLine == null) {
-                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                            LINE_ID, "ASSEMBLY LINE NOT FOUND"));
+                    errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, LINE_ID, "ASSEMBLY LINE NOT FOUND"));
                 }
 
                 /* ================= DUPLICATE PLAN CHECK ================= */
-                Optional<PPEHead> existingHead =
-                        ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndAssemblyLineId(
-                                false,
-                                startDate,
-                                Time.valueOf(startTime),
-                                assemblyLine.getId());
+                Optional<PPEHead> existingHead = ppeHeadRepository.findByIsDeletedAndStartDateAndStartTimeAndAssemblyLineId(false, startDate, Time.valueOf(startTime), assemblyLine.getId());
 
                 PPEHead ppeHead = null;
-                Optional<PPEHead> ppeHeadOptional = ppeHeadRepository
-                        .findByIsDeletedAndSubOrganizationIdAndPlanOrderId(
-                                false, loginUser.getSubOrgId(), planId);
+                Optional<PPEHead> ppeHeadOptional = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPlanOrderId(false, loginUser.getSubOrgId(), planId);
 
                 if (!existingHead.isPresent()) {
-                    Optional<PPEHead> existingPlanId =
-                            ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPpeId(false, loginUser.getSubOrgId(), planId);
+                    Optional<PPEHead> existingPlanId = ppeHeadRepository.findByIsDeletedAndSubOrganizationIdAndPpeId(false, loginUser.getSubOrgId(), planId);
                     if (existingPlanId.isPresent()) {
-                        errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                                PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
+                        errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
                     }
                 }
 
@@ -2738,8 +2516,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     if (ppeHeadOptional.get().getPpeStatus().getStatusName().equalsIgnoreCase("Uploaded")) {
                         ppeHead = ppeHeadOptional.get();
                     } else {
-                        errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                                PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
+                        errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, PPE_PLAN_ID, "PLAN ID ALREADY EXISTS"));
                     }
                 } else {
                     ppeHead = new PPEHead();
@@ -2747,26 +2524,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                 if (existingHead.isPresent()) {
 
-                    boolean isSameRecord =
-                            ppeHeadOptional.isPresent() &&
-                                    Objects.equals(ppeHeadOptional.get().getId(), existingHead.get().getId());
+                    boolean isSameRecord = ppeHeadOptional.isPresent() && Objects.equals(ppeHeadOptional.get().getId(), existingHead.get().getId());
 
                     // Only check duplicates if it's NOT the same record
                     if (!isSameRecord) {
 
-                        boolean duplicateInFile = ppePlans.stream().anyMatch(existing ->
-                                Objects.equals(existing.getStartDate(), startDate) &&
-                                        Objects.equals(existing.getStartTime(), Time.valueOf(startTime)) &&
-                                        Objects.equals(existing.getAssemblyLine(), assemblyLine)
-                        );
+                        boolean duplicateInFile = ppePlans.stream().anyMatch(existing -> Objects.equals(existing.getStartDate(), startDate) && Objects.equals(existing.getStartTime(), Time.valueOf(startTime)) && Objects.equals(existing.getAssemblyLine(), assemblyLine));
 
                         if (duplicateInFile) {
-                            errors.add(new ValidationResultResponse(
-                                    type,
-                                    row.getRowNum() + 1,
-                                    PPE_PLAN_ID,
-                                    "PLAN ALREADY MAPPED WITH SAME LINE, START DATE & TIME"
-                            ));
+                            errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, PPE_PLAN_ID, "PLAN ALREADY MAPPED WITH SAME LINE, START DATE & TIME"));
                         }
                     }
                 }
@@ -2798,8 +2564,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ppeHead.setEndDate(endDate);
                     ppeHead.setEndTime(Time.valueOf(endTime));
 
-                    PpeStatus uploaded =
-                            ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
+                    PpeStatus uploaded = ppeStatusRepository.findByIsDeletedAndStatusName(false, "Uploaded");
 
                     ppeHead.setPpeStatus(uploaded);
 
@@ -2807,9 +2572,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     ppePlans.add(ppeHead);
 
                     /* ================= PPE LINES ================= */
-                    List<BOMLine> bomLineList =
-                            bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadIdBomERPCode(
-                                    false, loginUser.getSubOrgId(), bomCode);
+                    List<BOMLine> bomLineList = bomLineRepository.findByIsDeletedAndSubOrganizationIdAndBomHeadIdBomERPCode(false, loginUser.getSubOrgId(), bomCode);
 
                     for (BOMLine bomLine : bomLineList) {
                         PPELine ppeLine = null;
@@ -2824,20 +2587,15 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                         ppeLine.setRequiredQuantity(bomLine.getQuantity() * planQuantity);
 
-                        List<Location> locationList =
-                                locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(
-                                        false, loginUser.getSubOrgId(), bomLine.getItem().getId());
+                        List<Location> locationList = locationRepository.findByIsDeletedAndSubOrganizationIdAndItemId(false, loginUser.getSubOrgId(), bomLine.getItem().getId());
 
                         if (locationList == null || locationList.isEmpty()) {
-                            errors.add(new ValidationResultResponse(type, row.getRowNum() + 1,
-                                    ITEM, "STORE LOCATION NOT FOUND FOR ITEM"));
+                            errors.add(new ValidationResultResponse(type, row.getRowNum() + 1, ITEM, "STORE LOCATION NOT FOUND FOR ITEM"));
                             continue;
                         }
 
                         Location location = locationList.get(0);
-                        ppeLine.setStore(
-                                location.getZone().getArea().getStore().getStoreName()
-                        );
+                        ppeLine.setStore(location.getZone().getArea().getStore().getStoreName());
 
                         ppeLine.setRequiredBy(new Date());
                         ppeLine.setPPEHead(ppeHead);
@@ -2851,52 +2609,31 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 ppeHeadRepository.saveAll(ppePlans);
                 ppeLineRepository.saveAll(ppeLineList);
 
-                log.info("LogId:{} - PPE upload success in {} ms",
-                        loginUser.getLogId(),
-                        System.currentTimeMillis() - startTimeMillis);
+                log.info("LogId:{} - PPE upload success in {} ms", loginUser.getLogId(), System.currentTimeMillis() - startTimeMillis);
 
-                return ResponseEntity.ok(new BaseResponse<>(
-                        HttpStatus.OK.value(),
-                        ServiceConstants.FILE_UPLOADED_SUCCESSFULLY,
-                        null,
-                        ServiceConstants.SUCCESS_CODE,
-                        loginUser.getLogId()));
+                return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(), ServiceConstants.FILE_UPLOADED_SUCCESSFULLY, null, ServiceConstants.SUCCESS_CODE, loginUser.getLogId()));
             }
 
-            return ResponseEntity.ok(new BaseResponse<>(
-                    HttpStatus.OK.value(),
-                    ServiceConstants.STORE_DATA_UPLOAD_FAILED,
-                    errors,
-                    ServiceConstants.ERROR_CODE,
-                    loginUser.getLogId()));
+            return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(), ServiceConstants.STORE_DATA_UPLOAD_FAILED, errors, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
 
         } catch (Exception e) {
             log.error("PPE upload failed", e);
             ExceptionLogger.logException(e, loginUser.getLogId());
 
-            return ResponseEntity.ok(new BaseResponse<>(
-                    500,
-                    ServiceConstants.STORE_DATA_UPLOAD_FAILED,
-                    null,
-                    ServiceConstants.ERROR_CODE,
-                    loginUser.getLogId()));
+            return ResponseEntity.ok(new BaseResponse<>(500, ServiceConstants.STORE_DATA_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, loginUser.getLogId()));
         }
     }
 
     private boolean isFutureStartDate(Date date, LocalTime time) {
         if (date == null || time == null) return false;
-        ZonedDateTime start = LocalDateTime.of(
-                date.toInstant().atZone(ZoneOffset.UTC).toLocalDate(),
-                time).atZone(ZoneOffset.UTC);
+        ZonedDateTime start = LocalDateTime.of(date.toInstant().atZone(ZoneOffset.UTC).toLocalDate(), time).atZone(ZoneOffset.UTC);
         return start.isAfter(ZonedDateTime.now(ZoneOffset.UTC));
     }
 
     private boolean isStartAfterEnd(Date sd, LocalTime st, Date ed, LocalTime et) {
         if (sd == null || st == null || ed == null || et == null) return false;
-        LocalDateTime start = LocalDateTime.of(
-                sd.toInstant().atZone(ZoneOffset.UTC).toLocalDate(), st);
-        LocalDateTime end = LocalDateTime.of(
-                ed.toInstant().atZone(ZoneOffset.UTC).toLocalDate(), et);
+        LocalDateTime start = LocalDateTime.of(sd.toInstant().atZone(ZoneOffset.UTC).toLocalDate(), st);
+        LocalDateTime end = LocalDateTime.of(ed.toInstant().atZone(ZoneOffset.UTC).toLocalDate(), et);
         return start.isAfter(end);
     }
 
@@ -2989,13 +2726,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             boolean hasDataRows = false; // Flag to track if there are data rows
 
 
-            List<String> expectedColumns = Arrays.asList(
-                    ServiceConstants.DEVICE_NAME,
-                    ServiceConstants.DEVICE_BRAND,
-                    ServiceConstants.DEVICE_IP,
-                    ServiceConstants.DEVICE_PORT,
-                    ServiceConstants.SUB_MODULE_CODE,
-                    ServiceConstants.DEVICE_ROLE
+            List<String> expectedColumns = Arrays.asList(ServiceConstants.DEVICE_NAME, ServiceConstants.DEVICE_BRAND, ServiceConstants.DEVICE_IP, ServiceConstants.DEVICE_PORT, ServiceConstants.SUB_MODULE_CODE, ServiceConstants.DEVICE_ROLE
 
             );
 
@@ -3448,13 +3179,10 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
 
     @Override
-    public ResponseEntity<BaseResponse> uploadPackingList(
-            MultipartFile file, String type, Integer requestId,
-            String requestType, Boolean isFinalUpload) {
+    public ResponseEntity<BaseResponse> uploadPackingList(MultipartFile file, String type, Integer requestId, String requestType, Boolean isFinalUpload) {
 
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
-                loginUser.getLogId(), loginUser.getUserId(), "UPLOAD_PACKING_LIST_METHOD_STARTED");
+        log.info("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), "UPLOAD_PACKING_LIST_METHOD_STARTED");
 
         String logId = loginUser.getLogId();
 
@@ -3467,8 +3195,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             Row headerRow = sheet.getRow(ServiceConstants.PACKING_LIST_HEADER_ROW_INDEX);
             if (headerRow == null) {
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "Excel file missing header row", null, ServiceConstants.ERROR_CODE, logId));
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, "Excel file missing header row", null, ServiceConstants.ERROR_CODE, logId));
             }
 
             List<String> headerNames = new ArrayList<>();
@@ -3485,8 +3212,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                 int emptyCellCount = 0;
                 for (int i = 0; i < row.getLastCellNum() - 1; i++) {
-                    if (row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null)
-                        emptyCellCount++;
+                    if (row.getCell(i, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL) == null) emptyCellCount++;
                 }
                 if (emptyCellCount == row.getLastCellNum()) continue;
 
@@ -3499,9 +3225,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 dataMap.put("containerType", getCellStringValue(row, 5, resultResponses, type, headerNames));
 
                 // 🔹 Skip blank rows early
-                if (isBlank(dataMap.get("itemCode")) ||
-                        isBlank(dataMap.get("containerCode")) ||
-                        isBlank(dataMap.get("serialBatchNumber"))) {
+                if (isBlank(dataMap.get("itemCode")) || isBlank(dataMap.get("containerCode")) || isBlank(dataMap.get("serialBatchNumber"))) {
                     log.warn("Skipping blank row at index {}", row.getRowNum());
                     continue;
                 }
@@ -3510,9 +3234,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             }
 
             if (!hasDataRows || packingRows.isEmpty()) {
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "Excel file contains header only, no valid data rows found",
-                        null, ServiceConstants.ERROR_CODE, logId));
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, "Excel file contains header only, no valid data rows found", null, ServiceConstants.ERROR_CODE, logId));
             }
 
             // ==== Group by Item Code and Container ====
@@ -3524,10 +3246,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
                 if (isBlank(itemCode) || isBlank(container) || isBlank(serial)) continue;
 
-                itemToContainerSerials
-                        .computeIfAbsent(itemCode, k -> new HashMap<>())
-                        .computeIfAbsent(container, k -> new ArrayList<>())
-                        .add(serial);
+                itemToContainerSerials.computeIfAbsent(itemCode, k -> new HashMap<>()).computeIfAbsent(container, k -> new ArrayList<>()).add(serial);
             }
 
             // 🔹 Remove invalid keys if somehow still present
@@ -3541,29 +3260,18 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                 isBatchMode = asnLine.getItem().getTypeSerialBatchNone().equalsIgnoreCase("Batch");
             }
             if (asnLine == null) {
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "ASN Line not found for provided requestId/requestType", null,
-                        ServiceConstants.ERROR_CODE, logId));
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, "ASN Line not found for provided requestId/requestType", null, ServiceConstants.ERROR_CODE, logId));
             }
 
             // ==== Validate duplicate serial numbers ====
-            List<String> serialNumbers = packingRows.stream()
-                    .map(m -> m.get("serialBatchNumber"))
-                    .filter(Objects::nonNull)
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
+            List<String> serialNumbers = packingRows.stream().map(m -> m.get("serialBatchNumber")).filter(Objects::nonNull).map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toList());
 
             // In SERIAL mode, duplicates in Excel are NOT allowed
             if (!isBatchMode) {
-                Set<String> duplicateSerials = serialNumbers.stream()
-                        .filter(s -> Collections.frequency(serialNumbers, s) > 1)
-                        .collect(Collectors.toSet());
+                Set<String> duplicateSerials = serialNumbers.stream().filter(s -> Collections.frequency(serialNumbers, s) > 1).collect(Collectors.toSet());
 
                 if (!duplicateSerials.isEmpty()) {
-                    return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                            "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials),
-                            null, ServiceConstants.ERROR_CODE, logId));
+                    return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, "Duplicate Serial Numbers found in Excel: " + String.join(", ", duplicateSerials), null, ServiceConstants.ERROR_CODE, logId));
                 }
             }
 
@@ -3571,25 +3279,17 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
 
             Integer supplierId = null;
 
-            if (asnLine != null
-                    && asnLine.getAsnHeadId() != null
-                    && asnLine.getAsnHeadId().getSupplier() != null
-                    && asnLine.getAsnHeadId().getSupplier().getId() != null) {
+            if (asnLine != null && asnLine.getAsnHeadId() != null && asnLine.getAsnHeadId().getSupplier() != null && asnLine.getAsnHeadId().getSupplier().getId() != null) {
 
                 supplierId = asnLine.getAsnHeadId().getSupplier().getId();
             }
 
-            List<String> serialsForDbCheck = isBatchMode
-                    ? serialNumbers.stream().distinct().collect(Collectors.toList())
-                    : serialNumbers;
+            List<String> serialsForDbCheck = isBatchMode ? serialNumbers.stream().distinct().collect(Collectors.toList()) : serialNumbers;
 
-            List<String> overlap = serialBatchNumberRepository
-                    .findExistingSerialsForItemSupplierAndSerials(itemId, supplierId, serialsForDbCheck);
+            List<String> overlap = serialBatchNumberRepository.findExistingSerialsForItemSupplierAndSerials(itemId, supplierId, serialsForDbCheck);
 
             if (!overlap.isEmpty()) {
-                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                        "Serial Numbers already exist in system: " + String.join(", ", overlap),
-                        null, ServiceConstants.ERROR_CODE, logId));
+                return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, "Serial Numbers already exist in system: " + String.join(", ", overlap), null, ServiceConstants.ERROR_CODE, logId));
             }
 
             // ==== If NOT final upload → build summary only ====
@@ -3605,46 +3305,23 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                         if (containerMap == null || containerMap.isEmpty()) continue;
 
                         // ---- Safely get item name ----
-                        String itemName = packingRows.stream()
-                                .filter(r -> itemCode.equals(r.get("itemCode")))
-                                .map(r -> r.getOrDefault("itemName", ""))
-                                .findFirst()
-                                .orElse("");
+                        String itemName = packingRows.stream().filter(r -> itemCode.equals(r.get("itemCode"))).map(r -> r.getOrDefault("itemName", "")).findFirst().orElse("");
 
                         // ---- Safely build container summaries ----
-                        List<PackingSummaryResponse.ContainerSummary> containerSummaries = containerMap.entrySet().stream()
-                                .filter(e -> !isBlank(e.getKey()))
-                                .map(e -> {
-                                    String containerCode = e.getKey();
-                                    List<String> serials = e.getValue() == null
-                                            ? Collections.emptyList()
-                                            : e.getValue().stream().filter(Objects::nonNull).collect(Collectors.toList());
-                                    return new PackingSummaryResponse.ContainerSummary(containerCode, serials);
-                                })
-                                .collect(Collectors.toList());
+                        List<PackingSummaryResponse.ContainerSummary> containerSummaries = containerMap.entrySet().stream().filter(e -> !isBlank(e.getKey())).map(e -> {
+                            String containerCode = e.getKey();
+                            List<String> serials = e.getValue() == null ? Collections.emptyList() : e.getValue().stream().filter(Objects::nonNull).collect(Collectors.toList());
+                            return new PackingSummaryResponse.ContainerSummary(containerCode, serials);
+                        }).collect(Collectors.toList());
 
                         int totalContainers = containerSummaries.size();
-                        int totalQty = containerSummaries.stream()
-                                .mapToInt(c -> c.getSerialNumbers() != null ? c.getSerialNumbers().size() : 0)
-                                .sum();
+                        int totalQty = containerSummaries.stream().mapToInt(c -> c.getSerialNumbers() != null ? c.getSerialNumbers().size() : 0).sum();
 
-                        summaryList.add(new PackingSummaryResponse(
-                                itemName,
-                                itemCode,
-                                totalContainers,
-                                totalQty,
-                                containerSummaries
-                        ));
+                        summaryList.add(new PackingSummaryResponse(itemName, itemCode, totalContainers, totalQty, containerSummaries));
                     }
                 }
 
-                return ResponseEntity.ok(new BaseResponse<>(
-                        HttpStatus.OK.value(),
-                        "Packing summary generated successfully (preview mode)",
-                        summaryList,
-                        ServiceConstants.SUCCESS_CODE,
-                        logId
-                ));
+                return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(), "Packing summary generated successfully (preview mode)", summaryList, ServiceConstants.SUCCESS_CODE, logId));
             }
 
             // ==== FINAL upload: Save Data ====
@@ -3653,18 +3330,13 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             Integer subOrgId = loginUser.getSubOrgId();
             Integer userId = loginUser.getUserId();
 
-            int totalContainers = itemToContainerSerials.values().stream()
-                    .mapToInt(m -> m != null ? m.size() : 0)
-                    .sum();
+            int totalContainers = itemToContainerSerials.values().stream().mapToInt(m -> m != null ? m.size() : 0).sum();
 
             int sequenceCounter = 1; // start from 1
-            List<SerialBatchNumber> seq = this.serialBatchNumberRepository
-                    .findByIsDeletedFalseAndAsnLineIdOrderByAcceptedRejectedContainerBarcodePackingSlipNumberDesc(requestId);
+            List<SerialBatchNumber> seq = this.serialBatchNumberRepository.findByIsDeletedFalseAndAsnLineIdOrderByAcceptedRejectedContainerBarcodePackingSlipNumberDesc(requestId);
 
             String packingSlipNumber;
-            if (seq != null && !seq.isEmpty()
-                    && seq.get(0).getAcceptedRejectedContainerBarcode() != null
-                    && seq.get(0).getAcceptedRejectedContainerBarcode().getPackingSlipNumber() != null) {
+            if (seq != null && !seq.isEmpty() && seq.get(0).getAcceptedRejectedContainerBarcode() != null && seq.get(0).getAcceptedRejectedContainerBarcode().getPackingSlipNumber() != null) {
                 packingSlipNumber = seq.get(0).getAcceptedRejectedContainerBarcode().getPackingSlipNumber();
             } else {
                 packingSlipNumber = null; // Let generator handle initial creation
@@ -3685,11 +3357,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     String nextPackingSlipNumber = generateNextPackingSlipNumber();
 
                     // ✅ Get container type from first matching Excel row
-                    String containerType = packingRows.stream()
-                            .filter(r -> containerCode.equals(r.get("containerCode")))
-                            .map(r -> r.getOrDefault("containerType", ""))
-                            .findFirst()
-                            .orElse("");
+                    String containerType = packingRows.stream().filter(r -> containerCode.equals(r.get("containerCode"))).map(r -> r.getOrDefault("containerType", "")).findFirst().orElse("");
 
                     // ✅ Create and save barcode entity
                     AcceptedRejectedContainerBarcode barcode = new AcceptedRejectedContainerBarcode();
@@ -3706,38 +3374,33 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     acceptedRejectedContainerBarcodeRepository.save(barcode);
 
                     ASNLine finalAsnLine = asnLine;
-                    List<SerialBatchNumber> batchList = serials.stream()
-                            .filter(Objects::nonNull)
-                            .map(serial -> {
-                                SerialBatchNumber s = new SerialBatchNumber();
-                                s.setOrganizationId(orgId);
-                                s.setSubOrganizationId(subOrgId);
-                                s.setSerialBatchNumber(serial);
-                                s.setAcceptedRejectedContainerBarcode(barcode);
-                                s.setAsnLine(finalAsnLine);
-                                s.setIsDeleted(false);
-                                s.setCreatedBy(userId);
-                                s.setCreatedOn(now);
-                                return s;
-                            })
-                            .collect(Collectors.toList());
+                    List<SerialBatchNumber> batchList = serials.stream().filter(Objects::nonNull).map(serial -> {
+                        SerialBatchNumber s = new SerialBatchNumber();
+                        s.setOrganizationId(orgId);
+                        s.setSubOrganizationId(subOrgId);
+                        s.setSerialBatchNumber(serial);
+                        s.setAcceptedRejectedContainerBarcode(barcode);
+                        s.setAsnLine(finalAsnLine);
+                        s.setIsDeleted(false);
+                        s.setCreatedBy(userId);
+                        s.setCreatedOn(now);
+                        return s;
+                    }).collect(Collectors.toList());
                     serialBatchNumberRepository.saveAll(batchList);
 
 
 // Collect StockMovement objects for batch save
-                    List<StockMovement> stockMovementList = batchList.stream()
-                            .map(serialBatchNumber -> {
-                                StockMovement sm = new StockMovement();
-                                sm.setOrganizationId(orgId);
-                                sm.setSubOrganizationId(subOrgId);
-                                sm.setSerialBatchNumbers(serialBatchNumber);
-                                sm.setItem(finalAsnLine.getItem());
-                                sm.setIsDeleted(false);
-                                sm.setCreatedBy(userId);
-                                sm.setCreatedOn(now);
-                                return sm;
-                            })
-                            .collect(Collectors.toList());
+                    List<StockMovement> stockMovementList = batchList.stream().map(serialBatchNumber -> {
+                        StockMovement sm = new StockMovement();
+                        sm.setOrganizationId(orgId);
+                        sm.setSubOrganizationId(subOrgId);
+                        sm.setSerialBatchNumbers(serialBatchNumber);
+                        sm.setItem(finalAsnLine.getItem());
+                        sm.setIsDeleted(false);
+                        sm.setCreatedBy(userId);
+                        sm.setCreatedOn(now);
+                        return sm;
+                    }).collect(Collectors.toList());
 
                     // Save all StockMovement objects in one batch
                     this.stockMovementRepository.saveAll(stockMovementList);
@@ -3754,72 +3417,42 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             long endTime = System.currentTimeMillis();
             log.info("LogId:{} - uploadPackingList - saved in {}ms", logId, (endTime - startTime));
 
-            return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(),
-                    "Packing List Uploaded Successfully", null, ServiceConstants.SUCCESS_CODE, logId));
+            return ResponseEntity.ok(new BaseResponse<>(HttpStatus.OK.value(), "Packing List Uploaded Successfully", null, ServiceConstants.SUCCESS_CODE, logId));
 
         } catch (Exception e) {
-            log.error("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}",
-                    loginUser.getLogId(), loginUser.getUserId(), "PACKING_LIST_UPLOAD_FAILED", e);
+            log.error("LogId:{} - UploadExcelServiceImpl - uploadPackingList - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), "PACKING_LIST_UPLOAD_FAILED", e);
             ExceptionLogger.logException(e, logId);
-            return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500,
-                    ServiceConstants.FILE_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
+            return ResponseEntity.ok(new BaseResponse<>(ServiceConstants.STATUS_CODE_500, ServiceConstants.FILE_UPLOAD_FAILED, null, ServiceConstants.ERROR_CODE, logId));
         }
     }
 
 
     @Override
-    public ResponseEntity<BaseResponse> uploadPackingListV2(
-            MultipartFile file,
-            String type,
-            Integer requestId,
-            String requestType,
-            Boolean isFinalUpload) {
+    public ResponseEntity<BaseResponse> uploadPackingListV2(MultipartFile file, String type, Integer requestId, String requestType, Boolean isFinalUpload) {
 
         String logId = loginUser.getLogId();
 
         // =====================================================
         // FETCH ASN
         // =====================================================
-        ASNLine asnLine =
-                asnLineRepository.findByIsDeletedFalseAndId(requestId);
+        ASNLine asnLine = asnLineRepository.findByIsDeletedFalseAndId(requestId);
 
         if (asnLine == null) {
 
-            return ResponseEntity.ok(
-                    new BaseResponse<>(
-                            500,
-                            "ASN not found",
-                            null,
-                            500,
-                            logId
-                    )
-            );
+            return ResponseEntity.ok(new BaseResponse<>(500, "ASN not found", null, 500, logId));
         }
 
-        Integer supplierId =
-                asnLine.getAsnHeadId()
-                        .getSupplier()
-                        .getId();
+        Integer supplierId = asnLine.getAsnHeadId().getSupplier().getId();
 
-        Integer itemId =
-                asnLine.getItem()
-                        .getId();
+        Integer itemId = asnLine.getItem().getId();
 
-        boolean isBatch =
-                asnLine.getItem()
-                        .getTypeSerialBatchNone() != null
-                        &&
-                        asnLine.getItem()
-                                .getTypeSerialBatchNone()
-                                .equalsIgnoreCase("batch");
+        boolean isBatch = asnLine.getItem().getTypeSerialBatchNone() != null && asnLine.getItem().getTypeSerialBatchNone().equalsIgnoreCase("batch");
 
-        try (Workbook workbook =
-                     WorkbookFactory.create(file.getInputStream())) {
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
 
             Sheet sheet = workbook.getSheetAt(0);
 
-            List<BatchData> batchDataList =
-                    new ArrayList<>();
+            List<BatchData> batchDataList = new ArrayList<>();
 
             // =====================================================
             // READ EXCEL
@@ -3830,17 +3463,14 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     continue;
                 }
 
-                String serial =
-                        getCellStringValue(row, 3);
+                String serial = getCellStringValue(row, 3);
 
-                if (serial == null
-                        || serial.trim().isEmpty()) {
+                if (serial == null || serial.trim().isEmpty()) {
 
                     continue;
                 }
 
-                BatchData data =
-                        new BatchData();
+                BatchData data = new BatchData();
 
                 data.setSerialOrBatch(serial.trim());
 
@@ -3855,62 +3485,38 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
                     // ===== MFG DATE =====
                     if (mfgCell != null) {
 
-                        if (mfgCell.getCellType()
-                                == CellType.NUMERIC) {
+                        if (mfgCell.getCellType() == CellType.NUMERIC) {
 
-                            data.setMfgDate(
-                                    mfgCell.getDateCellValue()
-                            );
+                            data.setMfgDate(mfgCell.getDateCellValue());
 
-                        } else if (mfgCell.getCellType()
-                                == CellType.STRING) {
+                        } else if (mfgCell.getCellType() == CellType.STRING) {
 
-                            data.setMfgDate(
-                                    parseDate(
-                                            mfgCell.getStringCellValue()
-                                    )
-                            );
+                            data.setMfgDate(parseDate(mfgCell.getStringCellValue()));
                         }
                     }
 
                     // ===== EXP DATE =====
                     if (expCell != null) {
 
-                        if (expCell.getCellType()
-                                == CellType.NUMERIC) {
+                        if (expCell.getCellType() == CellType.NUMERIC) {
 
-                            data.setExpDate(
-                                    expCell.getDateCellValue()
-                            );
+                            data.setExpDate(expCell.getDateCellValue());
 
-                        } else if (expCell.getCellType()
-                                == CellType.STRING) {
+                        } else if (expCell.getCellType() == CellType.STRING) {
 
-                            data.setExpDate(
-                                    parseDate(
-                                            expCell.getStringCellValue()
-                                    )
-                            );
+                            data.setExpDate(parseDate(expCell.getStringCellValue()));
                         }
                     }
 
                     // ===== VALIDATION =====
-                    if (data.getMfgDate() == null
-                            || data.getExpDate() == null) {
+                    if (data.getMfgDate() == null || data.getExpDate() == null) {
 
-                        throw new RuntimeException(
-                                "MFG/Expiry date missing at row: "
-                                        + (row.getRowNum() + 1)
-                        );
+                        throw new RuntimeException("MFG/Expiry date missing at row: " + (row.getRowNum() + 1));
                     }
 
-                    if (data.getExpDate()
-                            .before(data.getMfgDate())) {
+                    if (data.getExpDate().before(data.getMfgDate())) {
 
-                        throw new RuntimeException(
-                                "Expiry date cannot be before MFG date at row: "
-                                        + (row.getRowNum() + 1)
-                        );
+                        throw new RuntimeException("Expiry date cannot be before MFG date at row: " + (row.getRowNum() + 1));
                     }
                 }
 
@@ -3922,219 +3528,163 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             // =====================================================
             if (batchDataList.isEmpty()) {
 
-                return ResponseEntity.ok(
-                        new BaseResponse<>(
-                                500,
-                                "No data found",
-                                null,
-                                500,
-                                logId
-                        )
-                );
+                return ResponseEntity.ok(new BaseResponse<>(500, "No data found", null, 500, logId));
             }
 
-            int totalSerials =
-                    batchDataList.size();
+            int totalSerials = batchDataList.size();
 
-            Integer userId =
-                    loginUser.getUserId();
+            Integer userId = loginUser.getUserId();
 
-            Integer orgId =
-                    loginUser.getOrgId();
+            Integer orgId = loginUser.getOrgId();
 
-            Integer subOrgId =
-                    loginUser.getSubOrgId();
+            Integer subOrgId = loginUser.getSubOrgId();
 
-            Date now =
-                    new Date();
+            Date now = new Date();
 
             // =====================================================
             // FETCH PACKING LEVELS
             // =====================================================
-            List<PackingProfileLevel> levels =
-                    packingProfileLevelRepository
-                            .findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(
-                                    supplierId,
-                                    itemId
-                            );
+            List<PackingProfileLevel> levels = packingProfileLevelRepository.findBySupplierItemMapper_SupplierIdAndSupplierItemMapper_ItemIdAndIsDeletedFalse(supplierId, itemId);
 
-            if (levels == null
-                    || levels.isEmpty()) {
+            if (levels == null || levels.isEmpty()) {
 
-                throw new RuntimeException(
-                        "Packing levels not configured"
-                );
+                throw new RuntimeException("Packing levels not configured");
             }
 
             // =====================================================
             // SORT LEVELS
-            // HIGHEST -> LOWEST
+            // TOP -> BOTTOM
             // =====================================================
-            levels.sort(
-                    (a, b) ->
-                            b.getLevelOrder()
-                                    .compareTo(a.getLevelOrder())
-            );
-
-            long runningCount =
-                    containerHierarchyRepository.count() + 1;
+            levels.sort(Comparator.comparing(PackingProfileLevel::getLevelOrder));
 
             // =====================================================
-            // CALCULATE CONTAINER COUNT
+            // MOQ CALCULATION
             // =====================================================
-            Map<Integer, Integer> levelContainerCountMap =
-                    new LinkedHashMap<>();
+            Integer moq = levels.stream().map(l -> l.getUnitsPerParent() != null ? l.getUnitsPerParent() : 1).reduce(1, (a, b) -> a * b);
 
-            int previousRequired =
-                    totalSerials;
-
-            for (int i = levels.size() - 1;
-                 i >= 0;
-                 i--) {
-
-                PackingProfileLevel level =
-                        levels.get(i);
-
-                Integer unitsPerParent =
-                        level.getUnitsPerParent();
-
-                if (unitsPerParent == null
-                        || unitsPerParent <= 0) {
-
-                    unitsPerParent = 1;
-                }
-
-                int requiredContainers =
-                        (int) Math.ceil(
-                                (double) previousRequired
-                                        / unitsPerParent
-                        );
-
-                // USE INDEX AS KEY
-                levelContainerCountMap.put(
-                        i,
-                        requiredContainers
-                );
-
-                previousRequired =
-                        requiredContainers;
+            if (moq <= 0) {
+                moq = 1;
             }
 
             // =====================================================
-            // CREATE DYNAMIC HIERARCHY
+            // ROOT HIERARCHIES REQUIRED
             // =====================================================
-            Map<Integer, List<ContainerHierarchy>>
-                    levelWiseContainers =
-                    new LinkedHashMap<>();
+            int totalRootHierarchies = (int) Math.ceil((double) totalSerials / moq);
 
-            List<ContainerHierarchy>
-                    previousLevelContainers = null;
+            log.info("{} - Total Serials: {}, MOQ: {}, Root Hierarchies: {}", logId, totalSerials, moq, totalRootHierarchies);
 
-            for (int levelIndex = 0;
-                 levelIndex < levels.size();
-                 levelIndex++) {
+            long runningCount = containerHierarchyRepository.count() + 1;
 
-                PackingProfileLevel currentLevel =
-                        levels.get(levelIndex);
+            // =====================================================
+            // ALL LOWEST LEVEL CONTAINERS
+            // =====================================================
+            List<ContainerHierarchy> lowestLevelContainers = new ArrayList<>();
 
-                int currentLevelCount =
-                        levelContainerCountMap.get(levelIndex);
+            // =====================================================
+            // CREATE MULTIPLE ROOT HIERARCHIES
+            // =====================================================
+            for (int rootIndex = 0; rootIndex < totalRootHierarchies; rootIndex++) {
 
-                List<ContainerHierarchy>
-                        currentLevelContainers =
-                        new ArrayList<>();
+                List<ContainerHierarchy> parentContainers = new ArrayList<>();
 
-                Integer parentCapacity =
-                        currentLevel.getUnitsPerParent();
+                for (int levelIndex = 0; levelIndex < levels.size(); levelIndex++) {
 
-                if (parentCapacity == null
-                        || parentCapacity <= 0) {
+                    PackingProfileLevel currentLevel = levels.get(levelIndex);
 
-                    parentCapacity = 1;
-                }
+                    List<ContainerHierarchy> currentLevelContainers = new ArrayList<>();
 
-                for (int i = 0;
-                     i < currentLevelCount;
-                     i++) {
+                    // =================================================
+                    // ROOT LEVEL
+                    // =================================================
+                    if (levelIndex == 0) {
 
-                    ContainerHierarchy hierarchy =
-                            new ContainerHierarchy();
+                        ContainerHierarchy root = new ContainerHierarchy();
 
-                    hierarchy.setContainerCode(
-                            generateContainerCode(
-                                    "LVL"
-                                            + currentLevel.getLevelOrder(),
-                                    runningCount
-                            )
-                    );
+                        root.setContainerCode(generateContainerCode("LVL" + currentLevel.getLevelOrder(), runningCount));
 
-                    hierarchy.setPackingSlipNumber(
-                            createPackingSlip(runningCount)
-                    );
+                        root.setPackingSlipNumber(createPackingSlip(runningCount));
 
-                    hierarchy.setPackingLevel(currentLevel);
+                        root.setPackingLevel(currentLevel);
 
-                    hierarchy.setAsnLine(asnLine);
+                        root.setAsnLine(asnLine);
 
-                    // =============================================
-                    // PARENT LINKING
-                    // =============================================
-                    if (previousLevelContainers != null
-                            &&
-                            !previousLevelContainers.isEmpty()) {
+                        root.setCreatedBy(userId);
 
-                        ContainerHierarchy parent =
-                                previousLevelContainers.get(
-                                        i / parentCapacity
-                                );
+                        root.setCreatedOn(now);
 
-                        hierarchy.setParentContainerHierarchy(
-                                parent
-                        );
+                        root.setIsDeleted(false);
+
+                        root = containerHierarchyRepository.save(root);
+
+                        currentLevelContainers.add(root);
+
+                        runningCount++;
+
+                    } else {
+
+                        // =============================================
+                        // CHILD COUNT FROM PARENT LEVEL
+                        // =============================================
+                        PackingProfileLevel parentLevel = levels.get(levelIndex - 1);
+
+                        Integer childCount = parentLevel.getUnitsPerParent();
+
+                        if (childCount == null || childCount <= 0) {
+
+                            childCount = 1;
+                        }
+
+                        for (ContainerHierarchy parent : parentContainers) {
+
+                            for (int j = 0; j < childCount; j++) {
+
+                                ContainerHierarchy child = new ContainerHierarchy();
+
+                                child.setContainerCode(generateContainerCode("LVL" + currentLevel.getLevelOrder(), runningCount));
+
+                                child.setPackingSlipNumber(createPackingSlip(runningCount));
+
+                                child.setPackingLevel(currentLevel);
+
+                                child.setParentContainerHierarchy(parent);
+
+                                child.setAsnLine(asnLine);
+
+                                child.setCreatedBy(userId);
+
+                                child.setCreatedOn(now);
+
+                                child.setIsDeleted(false);
+
+                                child = containerHierarchyRepository.save(child);
+
+                                currentLevelContainers.add(child);
+
+                                runningCount++;
+                            }
+                        }
                     }
 
+                    // =================================================
+                    // LAST LEVEL = PRIMARY CONTAINERS
+                    // =================================================
+                    if (levelIndex == levels.size() - 1) {
 
-                    hierarchy.setCreatedBy(userId);
+                        lowestLevelContainers.addAll(currentLevelContainers);
+                    }
 
-                    hierarchy.setCreatedOn(now);
-
-                    hierarchy.setIsDeleted(false);
-
-                    currentLevelContainers.add(hierarchy);
-
-                    runningCount++;
+                    parentContainers = currentLevelContainers;
                 }
-
-                containerHierarchyRepository.saveAll(
-                        currentLevelContainers
-                );
-
-                levelWiseContainers.put(
-                        levelIndex,
-                        currentLevelContainers
-                );
-
-                previousLevelContainers =
-                        currentLevelContainers;
             }
 
             // =====================================================
-            // LOWEST LEVEL CONTAINERS
+            // LOWEST LEVEL CAPACITY
             // =====================================================
-            PackingProfileLevel lowestLevel =
-                    levels.get(levels.size() - 1);
+            PackingProfileLevel lowestLevel = levels.get(levels.size() - 1);
 
-            List<ContainerHierarchy>
-                    lowestLevelContainers =
-                    levelWiseContainers.get(
-                            levels.size() - 1
-                    );
+            Integer lowestCapacity = lowestLevel.getUnitsPerParent();
 
-            Integer lowestCapacity =
-                    lowestLevel.getUnitsPerParent();
-
-            if (lowestCapacity == null
-                    || lowestCapacity <= 0) {
+            if (lowestCapacity == null || lowestCapacity <= 0) {
 
                 lowestCapacity = 1;
             }
@@ -4142,42 +3692,27 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             // =====================================================
             // CREATE SERIAL/BATCH ENTRIES
             // =====================================================
-            List<SerialBatchNumber>
-                    serialEntities =
-                    new ArrayList<>();
+            List<SerialBatchNumber> serialEntities = new ArrayList<>();
 
             int serialIndex = 0;
 
-            for (ContainerHierarchy lowestContainer
-                    : lowestLevelContainers) {
+            for (ContainerHierarchy lowestContainer : lowestLevelContainers) {
 
-                for (int j = 0;
-                     j < lowestCapacity
-                             &&
-                             serialIndex < totalSerials;
-                     j++) {
+                for (int j = 0; j < lowestCapacity && serialIndex < totalSerials; j++) {
 
-                    BatchData data =
-                            batchDataList.get(serialIndex++);
+                    BatchData data = batchDataList.get(serialIndex++);
 
-                    SerialBatchNumber serialEntity =
-                            new SerialBatchNumber();
+                    SerialBatchNumber serialEntity = new SerialBatchNumber();
 
-                    serialEntity.setSerialBatchNumber(
-                            data.getSerialOrBatch()
-                    );
+                    serialEntity.setSerialBatchNumber(data.getSerialOrBatch());
 
                     serialEntity.setAsnLine(asnLine);
 
                     if (isBatch) {
 
-                        serialEntity.setManufacturingDate(
-                                data.getMfgDate()
-                        );
+                        serialEntity.setManufacturingDate(data.getMfgDate());
 
-                        serialEntity.setExpiryDate(
-                                data.getExpDate()
-                        );
+                        serialEntity.setExpiryDate(data.getExpDate());
                     }
 
                     serialEntity.setOrganizationId(orgId);
@@ -4197,45 +3732,30 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             // =====================================================
             // SAVE SERIALS
             // =====================================================
-            serialBatchNumberRepository.saveAll(
-                    serialEntities
-            );
+            serialBatchNumberRepository.saveAll(serialEntities);
 
             // =====================================================
             // CREATE STOCK MOVEMENTS
             // =====================================================
-            List<StockMovement> mapperList =
-                    new ArrayList<>();
+            List<StockMovement> mapperList = new ArrayList<>();
 
             int movementIndex = 0;
 
-            for (ContainerHierarchy lowestContainer
-                    : lowestLevelContainers) {
+            for (ContainerHierarchy lowestContainer : lowestLevelContainers) {
 
-                for (int j = 0;
-                     j < lowestCapacity
-                             &&
-                             movementIndex < serialEntities.size();
-                     j++) {
+                for (int j = 0; j < lowestCapacity && movementIndex < serialEntities.size(); j++) {
 
-                    StockMovement movement =
-                            new StockMovement();
+                    StockMovement movement = new StockMovement();
 
                     movement.setOrganizationId(orgId);
 
                     movement.setSubOrganizationId(subOrgId);
 
-                    movement.setSerialBatchNumbers(
-                            serialEntities.get(movementIndex++)
-                    );
+                    movement.setSerialBatchNumbers(serialEntities.get(movementIndex++));
 
-                    movement.setContainerHierarchy(
-                            lowestContainer
-                    );
+                    movement.setContainerHierarchy(lowestContainer);
 
-                    movement.setItem(
-                            asnLine.getItem()
-                    );
+                    movement.setItem(asnLine.getItem());
 
                     movement.setCreatedBy(userId);
 
@@ -4250,39 +3770,18 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             // =====================================================
             // SAVE MOVEMENTS
             // =====================================================
-            stockMovementRepository.saveAll(
-                    mapperList
-            );
+            stockMovementRepository.saveAll(mapperList);
 
-            return ResponseEntity.ok(
-                    new BaseResponse<>(
-                            200,
-                            "Hierarchy created successfully",
-                            null,
-                            200,
-                            logId
-                    )
-            );
+            return ResponseEntity.ok(new BaseResponse<>(200, "Hierarchy created successfully", null, 200, logId));
 
         } catch (Exception e) {
 
-            log.error(
-                    "{} Error in uploadPackingListV2",
-                    logId,
-                    e
-            );
+            log.error("{} Error in uploadPackingListV2", logId, e);
 
-            return ResponseEntity.ok(
-                    new BaseResponse<>(
-                            500,
-                            "Upload failed: " + e.getMessage(),
-                            null,
-                            500,
-                            logId
-                    )
-            );
+            return ResponseEntity.ok(new BaseResponse<>(500, "Upload failed: " + e.getMessage(), null, 500, logId));
         }
     }
+
     private String createPackingSlip(Long count) {
 
         // Step 1: Prefix
@@ -4351,13 +3850,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
         value = value.trim();
 
         // Supported formats
-        String[] formats = {
-                "yyyy-MM-dd",
-                "dd-MM-yyyy",
-                "dd/MM/yyyy",
-                "MM/dd/yyyy",
-                "yyyy/MM/dd",
-                "dd-MMM-yyyy",   // 01-Jan-2026
+        String[] formats = {"yyyy-MM-dd", "dd-MM-yyyy", "dd/MM/yyyy", "MM/dd/yyyy", "yyyy/MM/dd", "dd-MMM-yyyy",   // 01-Jan-2026
                 "dd MMM yyyy"    // 01 Jan 2026
         };
 
@@ -4370,8 +3863,7 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             }
         }
 
-        throw new RuntimeException("Invalid date format: " + value +
-                ". Supported formats: yyyy-MM-dd, dd-MM-yyyy, dd/MM/yyyy, etc.");
+        throw new RuntimeException("Invalid date format: " + value + ". Supported formats: yyyy-MM-dd, dd-MM-yyyy, dd/MM/yyyy, etc.");
     }
 
 }
