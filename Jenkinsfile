@@ -2,11 +2,13 @@ pipeline {
     agent any
 
     environment {
-        COMPOSE_FILE = "docker-compose.uploading.yml"
+        IMAGE_NAME = "configurationservice"
+        CONTAINER_NAME = "configurationservice"
         REGISTRY_CONTAINER_NAME = "adminserviceregistry"
-        TARGET_SERVICE = "configurationservice"
-        TARGET_CONTAINER_NAME = "configurationservice" // container_name from your compose file
-        TARGET_IMAGE_NAME = "configurationservice:latest" // image name from your compose file
+        DOCKER_NETWORK = "updated_orgadmin_rmscadminnetwork"
+        HOST_PORT = "8084"
+        CONTAINER_PORT = "8084"
+        DOCKER_BUILDKIT = "0"
     }
 
     stages {
@@ -19,11 +21,10 @@ pipeline {
         stage('Docker Version') {
             steps {
                 sh 'docker --version'
-                sh 'docker-compose version'
             }
         }
 
-        stage('Check Registry and Run Service') {
+        stage('Check Registry') {
             steps {
                 script {
                     def isRegistryRunning = sh(
@@ -31,22 +32,50 @@ pipeline {
                         returnStdout: true
                     ).trim()
 
-                    if (isRegistryRunning) {
-                        echo "${REGISTRY_CONTAINER_NAME} is running. Proceeding to build and start ${TARGET_SERVICE}..."
-
-                        // Remove existing container
-                        sh "docker rm -f ${TARGET_CONTAINER_NAME} || true"
-
-                        // Remove existing image
-                        sh "docker rmi -f ${TARGET_IMAGE_NAME} || true"
-
-                        // Build and run the service
-                        sh "docker-compose -f ${COMPOSE_FILE} build ${TARGET_SERVICE}"
-                        sh "docker-compose -f ${COMPOSE_FILE} up -d ${TARGET_SERVICE}"
-                    } else {
-                        error "${REGISTRY_CONTAINER_NAME} is not running. Aborting deployment of ${TARGET_SERVICE}."
+                    if (!isRegistryRunning) {
+                        error "${REGISTRY_CONTAINER_NAME} is not running. Aborting deployment of ${CONTAINER_NAME}."
                     }
+
+                    echo "${REGISTRY_CONTAINER_NAME} is running. Proceeding..."
                 }
+            }
+        }
+
+        stage('Ensure Docker Network') {
+            steps {
+                sh """
+                    docker network inspect ${DOCKER_NETWORK} >/dev/null 2>&1 || \
+                    docker network create ${DOCKER_NETWORK}
+                """
+            }
+        }
+
+        stage('Clean Old Container and Image') {
+            steps {
+                sh """
+                    docker rm -f ${CONTAINER_NAME} || true
+                    docker rmi -f ${IMAGE_NAME}:latest || true
+                """
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                    DOCKER_BUILDKIT=0 docker build --no-cache -t ${IMAGE_NAME}:latest .
+                """
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh """
+                    docker run -d --name ${CONTAINER_NAME} \
+                        --restart unless-stopped \
+                        -p ${HOST_PORT}:${CONTAINER_PORT} \
+                        --network ${DOCKER_NETWORK} \
+                        ${IMAGE_NAME}:latest
+                """
             }
         }
     }
