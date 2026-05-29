@@ -3569,7 +3569,8 @@ public class UploadExcelServiceImpl extends Validations implements UploadExcelSe
             // ROOT HIERARCHIES REQUIRED
             // =====================================================
             int totalRootHierarchies = (int) Math.ceil((double) totalSerials / moq);
-
+            asnLine.setNumberOfContainer(totalRootHierarchies);
+            asnLineRepository.save(asnLine);
             log.info("{} - Total Serials: {}, MOQ: {}, Root Hierarchies: {}", logId, totalSerials, moq, totalRootHierarchies);
 
             long runningCount = containerHierarchyRepository.count() + 1;
