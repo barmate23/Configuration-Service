@@ -27,4 +27,6 @@ public interface ZoneService  {
     ByteArrayOutputStream generateBarcodePDF(String zoneId, Boolean getAll);
 
     BaseResponse<com.stockmanagementsystem.response.ZoneResponse> getAllZonesWithPaginationV2(Integer pageNo, Integer pageSize, List<Integer> storeId, List<Integer> areaId, List<Integer> zoneId, Date startDate, Date endDate);
+
+    BaseResponse<Zone> addZonesToArea(Integer areaId, Integer numberOfZones);
 }

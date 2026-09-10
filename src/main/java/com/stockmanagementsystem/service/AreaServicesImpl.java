@@ -177,15 +177,19 @@ public class AreaServicesImpl implements AreaServices {
 
     @Override
     public BaseResponse<Area> createArea(Store store, Integer sq) {
+        return createAreaV2(store, sq, 8);
+    }
+
+    @Override
+    public BaseResponse<Area> createAreaV2(Store store, Integer sq, Integer numberOfZones) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - AreaServicesImpl - createArea - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),"  AUTO CREATE AREA METHOD START");
+        log.info("LogId:{} - AreaServicesImpl - createAreaV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),"  AUTO CREATE AREA V2 METHOD START");
         BaseResponse<Area> baseResponse = new BaseResponse<>();
         try {
             Area area = new Area();
-            if(sq<10) {
+            if (sq<10) {
                 area.setAreaId(store.getStoreId() + "-A0" + sq);
-            }
-            else {
+            } else {
                 area.setAreaId(store.getStoreId() + "-A" + sq);
             }
             area.setStore(store);
@@ -199,13 +203,15 @@ public class AreaServicesImpl implements AreaServices {
             areaRepository.save(area);
             List<Area> areas = new ArrayList<>();
             areas.add(area);
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10013S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10013S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(areas);
             baseResponse.setLogId(loginUser.getLogId());
-            for (Integer i=1;i<=8;i++){
+            
+            int zonesToCreate = (numberOfZones != null) ? numberOfZones : 8;
+            for (Integer i=1;i<=zonesToCreate;i++){
                 zoneService.createZone(area,i);
             }
         } catch (Exception ex) {
@@ -216,11 +222,11 @@ public class AreaServicesImpl implements AreaServices {
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - AreaServicesImpl - createArea - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),ex);
+            log.error("LogId:{} - AreaServicesImpl - createAreaV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),ex);
             return baseResponse;
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - AreaServicesImpl - createArea - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," AUTO CREATE AREA METHOD EXECUTED :" + (endTime - startTime));
+        log.info("LogId:{} - AreaServicesImpl - createAreaV2 - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," AUTO CREATE AREA V2 METHOD EXECUTED :" + (endTime - startTime));
         return baseResponse;
     }
 

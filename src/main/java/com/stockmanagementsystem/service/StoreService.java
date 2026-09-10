@@ -15,6 +15,7 @@ import java.util.List;
 @Service
 public interface StoreService {
     BaseResponse<Store> saveStore(StoreRequest storeRequest);
+    BaseResponse<Store> saveStoreV2(StoreRequest storeRequest);
 
     BaseResponse<Store> updateStore(Integer storeId, StoreRequest storeRequest);
 

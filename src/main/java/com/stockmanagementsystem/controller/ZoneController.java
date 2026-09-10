@@ -89,4 +89,10 @@ public class ZoneController {
                                                        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy/MM/dd") Date endDate){
         return zoneService.getAllZonesWithPaginationV2(pageNo, pageSize, storeId, areaId, zoneId, startDate, endDate);
     }
+
+    @PostMapping("/addZonesToArea")
+    public BaseResponse<Zone> addZonesToArea(@RequestParam Integer areaId,
+                                             @RequestParam Integer numberOfZones) {
+        return zoneService.addZonesToArea(areaId, numberOfZones);
+    }
 }

@@ -7,6 +7,7 @@ public class APIConstants {
     public static final String BASE_REQUEST="/api";
     public static final String FILE_CONTROLLER="/file";
     public static final String AREA_CONTROLLER="/area";
+    public static final String ADDRESS_CONTROLLER="/address";
     public static final String DEVICE_MASTER_CONTROLLER="/DeviceMaster";
     public static final String BARCODE_CONTROLLER="/barcode";
     public static final String EQUIPMENT_CONTROLLER="/equipment";

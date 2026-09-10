@@ -22,6 +22,18 @@ public class Store {
     @Column(name = "SubOrganizationId")
     private Integer subOrganizationId;
 
+    @ManyToOne
+    @JoinColumn(name = "storeTypeId", referencedColumnName = "Id")
+    private CommonMaster storeType;
+
+    @ManyToOne
+    @JoinColumn(name = "bulkStoreId", referencedColumnName = "Id")
+    private Store bulkStore;
+
+    @ManyToOne
+    @JoinColumn(name = "superMarketStoreId", referencedColumnName = "Id")
+    private Store superMarketStore;
+
     @Column(name = "StoreId")
     private String storeId;
 

@@ -10,5 +10,8 @@ public class StoreRequest {
     private List<String> storeManagerName;
     private List<Integer> additionalAreaLicenceKeyId;
     private String erpStoreId;
+    private Integer numberOfAreas;
+    private Integer bulkStoreId;
+    private Integer numberOfZones;
 
 }

@@ -364,4 +364,48 @@ public class ZoneServiceImpl implements ZoneService{
         }
         return baseResponse;
     }
+
+    @Override
+    public BaseResponse<Zone> addZonesToArea(Integer areaId, Integer numberOfZones) {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - ZoneServiceImpl - addZonesToArea - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " ADD ZONES TO AREA METHOD START");
+        BaseResponse<Zone> baseResponse = new BaseResponse<>();
+        try {
+            Area area = areaRepository.findByIsDeletedAndIdAndSubOrganizationId(false, areaId, loginUser.getSubOrgId());
+            if (area == null) {
+                baseResponse.setCode(0);
+                baseResponse.setStatus(404);
+                baseResponse.setMessage("Area not found");
+                baseResponse.setData(new ArrayList<>());
+                baseResponse.setLogId(loginUser.getLogId());
+                return baseResponse;
+            }
+
+            List<Zone> existingZones = zoneRepository.findByIsDeletedAndAreaId(false, areaId);
+            int startSeq = existingZones.size() + 1;
+
+            for (int i = startSeq; i < startSeq + numberOfZones; i++) {
+                createZone(area, i);
+                log.info("LogId:{} - ZoneServiceImpl - addZonesToArea - UserId:{} - Zone seq {} created under areaId:{}", loginUser.getLogId(), loginUser.getUserId(), i, areaId);
+            }
+
+            List<Zone> allZones = zoneRepository.findByIsDeletedAndAreaId(false, areaId);
+            baseResponse.setCode(1);
+            baseResponse.setStatus(200);
+            baseResponse.setMessage("Zones added successfully");
+            baseResponse.setData(allZones);
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.info("LogId:{} - ZoneServiceImpl - addZonesToArea - UserId:{} - {} zones added to areaId:{} TIME:{}", loginUser.getLogId(), loginUser.getUserId(), numberOfZones, areaId, (endTime - startTime));
+        } catch (Exception ex) {
+            baseResponse.setCode(0);
+            baseResponse.setStatus(500);
+            baseResponse.setMessage("Failed to add zones");
+            baseResponse.setData(new ArrayList<>());
+            baseResponse.setLogId(loginUser.getLogId());
+            long endTime = System.currentTimeMillis();
+            log.error("LogId:{} - ZoneServiceImpl - addZonesToArea - UserId:{} - FAILED TIME:{}", loginUser.getLogId(), loginUser.getUserId(), (endTime - startTime), ex);
+        }
+        return baseResponse;
+    }
 }

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.stockmanagementsystem.response.StoreResponseDto;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,7 +36,7 @@ import static com.stockmanagementsystem.utils.GlobalMessages.getResponseMessages
 
 @Service
 @Slf4j
-public class StoreServiceImpl implements StoreService{
+public class StoreServiceImpl implements StoreService {
 
     @Autowired
     StoreRepository storeRepository;
@@ -82,64 +83,73 @@ public class StoreServiceImpl implements StoreService{
     ZoneRepository zoneRepository;
 
 
+    @Override
+    @Transactional
+    public BaseResponse<Store> saveStore(StoreRequest storeRequest) {
+        return commonSaveStore(storeRequest, false);
+    }
 
     @Override
     @Transactional
-    public BaseResponse<Store> saveStore(StoreRequest storeRequest){
+    public BaseResponse<Store> saveStoreV2(StoreRequest storeRequest) {
+        return commonSaveStore(storeRequest, true);
+    }
+
+    private BaseResponse<Store> commonSaveStore(StoreRequest storeRequest, boolean isV2) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," SAVE STORE METHOD START");
-        BaseResponse<Store> baseResponse=new BaseResponse<>();
-        try{
-            Store store =new Store();
-            List<ModuleUserLicenceKey> moduleUserLicenceKeyList =userLicenseKeyRepository.findByIsDeletedAndIsUsedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationId(false, false, "STOR", 3, loginUser.getSubOrgId());
-            List<Store>storeList=storeRepository.findByIsDeletedAndOrganizationId(false,loginUser.getSubOrgId());
+        log.info("LogId:{} - StoreServiceImpl - saveStore{} - UserId:{} - {}", loginUser.getLogId(), isV2 ? "V2" : "", loginUser.getUserId(), " SAVE STORE METHOD START");
+        BaseResponse<Store> baseResponse = new BaseResponse<>();
+        try {
+            Store store = new Store();
+            List<ModuleUserLicenceKey> moduleUserLicenceKeyList = userLicenseKeyRepository.findByIsDeletedAndIsUsedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationId(false, false, "STOR", 3, loginUser.getSubOrgId());
+            List<Store> storeList = storeRepository.findByIsDeletedAndOrganizationId(false, loginUser.getSubOrgId());
 
-            if(moduleUserLicenceKeyList.size()>storeList.size()){
-            store.setStoreId(validations.storeIdGeneration(storeRequest.getStoreName()));
-            if(validations.isDuplicateStoreName(storeRequest.getStoreName(),null)){
-                store.setStoreName(storeRequest.getStoreName().trim().replaceAll(" +", " "));
-            }else {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10001E);
-                baseResponse.setCode(responseMessage.getCode());
-                baseResponse.setStatus(responseMessage.getStatus());
-                baseResponse.setData(new ArrayList<>());
-                baseResponse.setMessage(responseMessage.getMessage());
-                baseResponse.setLogId(loginUser.getLogId());
-                long endTime = System.currentTimeMillis();
-                log.info("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime));
-                return baseResponse;
-            }
-            if(validations.isDuplicateStoreName(null,storeRequest.getErpStoreId())){
-                store.setErpStoreId(storeRequest.getErpStoreId());
-            }else {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10002E);
-                baseResponse.setCode(responseMessage.getCode());
-                baseResponse.setStatus(responseMessage.getStatus());
-                baseResponse.setData(new ArrayList<>());
-                baseResponse.setMessage(responseMessage.getMessage());
-                baseResponse.setLogId(loginUser.getLogId());
-                long endTime = System.currentTimeMillis();
-                log.info("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime));
-                return baseResponse;
-            }
-            store.setSubOrganizationId(loginUser.getSubOrgId());
-            store.setOrganizationId(loginUser.getOrgId());
-            store.setCreatedBy(loginUser.getUserId());
-            store.setCreatedOn(new Date());
-            store.setIsActive(true);
-            store.setIsDeleted(false);
-            storeRepository.save(store);
-            StoreName storeName=storeNameRepository.findByIsDeletedAndIsUsedAndSubOrganizationIdAndStoreName(false,false,loginUser.getSubOrgId(),storeRequest.getStoreName());
-            storeName.setIsUsed(true);
-            storeNameRepository.save(storeName);
-            List<Store> stores=new ArrayList<>();
-             stores.add(store);
+            if (true) {
+                store.setStoreId(validations.storeIdGeneration(storeRequest.getStoreName()));
+                if (validations.isDuplicateStoreName(storeRequest.getStoreName(), null)) {
+                    store.setStoreName(storeRequest.getStoreName().trim().replaceAll(" +", " "));
+                } else {
+                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10001E);
+                    baseResponse.setCode(responseMessage.getCode());
+                    baseResponse.setStatus(responseMessage.getStatus());
+                    baseResponse.setData(new ArrayList<>());
+                    baseResponse.setMessage(responseMessage.getMessage());
+                    baseResponse.setLogId(loginUser.getLogId());
+                    long endTime = System.currentTimeMillis();
+                    log.info("LogId:{} - StoreServiceImpl - saveStore{} - UserId:{} - {}", loginUser.getLogId(), isV2 ? "V2" : "", loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime));
+                    return baseResponse;
+                }
+                if (validations.isDuplicateStoreName(null, storeRequest.getErpStoreId())) {
+                    store.setErpStoreId(storeRequest.getErpStoreId());
+                } else {
+                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10002E);
+                    baseResponse.setCode(responseMessage.getCode());
+                    baseResponse.setStatus(responseMessage.getStatus());
+                    baseResponse.setData(new ArrayList<>());
+                    baseResponse.setMessage(responseMessage.getMessage());
+                    baseResponse.setLogId(loginUser.getLogId());
+                    long endTime = System.currentTimeMillis();
+                    log.info("LogId:{} - StoreServiceImpl - saveStore{} - UserId:{} - {}", loginUser.getLogId(), isV2 ? "V2" : "", loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime));
+                    return baseResponse;
+                }
+                store.setSubOrganizationId(loginUser.getSubOrgId());
+                store.setOrganizationId(loginUser.getOrgId());
+                store.setCreatedBy(loginUser.getUserId());
+                store.setCreatedOn(new Date());
+                store.setIsActive(true);
+                store.setIsDeleted(false);
+                storeRepository.save(store);
+                StoreName storeName = storeNameRepository.findByIsDeletedAndIsUsedAndSubOrganizationIdAndStoreName(false, false, loginUser.getSubOrgId(), storeRequest.getStoreName());
+                storeName.setIsUsed(true);
+                storeNameRepository.save(storeName);
+                List<Store> stores = new ArrayList<>();
+                stores.add(store);
 
-                List<String> fullName=new ArrayList<>();
-                for (String user:storeRequest.getStoreManagerName()) {
-                    Optional<Users> users= userRepository.findByIsDeletedAndUsernameAndSubOrganizationId(false,user,loginUser.getSubOrgId());
-                    fullName.add(users.get().getFirstName()+" "+users.get().getLastName());
-                    StoreKeeperMapper storeKeeperMapper =new StoreKeeperMapper();
+                List<String> fullName = new ArrayList<>();
+                for (String user : storeRequest.getStoreManagerName()) {
+                    Optional<Users> users = userRepository.findByIsDeletedAndUsernameAndSubOrganizationId(false, user, loginUser.getSubOrgId());
+                    fullName.add(users.get().getFirstName() + " " + users.get().getLastName());
+                    StoreKeeperMapper storeKeeperMapper = new StoreKeeperMapper();
                     storeKeeperMapper.setStore(store);
                     storeKeeperMapper.setStoreKeeper(users.get());
                     storeKeeperMapper.setOrganizationId(loginUser.getOrgId());
@@ -154,89 +164,98 @@ public class StoreServiceImpl implements StoreService{
                 store.setStoreManagerName(String.join(",", fullName));
                 storeRepository.save(store);
 
-            log.info("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE KEEPER MAPPED SUCCESSFULLY :");
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10001S);
+                log.info("LogId:{} - StoreServiceImpl - saveStore{} - UserId:{} - {}", loginUser.getLogId(), isV2 ? "V2" : "", loginUser.getUserId(), " STORE KEEPER MAPPED SUCCESSFULLY :");
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10001S);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
                 baseResponse.setData(stores);
                 baseResponse.setLogId(loginUser.getLogId());
                 long endTime = System.currentTimeMillis();
-                log.info("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime));
-                Integer additionalArea=0;
-                if(storeRequest.getAdditionalAreaLicenceKeyId()!=null && storeRequest.getAdditionalAreaLicenceKeyId().size()!=0){
-                   additionalArea=storeRequest.getAdditionalAreaLicenceKeyId().size();
-                    for (Integer i:storeRequest.getAdditionalAreaLicenceKeyId()) {
-                        ModuleUserLicenceKey moduleUserLicenceKey=moduleUserLicenceKeyRepository.findByIsDeletedAndId(false,i);
-                        moduleUserLicenceKey.setIsUsed(true);
-                        moduleUserLicenceKeyRepository.save(moduleUserLicenceKey);
+                log.info("LogId:{} - StoreServiceImpl - saveStore{} - UserId:{} - {}", loginUser.getLogId(), isV2 ? "V2" : "", loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime));
+
+                if (isV2) {
+                    Integer areasToCreate = (storeRequest.getNumberOfAreas() != null) ? storeRequest.getNumberOfAreas() : 4;
+                    Integer zonesPerArea = (storeRequest.getNumberOfZones() != null) ? storeRequest.getNumberOfZones() : 8;
+                    for (Integer i = 1; i <= areasToCreate; i++) {
+                        areaServices.createAreaV2(store, i, zonesPerArea);
+                    }
+                } else {
+                    Integer additionalArea = 0;
+                    if (storeRequest.getAdditionalAreaLicenceKeyId() != null && storeRequest.getAdditionalAreaLicenceKeyId().size() != 0) {
+                        additionalArea = storeRequest.getAdditionalAreaLicenceKeyId().size();
+                        for (Integer i : storeRequest.getAdditionalAreaLicenceKeyId()) {
+                            ModuleUserLicenceKey moduleUserLicenceKey = moduleUserLicenceKeyRepository.findByIsDeletedAndId(false, i);
+                            moduleUserLicenceKey.setIsUsed(true);
+                            moduleUserLicenceKeyRepository.save(moduleUserLicenceKey);
+                        }
+                    }
+                    for (Integer i = 1; i <= (4 + additionalArea); i++) {
+                        areaServices.createArea(store, i);
                     }
                 }
-                for (Integer i = 1; i<=(4+additionalArea); i++) {
-                   areaServices.createArea(store,i);
-
-                }
-            }else {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10003E);
-                baseResponse.setCode(responseMessage.getCode());
-                baseResponse.setStatus(responseMessage.getStatus());
-                baseResponse.setData(new ArrayList<>());
-                baseResponse.setMessage(responseMessage.getMessage());
-                baseResponse.setLogId(loginUser.getLogId());
-                long endTime = System.currentTimeMillis();
-                log.error("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime));
+            } else {
+//                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10003E);
+//                baseResponse.setCode(responseMessage.getCode());
+//                baseResponse.setStatus(responseMessage.getStatus());
+//                baseResponse.setData(new ArrayList<>());
+//                baseResponse.setMessage(responseMessage.getMessage());
+//                baseResponse.setLogId(loginUser.getLogId());
+//                long endTime = System.currentTimeMillis();
+//                log.error("LogId:{} - StoreServiceImpl - saveStore{} - UserId:{} - {}", loginUser.getLogId(), isV2 ? "V2" : "", loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime));
             }
-        }catch (Exception e){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10001F);
+        } catch (Exception e) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10001F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),e);
+            log.error("LogId:{} - StoreServiceImpl - saveStore{} - UserId:{} - {}", loginUser.getLogId(), isV2 ? "V2" : "", loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         return baseResponse;
     }
+
     @Override
-    public BaseResponse<Store> updateStore(Integer storeId, StoreRequest storeRequest){
+    public BaseResponse<Store> updateStore(Integer storeId, StoreRequest storeRequest) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," UPDATE STORE METHOD START");
-        BaseResponse<Store> baseResponse=new BaseResponse<>();
-        try{
-            Optional<Store> store =storeRepository.findByIsDeletedAndIdAndSubOrganizationId(false,storeId,loginUser.getSubOrgId());
-            if(storeRequest.getStoreName().equalsIgnoreCase(store.get().getStoreName())){
+        log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " UPDATE STORE METHOD START");
+        BaseResponse<Store> baseResponse = new BaseResponse<>();
+        try {
+            Optional<Store> store = storeRepository.findByIsDeletedAndIdAndSubOrganizationId(false, storeId, loginUser.getSubOrgId());
+            if (storeRequest.getStoreName().equalsIgnoreCase(store.get().getStoreName())) {
                 store.get().setStoreName(storeRequest.getStoreName());
-            }else {
-                if(validations.isDuplicateStoreName(storeRequest.getStoreName(),null)){
+            } else {
+                if (validations.isDuplicateStoreName(storeRequest.getStoreName(), null)) {
                     store.get().setStoreName(storeRequest.getStoreName().trim().replaceAll(" +", " "));
 
-                }else {
-                    ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10004E);
+                } else {
+                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10004E);
                     baseResponse.setCode(responseMessage.getCode());
                     baseResponse.setStatus(responseMessage.getStatus());
                     baseResponse.setData(new ArrayList<>());
                     baseResponse.setMessage(responseMessage.getMessage());
                     baseResponse.setLogId(loginUser.getLogId());
                     long endTime = System.currentTimeMillis();
-                    log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()  + (endTime - startTime));
+                    log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime));
                     return baseResponse;
                 }
             }
-            if(storeRequest.getErpStoreId().equals(store.get().getErpStoreId())){
+            if (storeRequest.getErpStoreId().equals(store.get().getErpStoreId())) {
                 store.get().setErpStoreId(storeRequest.getErpStoreId());
-            }else {
-                if(validations.isDuplicateStoreName(null,storeRequest.getErpStoreId())){
+            } else {
+                if (validations.isDuplicateStoreName(null, storeRequest.getErpStoreId())) {
                     store.get().setErpStoreId(storeRequest.getErpStoreId());
 
-                }else {
-                    ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10005E);
+                } else {
+                    ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10005E);
                     baseResponse.setCode(responseMessage.getCode());
                     baseResponse.setStatus(responseMessage.getStatus());
                     baseResponse.setData(new ArrayList<>());
                     baseResponse.setMessage(responseMessage.getMessage());
                     baseResponse.setLogId(loginUser.getLogId());
                     long endTime = System.currentTimeMillis();
-                    log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime));
+                    log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime));
                     return baseResponse;
                 }
             }
@@ -248,11 +267,11 @@ public class StoreServiceImpl implements StoreService{
             store.get().setIsActive(true);
             store.get().setIsDeleted(false);
             storeRepository.save(store.get());
-            List<Store> stores=new ArrayList<>();
+            List<Store> stores = new ArrayList<>();
             stores.add(store.get());
-            for (String user:storeRequest.getStoreManagerName()) {
-                Optional<Users> users= userRepository.findByIsDeletedAndUsernameAndSubOrganizationId(false,user,loginUser.getSubOrgId());
-                StoreKeeperMapper storeKeeperMapper =new StoreKeeperMapper();
+            for (String user : storeRequest.getStoreManagerName()) {
+                Optional<Users> users = userRepository.findByIsDeletedAndUsernameAndSubOrganizationId(false, user, loginUser.getSubOrgId());
+                StoreKeeperMapper storeKeeperMapper = new StoreKeeperMapper();
                 storeKeeperMapper.setStore(store.get());
                 storeKeeperMapper.setStoreKeeper(users.get());
                 storeKeeperMapper.setOrganizationId(loginUser.getOrgId());
@@ -264,92 +283,92 @@ public class StoreServiceImpl implements StoreService{
                 storeKeeperMapper.setModifiedOn(new Date());
                 storeKeeperMapperRepository.save(storeKeeperMapper);
             }
-            log.info("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE KEEPER MAPPED SUCCESSFULLY :");
+            log.info("LogId:{} - StoreServiceImpl - saveStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " STORE KEEPER MAPPED SUCCESSFULLY :");
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10002S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10002S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(stores);
             baseResponse.setLogId(loginUser.getLogId());
-            Integer additionalArea=0;
-            if(storeRequest.getAdditionalAreaLicenceKeyId()!=null && storeRequest.getAdditionalAreaLicenceKeyId().size()!=0){
-                additionalArea=storeRequest.getAdditionalAreaLicenceKeyId().size();
-                for (Integer i:storeRequest.getAdditionalAreaLicenceKeyId()) {
-                    ModuleUserLicenceKey moduleUserLicenceKey=moduleUserLicenceKeyRepository.findByIsDeletedAndId(false,i);
+            Integer additionalArea = 0;
+            if (storeRequest.getAdditionalAreaLicenceKeyId() != null && storeRequest.getAdditionalAreaLicenceKeyId().size() != 0) {
+                additionalArea = storeRequest.getAdditionalAreaLicenceKeyId().size();
+                for (Integer i : storeRequest.getAdditionalAreaLicenceKeyId()) {
+                    ModuleUserLicenceKey moduleUserLicenceKey = moduleUserLicenceKeyRepository.findByIsDeletedAndId(false, i);
                     moduleUserLicenceKey.setIsUsed(true);
                     moduleUserLicenceKeyRepository.save(moduleUserLicenceKey);
                 }
             }
-            List<Area> areas=areaRepository.findByIsDeletedAndSubOrganizationIdAndStoreId(false,loginUser.getSubOrgId(),storeId);
-            for (Integer i = areas.size()+1; i<=areas.size()+additionalArea; i++) {
-                areaServices.createArea(store.get(),i);
+            List<Area> areas = areaRepository.findByIsDeletedAndSubOrganizationIdAndStoreId(false, loginUser.getSubOrgId(), storeId);
+            for (Integer i = areas.size() + 1; i <= areas.size() + additionalArea; i++) {
+                areaServices.createArea(store.get(), i);
             }
-        }catch (Exception e){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10002F);
+        } catch (Exception e) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10002F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),e);
+            log.error("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," UPDATE SAVED SUCCESSFULLY :" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - updateStore - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " UPDATE SAVED SUCCESSFULLY :" + (endTime - startTime));
         return baseResponse;
     }
+
     @Override
-    public BaseResponse<StoreResponse> getStoresWithPagination(Integer pageNo, Integer pageSize){
+    public BaseResponse<StoreResponse> getStoresWithPagination(Integer pageNo, Integer pageSize) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getStoresWithPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET STORE WITH PAGINATION METHOD START");
-        BaseResponse<StoreResponse> baseResponse=new BaseResponse<>();
+        log.info("LogId:{} - StoreServiceImpl - getStoresWithPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET STORE WITH PAGINATION METHOD START");
+        BaseResponse<StoreResponse> baseResponse = new BaseResponse<>();
         try {
             final Pageable pageable = (Pageable) PageRequest.of((int) pageNo, (int) pageSize);
-            Page<Store> pageResult = this.storeRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(),pageable);
+            Page<Store> pageResult = this.storeRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
             final StoreResponse storeResponse = new StoreResponse();
             storeResponse.setPageCount(pageResult.getTotalPages());
             storeResponse.setStores(pageResult.getContent());
             storeResponse.setRecordCount(pageResult.getTotalElements());
-            List<StoreResponse> storeResponseList=new ArrayList<>();
+            List<StoreResponse> storeResponseList = new ArrayList<>();
             storeResponseList.add(storeResponse);
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10003S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10003S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(storeResponseList);
             baseResponse.setLogId(loginUser.getLogId());
-        }catch (Exception ex){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10003F);
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10003F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - getStoresWithPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()  + (endTime - startTime),ex);
+            log.error("LogId:{} - StoreServiceImpl - getStoresWithPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getStoresWithPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE LIST FETCHED SUCCESSFULLY :" + (endTime - startTime));
-       return baseResponse;
+        log.info("LogId:{} - StoreServiceImpl - getStoresWithPagination - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " STORE LIST FETCHED SUCCESSFULLY :" + (endTime - startTime));
+        return baseResponse;
     }
 
     @Override
-    public BaseResponse<StoreResponse> getStoreListByERPStoreId(Integer pageNo, Integer pageSize, List<Integer> storeId,List<String> erpStoreId,Date startDate, Date endDate){
+    public BaseResponse<StoreResponse> getStoreListByERPStoreId(Integer pageNo, Integer pageSize, List<Integer> storeId, List<String> erpStoreId, Date startDate, Date endDate) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getStoreListByERPStoreId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET STORE LIST BY ERP STORE ID METHOD START");
-        BaseResponse<StoreResponse> baseResponse=new BaseResponse<>();
+        log.info("LogId:{} - StoreServiceImpl - getStoreListByERPStoreId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET STORE LIST BY ERP STORE ID METHOD START");
+        BaseResponse<StoreResponse> baseResponse = new BaseResponse<>();
         try {
             final Pageable pageable = (Pageable) PageRequest.of((int) pageNo, (int) pageSize);
-            Page<Store> pageResult =null;
-            if(storeId!=null && erpStoreId!=null){
-                pageResult=this.storeRepository.findByIsDeletedAndSubOrganizationIdAndIdInOrErpStoreIdInOrderByIdAsc(false,loginUser.getSubOrgId(),storeId,erpStoreId, pageable);
-            }else if (storeId==null && erpStoreId==null){
-                pageResult=this.storeRepository.findByIsDeletedAndSubOrganizationIdOrderByIdAsc(false,loginUser.getSubOrgId(), pageable);
-            } else if (storeId!=null && erpStoreId==null) {
-                pageResult=this.storeRepository.findByIsDeletedAndSubOrganizationIdAndIdInOrderByIdAsc(false,loginUser.getSubOrgId(),storeId, pageable);
-            }
-            else if (storeId==null && erpStoreId!=null) {
-                pageResult=this.storeRepository.findByIsDeletedAndSubOrganizationIdAndErpStoreIdInOrderByIdAsc(false,loginUser.getSubOrgId(),erpStoreId, pageable);
+            Page<Store> pageResult = null;
+            if (storeId != null && erpStoreId != null) {
+                pageResult = this.storeRepository.findByIsDeletedAndSubOrganizationIdAndIdInOrErpStoreIdInOrderByIdAsc(false, loginUser.getSubOrgId(), storeId, erpStoreId, pageable);
+            } else if (storeId == null && erpStoreId == null) {
+                pageResult = this.storeRepository.findByIsDeletedAndSubOrganizationIdOrderByIdAsc(false, loginUser.getSubOrgId(), pageable);
+            } else if (storeId != null && erpStoreId == null) {
+                pageResult = this.storeRepository.findByIsDeletedAndSubOrganizationIdAndIdInOrderByIdAsc(false, loginUser.getSubOrgId(), storeId, pageable);
+            } else if (storeId == null && erpStoreId != null) {
+                pageResult = this.storeRepository.findByIsDeletedAndSubOrganizationIdAndErpStoreIdInOrderByIdAsc(false, loginUser.getSubOrgId(), erpStoreId, pageable);
             }
 //            else if (createYear!=null && createYear.size()!=0) {
 ////                pageResult=this.storeRepository.findByIsDeletedAndSubOrganizationIdAnd
@@ -358,54 +377,55 @@ public class StoreServiceImpl implements StoreService{
             storeResponse.setPageCount(pageResult.getTotalPages());
             storeResponse.setStores(pageResult.getContent());
             storeResponse.setRecordCount(pageResult.getTotalElements());
-            List<StoreResponse> storeResponseList=new ArrayList<>();
+            List<StoreResponse> storeResponseList = new ArrayList<>();
             storeResponseList.add(storeResponse);
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10004S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10004S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(storeResponseList);
             baseResponse.setLogId(loginUser.getLogId());
-        }catch (Exception ex){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10004F);
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10004F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - getStoreListByERPStoreId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()  + (endTime - startTime),ex);
+            log.error("LogId:{} - StoreServiceImpl - getStoreListByERPStoreId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getStoreListByERPStoreId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - getStoreListByERPStoreId - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
         return baseResponse;
     }
-    @Override
-    public BaseResponse<Store> getAllStores(){
-        long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAllStores - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET ALL STORE METHOD START");
-        BaseResponse<Store> baseResponse=new BaseResponse<>();
-        try {
-            List<Store> stores=storeRepository.findByIsDeletedAndSubOrganizationId(false,loginUser.getSubOrgId());
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10005S);
+    @Override
+    public BaseResponse<Store> getAllStores() {
+        long startTime = System.currentTimeMillis();
+        log.info("LogId:{} - StoreServiceImpl - getAllStores - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL STORE METHOD START");
+        BaseResponse<Store> baseResponse = new BaseResponse<>();
+        try {
+            List<Store> stores = storeRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
+
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10005S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(stores);
             baseResponse.setLogId(loginUser.getLogId());
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10005F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10005F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - getAllStores - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()  + (endTime - startTime),ex);
+            log.error("LogId:{} - StoreServiceImpl - getAllStores - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAllStores - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - getAllStores - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
@@ -443,73 +463,73 @@ public class StoreServiceImpl implements StoreService{
 //    }
 
     @Override
-    public BaseResponse<StoreName> getAllStoresName(){
+    public BaseResponse<StoreName> getAllStoresName() {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET ALL STORE METHOD START");
-        BaseResponse<StoreName> baseResponse=new BaseResponse<>();
+        log.info("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL STORE METHOD START");
+        BaseResponse<StoreName> baseResponse = new BaseResponse<>();
         try {
-            List<StoreName> stores=storeNameRepository.findByIsDeletedAndIsUsedAndSubOrganizationId(false,false,loginUser.getSubOrgId());
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10006S);
+            List<StoreName> stores = storeNameRepository.findByIsDeletedAndIsUsedAndSubOrganizationId(false, false, loginUser.getSubOrgId());
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10006S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(stores);
             baseResponse.setLogId(loginUser.getLogId());
-        }catch (Exception ex){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10006F);
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10006F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()  + (endTime - startTime),ex);
+            log.error("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
     @Override
-    public BaseResponse<Store> deleteStoreById(Integer storeId){
+    public BaseResponse<Store> deleteStoreById(Integer storeId) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," DELETE STORE BY ID METHOD START");
-        BaseResponse<Store> baseResponse=new BaseResponse<>();
+        log.info("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " DELETE STORE BY ID METHOD START");
+        BaseResponse<Store> baseResponse = new BaseResponse<>();
         try {
-            Optional<Store> store=storeRepository.findByIsDeletedAndIdAndSubOrganizationId(false,storeId,loginUser.getSubOrgId());
-            List<Area> areas=areaRepository.findByIsDeletedAndStoreId(false,storeId);
-            if(areas!=null && areas.size()==0){
+            Optional<Store> store = storeRepository.findByIsDeletedAndIdAndSubOrganizationId(false, storeId, loginUser.getSubOrgId());
+            List<Area> areas = areaRepository.findByIsDeletedAndStoreId(false, storeId);
+            if (areas != null && areas.size() == 0) {
                 store.get().setIsDeleted(true);
-                List<Store> stores=new ArrayList<>();
+                List<Store> stores = new ArrayList<>();
                 stores.add(store.get());
                 storeRepository.save(store.get());
 
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10007S);
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10007S);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
                 baseResponse.setData(stores);
                 baseResponse.setLogId(loginUser.getLogId());
-            }else {
-                ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10006E);
+            } else {
+                ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10006E);
                 baseResponse.setCode(responseMessage.getCode());
                 baseResponse.setStatus(responseMessage.getStatus());
                 baseResponse.setMessage(responseMessage.getMessage());
                 baseResponse.setData(new ArrayList<>());
                 baseResponse.setLogId(loginUser.getLogId());
                 long endTime = System.currentTimeMillis();
-                log.info("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime));
+                log.info("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime));
             }
-        }catch (Exception ex){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10007F);
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10007F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage() + (endTime - startTime),ex);
+            log.error("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE DELETED SUCCESSFULLY :" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - deleteStoreById - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " STORE DELETED SUCCESSFULLY :" + (endTime - startTime));
         return baseResponse;
     }
 
@@ -561,36 +581,33 @@ public class StoreServiceImpl implements StoreService{
     }
 
 
-
-
-
     @Override
-    public BaseResponse<Users> getAllStoreKeeper(){
+    public BaseResponse<Users> getAllStoreKeeper() {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAllStoreKeeper - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET ALL STORE KEEPER METHOD START");
-        BaseResponse<Users> baseResponse=new BaseResponse<>();
+        log.info("LogId:{} - StoreServiceImpl - getAllStoreKeeper - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL STORE KEEPER METHOD START");
+        BaseResponse<Users> baseResponse = new BaseResponse<>();
         try {
-            List<Users> stores=userRepository.findByIsDeletedAndSubOrganizationIdAndModuleUserLicenceKeyLicenceLinePartNumberSubModuleMapperSubModuleSubModuleCode(false,loginUser.getSubOrgId(),"SKPR");
-            List<StoreKeeperMapper> storeKeeperMappers=storeKeeperMapperRepository.findByIsDeletedAndSubOrganizationId(false,loginUser.getSubOrgId());
+            List<Users> stores = userRepository.findByIsDeletedAndSubOrganizationIdAndModuleUserLicenceKeyLicenceLinePartNumberSubModuleMapperSubModuleSubModuleCode(false, loginUser.getSubOrgId(), "SKPR");
+            List<StoreKeeperMapper> storeKeeperMappers = storeKeeperMapperRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
 //            stores.stream().    reduce(storeKeeperMappers.stream().forEach());
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10008S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10008S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(stores);
             baseResponse.setLogId(loginUser.getLogId());
-        }catch (Exception ex){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10008F);
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10008F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - getAllStoreKeeper - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
+            log.error("LogId:{} - StoreServiceImpl - getAllStoreKeeper - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAllStoreKeeper - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," FAILED TO FETCHED USER LIST TIME :" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - getAllStoreKeeper - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " FAILED TO FETCHED USER LIST TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
@@ -600,151 +617,145 @@ public class StoreServiceImpl implements StoreService{
         log.info(loginUser.getLogId() + " GET USERS BY ID METHOD START");
         BaseResponse baseResponse = new BaseResponse<>();
         try {
-            List<ModuleUserLicenceKey> moduleUserLicenceKeyList =userLicenseKeyRepository.findByIsDeletedAndIsUsedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationIdAndLicenceLinePartNumberSubModuleMapperPartNumberDefaultAdditional(false, false, "AREA", 3, loginUser.getSubOrgId(),2);
+            List<ModuleUserLicenceKey> moduleUserLicenceKeyList = userLicenseKeyRepository.findByIsDeletedAndIsUsedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationIdAndLicenceLinePartNumberSubModuleMapperPartNumberDefaultAdditional(false, false, "AREA", 3, loginUser.getSubOrgId(), 2);
 
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10009S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10009S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(moduleUserLicenceKeyList);
             baseResponse.setLogId(loginUser.getLogId());
-            log.info("LogId:{} - StoreServiceImpl - getAreaLicense - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage());
+            log.info("LogId:{} - StoreServiceImpl - getAreaLicense - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage());
         } catch (Exception e) {
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10009F);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10009F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(new ArrayList<>());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - getAreaLicense - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),e);
+            log.error("LogId:{} - StoreServiceImpl - getAreaLicense - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), e);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAreaLicense - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET USER BY ID METHOD EXECUTED TIME:" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - getAreaLicense - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET USER BY ID METHOD EXECUTED TIME:" + (endTime - startTime));
         return baseResponse;
     }
+
     @Override
-    public BaseResponse<CreateYearResponse> getAllYears(String type){
+    public BaseResponse<CreateYearResponse> getAllYears(String type) {
         long startTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - CreateYearResponse - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," GET ALL YEAR METHOD START");
-        BaseResponse<CreateYearResponse> baseResponse=new BaseResponse<>();
-        List<CreateYearResponse> createYearResponses=new ArrayList<>();
+        log.info("LogId:{} - StoreServiceImpl - CreateYearResponse - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " GET ALL YEAR METHOD START");
+        BaseResponse<CreateYearResponse> baseResponse = new BaseResponse<>();
+        List<CreateYearResponse> createYearResponses = new ArrayList<>();
         try {
-            if(type.equals("STORE")) {
+            if (type.equals("STORE")) {
                 List<Store> stores = storeRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = stores.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }else if (type.equals("AREA")){
+            } else if (type.equals("AREA")) {
                 List<Area> areas = areaRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = areas.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }
-            else if (type.equals("ZONE")){
+            } else if (type.equals("ZONE")) {
                 List<Zone> zones = zoneRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = zones.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }
-            else if (type.equals("LOCATION")){
+            } else if (type.equals("LOCATION")) {
                 List<Location> locations = locationRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = locations.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }
-            else if (type.equals("ITEM")){
+            } else if (type.equals("ITEM")) {
                 List<Item> items = itemRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = items.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }
-            else if (type.equals("DOCK")){
+            } else if (type.equals("DOCK")) {
                 List<Dock> docks = docksRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = docks.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }
-            else if (type.equals("PURCHASE")){
+            } else if (type.equals("PURCHASE")) {
                 List<PurchaseOrderHead> purchaseOrderHeads = purchaseOrderHeadRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = purchaseOrderHeads.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }
-            else if (type.equals("BOM")){
+            } else if (type.equals("BOM")) {
                 List<BoMHead> boMHeads = bomHeadRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = boMHeads.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
-            }
-            else if (type.equals("SUPLY")){
+            } else if (type.equals("SUPLY")) {
                 List<Supplier> supplierList = supplierRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId());
                 List<Integer> years = supplierList.stream().map(k -> k.getCreatedOn().getYear()).distinct().collect(Collectors.toList());
                 for (Integer year : years) {
                     CreateYearResponse createYearResponse = new CreateYearResponse();
                     createYearResponse.setYear((1900 + year - 1) + "-" + (1900 + year));
-                    createYearResponse.setStartDate(getStartDate(1900+year - 1));
-                    createYearResponse.setEndDate(getEndDate(1900+year));
+                    createYearResponse.setStartDate(getStartDate(1900 + year - 1));
+                    createYearResponse.setEndDate(getEndDate(1900 + year));
                     createYearResponses.add(createYearResponse);
                 }
             }
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10010S);
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10010S);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setData(createYearResponses);
             baseResponse.setLogId(loginUser.getLogId());
-        }catch (Exception ex){
-            ResponseMessage responseMessage=getResponseMessages(ResponseKeyConstant.UPLD10010F);
+        } catch (Exception ex) {
+            ResponseMessage responseMessage = getResponseMessages(ResponseKeyConstant.UPLD10010F);
             baseResponse.setCode(responseMessage.getCode());
             baseResponse.setStatus(responseMessage.getStatus());
             baseResponse.setMessage(responseMessage.getMessage());
             baseResponse.setLogId(loginUser.getLogId());
             long endTime = System.currentTimeMillis();
-            log.error("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(),ResponseKeyConstant.SPACE+responseMessage.getMessage()+ (endTime - startTime),ex);
+            log.error("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), ResponseKeyConstant.SPACE + responseMessage.getMessage() + (endTime - startTime), ex);
         }
         long endTime = System.currentTimeMillis();
-        log.info("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId()," STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
+        log.info("LogId:{} - StoreServiceImpl - getAllStoresName - UserId:{} - {}", loginUser.getLogId(), loginUser.getUserId(), " STORE LIST FETCHED SUCCESSFULLY TIME :" + (endTime - startTime));
         return baseResponse;
     }
 
@@ -768,7 +779,7 @@ public class StoreServiceImpl implements StoreService{
         try {
             Pageable pageable = PageRequest.of(pageNo, pageSize);
             Page<Store> storePage = storeRepository.findByIsDeletedAndSubOrganizationId(false, loginUser.getSubOrgId(), pageable);
-            
+
             List<com.stockmanagementsystem.response.StoreResponseDto> storeResponseList = storePage.getContent().stream().map(s -> {
                 com.stockmanagementsystem.response.StoreResponseDto dto = new com.stockmanagementsystem.response.StoreResponseDto();
                 dto.setId(s.getId());
@@ -780,7 +791,7 @@ public class StoreServiceImpl implements StoreService{
                 dto.setEmailId(s.getEmailId());
                 return dto;
             }).collect(java.util.stream.Collectors.toList());
-            
+
             baseResponse.setCode(1);
             baseResponse.setStatus(200);
             baseResponse.setTotalPageCount(storePage.getTotalPages());
