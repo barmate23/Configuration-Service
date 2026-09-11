@@ -59,6 +59,9 @@ public class NewAddress {
     @Column(name = "google_map_link", length = 1000)
     private String googleMapLink;
 
+    @Column(name = "area_code", length = 50)
+    private String areaCode;
+
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 

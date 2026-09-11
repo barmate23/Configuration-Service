@@ -41,4 +41,6 @@ public class AddressRequestDto {
     private String street;
 
     private String googleMapLink;
+
+    private String areaCode;
 }

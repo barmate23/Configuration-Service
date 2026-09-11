@@ -158,6 +158,7 @@ public class AddressServiceImpl implements AddressService {
         address.setSubLocality(request.getSubLocality());
         address.setStreet(request.getStreet());
         address.setGoogleMapLink(request.getGoogleMapLink());
+        address.setAreaCode(request.getAreaCode());
     }
 
     private AddressResponseDto mapToResponse(NewAddress address) {
@@ -177,6 +178,7 @@ public class AddressServiceImpl implements AddressService {
                 .subLocality(address.getSubLocality())
                 .street(address.getStreet())
                 .googleMapLink(address.getGoogleMapLink())
+                .areaCode(address.getAreaCode())
                 .createdOn(address.getCreatedOn())
                 .updatedOn(address.getUpdatedOn())
                 .build();

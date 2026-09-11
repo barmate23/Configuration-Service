@@ -37,6 +37,8 @@ public class AddressResponseDto {
 
     private String googleMapLink;
 
+    private String areaCode;
+
     private LocalDateTime createdOn;
 
     private LocalDateTime updatedOn;
