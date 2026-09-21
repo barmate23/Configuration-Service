@@ -146,6 +146,16 @@ public class APIConstants {
     public static final String DELETE_PRODUCTION_LINE_STAGE = "/deleteProductionLineStage/{id}";
     public static final String GET_ALL_PRODUCTION_LINE_STAGES = "/getAllProductionLineStages";
     public static final String GET_STAGES_BY_LINE_ID = "/getStagesByLineId/{lineId}";
+
+    // DASHBOARD
+    public static final String DASHBOARD_CONTROLLER = "/dashboard";
+    public static final String GET_DASHBOARD_DATA = "/getDashboardData";
+    public static final String GET_DASHBOARD_KPIS = "/getKpiCards";
+    public static final String GET_CONFIGURATION_PROGRESS = "/getConfigurationProgress";
+    public static final String GET_WORKFORCE_DISTRIBUTION = "/getWorkforceDistribution";
+    public static final String GET_RECENT_PURCHASE_ORDERS = "/getRecentPurchaseOrders";
+    public static final String GET_CONNECTED_HARDWARE_FLEET = "/getConnectedHardwareFleet";
+    public static final String GET_BOTTOM_QUICK_STATS = "/getBottomQuickStats";
 }
 
 

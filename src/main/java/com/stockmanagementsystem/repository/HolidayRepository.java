@@ -51,4 +51,6 @@ public interface HolidayRepository extends JpaRepository<Holiday,Integer> {
    Page<Holiday> findByOrganizationIdAndSubOrganizationIdAndIsDeletedOrderByDateAsc(Integer orgId, Integer subOrgId, boolean b, PageRequest pageable);
 
     List<Holiday> findByDateAndIsDeletedAndSubOrganizationId(Date time, boolean b, Integer subOrgId);
+    List<Holiday> findByIsDeleted(boolean isDeleted);
+    List<Holiday> findByIsDeletedAndSubOrganizationId(boolean isDeleted, Integer subOrgId);
 }

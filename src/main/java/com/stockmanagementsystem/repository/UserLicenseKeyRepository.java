@@ -18,4 +18,6 @@ public interface UserLicenseKeyRepository extends JpaRepository<ModuleUserLicenc
     List<ModuleUserLicenceKey> findByIsDeletedAndIsUsedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationIdAndLicenceLinePartNumberSubModuleMapperPartNumberDefaultAdditional(boolean b, boolean b1, String area, int i, Integer subOrgId, int i1);
 
     List<ModuleUserLicenceKey> findByIsDeletedAndLicenceLineSubModuleSubModuleCodeAndLicenceLinePartNumberSubModuleMapperLicenseCategoryAndSubOrganizationId(boolean b, String asns, int i, Integer subOrgId);
+    List<ModuleUserLicenceKey> findByIsDeleted(boolean isDeleted);
+    List<ModuleUserLicenceKey> findByIsDeletedAndSubOrganizationId(boolean isDeleted, Integer subOrgId);
 }

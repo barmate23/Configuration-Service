@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ProductionShopRepository extends JpaRepository<ProductionShop, Integer> {
     List<ProductionShop> findByIsDeletedFalse();
+    List<ProductionShop> findByIsDeleted(Boolean isDeleted);
+    List<ProductionShop> findByIsDeletedAndSubOrganizationId(Boolean isDeleted, Integer subOrgId);
 }
